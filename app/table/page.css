@@ -1,0 +1,66 @@
+
+.spreadsheet-container {
+    margin: 20px;
+    text-align: left; 
+    padding: 20px;
+    animation: fadeIn 0.5s ease;
+}
+
+.spreadsheet-title {
+    font-size: 2.5rem;
+    color: #333;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+body.dark .spreadsheet-title {
+    color: #fff; 
+}
+.jspreadsheet {
+    border-radius: 10px; 
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    overflow: hidden; 
+}
+text{
+    color:  #333;
+
+}
+.jspreadsheet th {
+    color: white;
+    font-weight: bold;
+    padding: 16px; 
+}
+
+.jspreadsheet td {
+    padding: 16px; 
+    border-bottom: 1px solid #ddd;
+    transition: background-color 0.3s ease;
+}
+
+.jspreadsheet tr:hover {
+    background-color: #d0eaff; 
+}
+
+.jspreadsheet td:hover {
+    background-color: #b3e0ff; 
+}
+
+.jspreadsheet select {
+    background-color: #f0f8ff; 
+    border: 1px solid #007bff; 
+    border-radius: 5px;
+    padding: 8px;
+    transition: border-color 0.3s ease;
+}
+
+.jspreadsheet select:hover {
+    border-color: #0056b3; 
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
