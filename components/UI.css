@@ -48,7 +48,7 @@ body.dark {
 body {
   background: var(--grey);
   overflow-x: hidden;
-  font-family: var(--lato);
+  font-family: "var(--lato)";
 }
 
 .submenu {
@@ -589,46 +589,41 @@ body {
   margin-bottom: 0;
 }
 
-/* Responsive Search Form */
-@media screen and (max-width: 576px) {
-  nav form .form-input input {
-    display: none;
-  }
-
-  nav form.show .form-input input {
-    display: block;
-    width: 100%;
-    padding: 10px;
-    background: var(--grey);
-    border-radius: 20px;
-  }
-
-  nav form.show ~ .notification,
-  nav form.show ~ .profile {
-    display: none;
-  }
-}
-
 @media screen and (max-width: 768px) {
   #sidebar {
     width: 60px;
+    transition: width 0.3s ease; 
+  }
+
+  #sidebar.expanded {
+    width: 280px; 
   }
 
   #content {
-    margin-left: 60px;
+    margin-left: 60px; 
+    transition: margin-left 0.3s ease;
   }
 
-  #sidebar.collapsed {
-    width: 60px;
+  #sidebar.expanded ~ #content {
+    margin-left: 280px; 
   }
 
   #content nav .nav-link {
     display: none;
   }
 
-  /* Hide notifications and profile in mobile when search bar is open */
-  nav form.show ~ .notification,
-  nav form.show ~ .profile {
-    display: none;
+  #sidebar.expanded ~ #content nav .nav-link {
+    display: block;
+  }
+
+  #sidebar.collapsed {
+    width: 80px;
+  }
+
+  #content {
+    margin-left:0px;
+  }
+  #content.collapsed{
+    margin-left:-10px;
   }
 }

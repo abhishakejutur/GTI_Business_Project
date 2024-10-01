@@ -1,118 +1,118 @@
 :root {
-    --bg-color: #ffffff;
-    --text-color: #333333;
-    --border-color: #dddddd;
-    --hover-bg-color: #f5f5f5;
+  --bg-color: #ffffff;
+  --text-color: #333333;
+  --border-color: #dddddd;
+  --hover-bg-color: #f5f5f5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-color: #1c1c1c;
+    --text-color: #f0f0f0;
+    --border-color: #444444;
+    --hover-bg-color: #333333;
   }
-  
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg-color: #1c1c1c;
-      --text-color: #f0f0f0;
-      --border-color: #444444;
-      --hover-bg-color: #333333;
-    }
-  }
+}
 .handsontable-wrapper {
-    height: 100vh;
-    width: calc(100% - 20px); 
-    max-width: 95vw;
-    max-height: 82vh;
-    margin: 20px auto;
-    overflow: auto;
-    border-radius: 15px;
-    border: 1px solid #a7a7a7;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-    background-color: var(--table-bg, #fff);
+  height: 100vh;
+  width: calc(100% - 20px); 
+  max-width: 95vw;
+  max-height: 82vh;
+  margin: 20px auto;
+  overflow: auto;
+  border-radius: 15px;
+  border: 1px solid #a7a7a7;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  background-color: var(--table-bg, #fff);
 }
 
 .custom-table {
-    width: 100%;
-    height: 100%;
-    border-radius: 15px;
+  width: 100%;
+  height: 100%;
+  border-radius: 15px;
 }
 
 
 .handsontable .htCore {
-    border-radius: 15px;
-    background-color: var(--bg-color);
-    border: 1px solid var(--border-color);
+  border-radius: 15px;
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
 }
 .handsontable .ht_master .htCore th,
 .handsontable .ht_master .htCore td {
-  color: var(--text-color);
-  border-color: var(--border-color);
+color: var(--text-color);
+border-color: var(--border-color);
 }
 
 .handsontable .ht_master .htCore tr:hover td {
-  background-color: var(--hover-bg-color);
+background-color: var(--hover-bg-color);
 }
 
 .handsontable .ht_master .htCore th:hover {
-  background-color: var(--hover-bg-color);
+background-color: var(--hover-bg-color);
 }
 .handsontable .ht_master .wtHider, .handsontable .ht_master .wtHolder {
-    border-radius: 15px;
+  border-radius: 15px;
 }
 
 ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px; 
+  width: 10px;
+  height: 10px; 
 }
 
 ::-webkit-scrollbar-track {
-    background: #f1f1f1;
+  background: #f1f1f1;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 10px;
+  background: #888;
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #555;
+  background: #555;
 }
 
 :root[data-theme='dark'] .custom-table {
-    background-color: #222;
-    color: #f0f0f0;
-    box-shadow: 0 8px 20px rgba(255, 255, 255, 0.1);
+  background-color: #222;
+  color: #f0f0f0;
+  box-shadow: 0 8px 20px rgba(255, 255, 255, 0.1);
 }
 
 :root[data-theme='dark'] .header-cell {
-    background-color: #333;
-    color: #f0f0f0;
-    border-bottom: 2px solid #444;
+  background-color: #333;
+  color: #f0f0f0;
+  border-bottom: 2px solid #444;
 }
 
 :root[data-theme='dark'] .data-cell {
-    background-color: #333;
-    border-bottom: 1px solid #444;
-    border-right: 1px solid #444;
+  background-color: #333;
+  border-bottom: 1px solid #444;
+  border-right: 1px solid #444;
 }
 
 :root[data-theme='dark'] .handsontable .ht_master .htCore tr:hover .data-cell {
-    background-color: #444;
+  background-color: #444;
 }
 
 :root[data-theme='dark'] .handsontable .ht_master .htCore th:hover {
-    background-color: #444;
+  background-color: #444;
 }
 
 :root[data-theme='dark'] ::-webkit-scrollbar-thumb {
-    background: #999;
+  background: #999;
 }
 
 :root[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
-    background: #777;
+  background: #777;
 }
 .hanson-title{
-  font-size: 1.5rem;
-  color: var(--foreground);
-  /* margin-bottom: 15px; */
-  margin-left: 20px;
-  font-weight: bold;
+font-size: 1.5rem;
+color: var(--foreground);
+/* margin-bottom: 15px; */
+margin-left: 20px;
+font-weight: bold;
 }
 body.dark .hanson-title {
-  color: #fff; 
+color: #fff; 
 }

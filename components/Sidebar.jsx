@@ -8,9 +8,10 @@ import {
   faThList,
   faCog,
   faSignOutAlt,
+  faShippingFast,  
   faAngleDown,
-  faAngleUp,
-  faShippingFast
+  faAngleRight,
+  faAngleUp
 } from "@fortawesome/free-solid-svg-icons";
 import './UI.css';
 
@@ -77,16 +78,55 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   return (
     <section id="sidebar" className={sidebarClass} ref={sidebarRef}>
       <a href="/" className="brand">
-      <span className="text" style={{marginTop:"6px", marginLeft:"25px", fontSize:"30px"}}>GTI <span style={{color:"green", fontSize:"15px"}}>Online</span></span>
+        {!isCollapsed ? (
+          <span
+            style={{
+              marginTop: "4px",
+              marginLeft: "25px",
+              fontSize: "30px",
+              fontFamily: "Arial, Helvetica, sans-serif !important",
+              transition: "all 0.3s ease",
+              display: "block",
+            }}
+          >
+            GTI{" "}
+            <span
+              style={{
+                color: "green",
+                fontSize: "20px",
+                fontFamily: "Arial, Helvetica, sans-serif !important", 
+                opacity: 1, 
+                transition: "opacity 0.3s ease", 
+                transitionDelay: "2s",
+              }}
+            >
+              Online
+            </span>
+          </span>
+        ) : (
+          <span
+            style={{
+              marginTop: "4px",
+              marginLeft: "2px",
+              fontSize: "20px",
+              fontFamily: "Arial, Helvetica, sans-serif !important",
+              transition: "all 0.3s ease",
+              display: "block",
+              textAlign: "center",
+            }}
+          >
+            GTI
+          </span>
+        )}
       </a>
       <ul className="side-menu top">
         <li className={activeLink === "/dashboard" ? "active" : ""}>
           <a href="/dashboard" onClick={(e) => handleLinkClick("/dashboard", e)}>
             <FontAwesomeIcon icon={faTachometerAlt} />
             {!isCollapsed && (
-              <b><span style={{ marginLeft: "6px" }} className="text">
-                Dashboard
-              </span></b>
+              <span style={{ marginLeft: "6px" }} className="text">
+                <b>Dashboard</b>
+              </span>
             )}
           </a>
         </li>
@@ -99,7 +139,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                   <b>Tables</b>
                 </span>
                 <FontAwesomeIcon
-                  icon={isTablesOpen ? faAngleUp : faAngleDown}
+                  icon={isTablesOpen ? faAngleDown : faAngleRight}
                   style={{ marginLeft: "30px" }}
                 />
               </>
@@ -129,11 +169,11 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         </ul>
         <li className={activeLink === "/Shipping_plan" ? "active" : ""}>
           <a href="/Shipping_plan" onClick={(e) => handleLinkClick("/Shipping_plan", e)}>
-            <FontAwesomeIcon icon={faShippingFast} />
+            <FontAwesomeIcon icon={faShippingFast} /> 
             {!isCollapsed && (
-              <b><span style={{ marginLeft: "6px" }} className="text">
-                Shipping Plan
-              </span></b>
+              <span style={{ marginLeft: "2px" }} className="text">
+                <b>Shipping Plan</b>
+              </span>
             )}
           </a>
         </li>
@@ -143,9 +183,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           <a href="/settings" onClick={(e) => handleLinkClick("/settings", e)}>
             <FontAwesomeIcon icon={faCog} />
             {!isCollapsed && (
-              <b><span style={{ marginLeft: "6px" }} className="text">
-                Settings
-              </span></b>
+              <span style={{ marginLeft: "6px" }} className="text">
+                <b>Settings</b>
+              </span>
             )}
           </a>
         </li>
@@ -153,9 +193,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           <a onClick={handleLogout} className="logout" style={{ cursor: "pointer" }}>
             <FontAwesomeIcon icon={faSignOutAlt} />
             {!isCollapsed && (
-              <b><span style={{ marginLeft: "6px" }} className="text">
-                Logout
-              </span></b>
+              <span style={{ marginLeft: "6px" }} className="text">
+                <b>Logout</b>
+              </span>
             )}
           </a>
         </li>
