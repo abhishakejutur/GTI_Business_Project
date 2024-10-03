@@ -84,23 +84,21 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               marginTop: "4px",
               marginLeft: "25px",
               fontSize: "30px",
-              fontFamily: "Arial, Helvetica, sans-serif !important",
               transition: "all 0.3s ease",
               display: "block",
             }}
           >
-            GTI{" "}
+            𝐆𝐓𝐈{" "}
             <span
               style={{
                 color: "green",
                 fontSize: "20px",
-                fontFamily: "Arial, Helvetica, sans-serif !important", 
                 opacity: 1, 
                 transition: "opacity 0.3s ease", 
                 transitionDelay: "2s",
               }}
             >
-              Online
+              𝐎𝐧𝐥𝐢𝐧𝐞
             </span>
           </span>
         ) : (
@@ -109,13 +107,13 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               marginTop: "4px",
               marginLeft: "2px",
               fontSize: "20px",
-              fontFamily: "Arial, Helvetica, sans-serif !important",
+              fontFamily: "Arial, serif !important",
               transition: "all 0.3s ease",
               display: "block",
               textAlign: "center",
             }}
           >
-            GTI
+            𝐆𝐓𝐈
           </span>
         )}
       </a>
@@ -178,7 +176,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           </a>
         </li>
       </ul>
-      <ul className="side-menu">
+      <ul className="side-menu down">
         <li className={activeLink === "/settings" ? "active" : ""}>
           <a href="/settings" onClick={(e) => handleLinkClick("/settings", e)}>
             <FontAwesomeIcon icon={faCog} />

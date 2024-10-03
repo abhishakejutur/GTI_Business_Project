@@ -171,7 +171,7 @@ body {
   color: var(--dark);
   white-space: nowrap;
   overflow-x: hidden;
-  padding-left: 20px;
+  padding-left: 23px;
 }
 
 #sidebar .side-menu.top li.active a {
@@ -196,6 +196,12 @@ body {
   height: 24px;
   display: flex;
   justify-content: center;
+}
+#sidebar .side-menu.down li a:hover {
+  color: var(--blue);
+}
+#sidebar .side-menu.down li.active a {
+  color: var(--blue);;
 }
 
 #content {
