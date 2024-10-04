@@ -203,7 +203,9 @@ body {
 #sidebar .side-menu.down li.active a {
   color: var(--blue);;
 }
-
+#sidebar .side-menu.down .logout:hover {
+  color: red;
+}
 #content {
   position: relative;
   width: calc(100% - 280px);
@@ -322,13 +324,23 @@ body {
   align-items: center;
 }
 
+#content nav .menuicon{
+  color: var(--dark);
+}
+
 #content nav .profile img {
   width: 36px;
   height: 36px;
   object-fit: cover;
   border-radius: 50%;
 }
+#content nav .profile{
+  color: var(--dark);
+}
 
+#content nav .emp_id{
+  color: var(--dark);
+}
 #content nav .switch-mode {
   display: block;
   min-width: 50px;

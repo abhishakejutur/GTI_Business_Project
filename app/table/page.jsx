@@ -1,137 +1,149 @@
 "use client";
-import React, { useEffect, useRef, useState } from 'react';
-import 'jspreadsheet-ce/dist/jspreadsheet.css';
-import jspreadsheet from 'jspreadsheet-ce';
-import './page.css';
-// import '../components/UI.css';
+import { useEffect, useState } from 'react';
+import Handsontable from 'handsontable';
+import 'handsontable/dist/handsontable.full.min.css';
+import HyperFormula from 'hyperformula'; 
+import '../handsontable/page.css';
+import '../globals.css';
 
-const Spreadsheet = () => {
-  const spreadsheetRef = useRef(null);
+function Page({ isDarkMode }) {
   const [data, setData] = useState([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch('http://10.40.20.98:82/api/Productmatrix');
-        const result = await response.json();
+  const columnHeaders = [
+    'Product ID',
+    'Project',
+    'Customer',
+    'Part Description',
+    'Cast Part No',
+    'Mach Part No',
+    'Assy Part No',
+  ];
 
-        const formattedData = result.map(item => [
-          item.product_Id,
-          item.project,
-          item.status,
-          item.customer,
-          item.partDesc,
-          item.castRR,
-          item.machRR,
-          item.location,
-          item.material,
-          item.cast_PartNo,
-        ]);
+  const statusOptions = [0, 1, 2, 3, 4]; 
 
-        setData(formattedData);
-      } catch (error) {
-        console.error('Error fetching data:', error);
+  const alphabeticHeaders = () => {
+    return columnHeaders.map((_, index) => {
+      let letter = '';
+      while (index >= 0) {
+        letter = String.fromCharCode((index % 26) + 65) + letter;
+        index = Math.floor(index / 26) - 1;
       }
-    };
-
-    fetchData();
-  }, []);
-
-  const applyStyles = (table) => {
-    const isDarkMode = document.body.classList.contains('dark');
-    const textColor = isDarkMode ? '#f0f0f0' : '#333';
-    const hoverColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-    const backgroundColor = isDarkMode ? '#333' : '#fff';
-    const headerBackgroundColor = isDarkMode ? '#444' : '#eee';
-
-    table.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.2)';
-    table.style.backgroundColor = backgroundColor;
-    table.style.width = '100%';
-
-    const cells = table.querySelectorAll('td');
-    cells.forEach(cell => {
-      cell.style.padding = '16px';
-      cell.style.transition = 'background-color 0.3s, transform 0.2s';
-      cell.style.backgroundColor = 'transparent';
-      cell.style.color = textColor;
-      cell.style.borderBottom = `1px solid rgba(0, 0, 0, 0.1)`;
-      cell.style.borderRadius = '5px';
-
-      cell.addEventListener('mouseenter', () => {
-        cell.style.backgroundColor = hoverColor;
-        cell.style.transform = 'scale(1.02)';
-      });
-      cell.addEventListener('mouseleave', () => {
-        cell.style.backgroundColor = 'transparent';
-        cell.style.transform = 'scale(1)';
-      });
+      return letter;
     });
   };
 
   useEffect(() => {
-    if (data.length > 0) {
-      const spreadsheet = jspreadsheet(spreadsheetRef.current, {
-        data: data,
-        columns: [
-          { type: 'numeric', title: 'Product ID', width: 90 },
-          { type: 'text', title: 'Project', width: 150 },
-          { type: 'dropdown', title: 'Status', width: 90, source: ['1', '2', '3', '4'] },
-          { type: 'text', title: 'Customer', width: 120 },
-          { type: 'text', title: 'Part Description', width: 150 },
-          { type: 'numeric', title: 'Cast RR', width: 80 },
-          { type: 'numeric', title: 'Mach RR', width: 80 },
-          { type: 'text', title: 'Location', width: 100 },
-          { type: 'text', title: 'Material', width: 80 },
-          { type: 'text', title: 'Cast Part No', width: 120 },
-        ],
-        allowEditing: true,
-        allowDragging: true,
-        allowInsertRow: true,
-        allowDeleteRow: true,
-        rowHeight: 50,
-        headerHeight: 50,
-      });
-
-      setTimeout(() => {
-        const table = spreadsheetRef.current.querySelector('table');
-        if (table) {
-          table.style.borderRadius = '10px';
-          table.style.overflowX = 'auto'; // Enable horizontal scroll
-          table.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
-
-          // Apply sticky header and responsive table adjustments
-          const headers = table.querySelectorAll('th');
-          headers.forEach(header => {
-            header.style.backgroundColor = headerBackgroundColor;
-            header.style.color = '#fff';
-            header.style.borderBottom = `2px solid rgba(0, 0, 0, 0.1)`;
-            header.style.fontSize = '16px';
-            header.style.padding = '16px';
-            header.style.position = 'sticky';
-            header.style.top = '0';
-            header.style.zIndex = '10';
-          });
-
-          applyStyles(table);
-        }
-      }, 0);
-
-      return () => {
-        spreadsheet.destroy();
-      };
+    const employeeId = localStorage.getItem("employeeId");
+    
+    if (!employeeId) {
+      alert("Please log in to access this page.");
+      window.location.href = "/";
+      return;
     }
-  }, [data]);
+
+    setIsLoggedIn(true);
+    fetch('http://localhost:5227/Product')
+      .then(response => response.json())
+      .then(data => {
+        const tableData = data.map(item => [
+          item.product_Id,
+          item.project,
+          item.customer,
+          item.partDesc,
+          item.cast_PartNo,
+          item.mach_PartNo,
+          item.assy_PartNo,
+        ]);
+        setData(tableData);
+      })
+      .catch(error => console.error(error));
+  }, []);
+
+  const cellRenderer = (instance, td, row, col, prop, value, cellProperties) => {
+    const textRenderer = Handsontable.renderers.TextRenderer;
+    
+    if (typeof textRenderer === "function") {
+      textRenderer.call(this, instance, td, row, col, prop, value, cellProperties);
+    }
+    
+    if (isDarkMode) {
+      td.style.backgroundColor = '#333'; 
+      td.style.color = '#f0f0f0'; 
+      td.style.border = '1px solid #555'; 
+    } else {
+      td.style.backgroundColor = '#fff'; 
+      td.style.color = '#333'; 
+      td.style.border = '1px solid #ddd'; 
+    }
+  };
+
+  useEffect(() => {
+    const container = document.querySelector('#example');
+
+    const hotInstance = new Handsontable(container, {
+      data,
+      rowHeaders: true,
+      nestedHeaders: [
+        alphabeticHeaders(), 
+        columnHeaders        
+      ],
+      height: "100%", 
+      width: "100%",
+      rowHeights: 35,
+      colWidths: 170,
+      autoWrapRow: true,
+      autoWrapCol: true,
+      licenseKey: 'non-commercial-and-evaluation',
+      stretchH: 'all',
+      headerTooltips: true,
+      columnSorting: true, 
+      dropdownMenu: true,  
+      filters: true,      
+      contextMenu: true,   
+      formulas: {
+        engine: HyperFormula, 
+      },
+      afterGetColHeader: function(col, TH) {
+        TH.style.background = '#eee'; 
+        TH.style.color = '#333'; 
+        TH.style.borderBottom = '2px solid #ccc'; 
+      },
+      afterOnCellMouseOver: function(event, coords, TD) {
+        if (coords.row >= 0) {
+          TD.style.background = '#f1f1f1'; 
+        }
+      },
+      afterOnCellMouseOut: function(event, coords, TD) {
+        if (coords.row >= 0) {
+          TD.style.background = ''; 
+        }
+      },
+      columns: [
+        { readOnly: true }, 
+        {},
+        {}, {}, {}, {}, {}, 
+      ],
+      cells: function (row, col) {
+        const cellProperties = {};
+        cellProperties.renderer = cellRenderer; 
+        return cellProperties;
+      },
+    });
+
+    return () => hotInstance.destroy(); 
+  }, [data, isDarkMode]);
 
   return (
-    <div className="spreadsheet-container">
-      <h1 className="spreadsheet-title">Product Matrix</h1>
-      <div
-        ref={spreadsheetRef}
-        className="spreadsheet"
-        style={{ overflow: 'auto', maxHeight: '600px', width: '100%' }} // Ensure full width for responsiveness
-      ></div>
+    <div className='card'>
+      <div className='card-header'>
+        <h2 className='hanson-title'>Product Matrix</h2>
+      </div>
+      <div className="handsontable-wrapper">
+        <div id="example" className="custom-table"></div>
+      </div>
     </div>
   );
-};
+}
 
-export default Spreadsheet;
+export default Page;

@@ -33,7 +33,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     event.preventDefault(); 
 
     if (!isLoggedIn) {
-      alert("Please log in to access this page...");
+      alert("Please login to access this page...");
       return;
     }
 
@@ -47,7 +47,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     event.preventDefault();
 
     if (!isLoggedIn) {
-      alert("Please log in.");
+      alert("Please login to access this page...");
       return;
     }
 
@@ -77,7 +77,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
   return (
     <section id="sidebar" className={sidebarClass} ref={sidebarRef}>
-      <a href="/" className="brand">
+      <a href="/dashboard" className="brand">
         {!isCollapsed ? (
           <span
             style={{
@@ -88,7 +88,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               display: "block",
             }}
           >
-            𝐆𝐓𝐈{" "}
+            𝗚𝗧𝗜{" "}
             <span
               style={{
                 color: "green",
@@ -98,13 +98,13 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                 transitionDelay: "2s",
               }}
             >
-              𝐎𝐧𝐥𝐢𝐧𝐞
+              𝗢𝗻𝗹𝗶𝗻𝗲
             </span>
           </span>
         ) : (
           <span
             style={{
-              marginTop: "4px",
+              marginTop: "2px",
               marginLeft: "2px",
               fontSize: "20px",
               fontFamily: "Arial, serif !important",
@@ -113,7 +113,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               textAlign: "center",
             }}
           >
-            𝐆𝐓𝐈
+            𝗚𝗧𝗜
           </span>
         )}
       </a>
@@ -148,7 +148,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           className={`submenu ${isTablesOpen ? "open" : "collapsed"}`}
           style={{
             maxHeight: isTablesOpen ? "500px" : "0",
-            transition: "max-height 0.5s ease-in-out, padding 0.5s ease-in-out",
+            transition: "max-height 0.3s ease-in-out, padding 0.3s ease-in-out",
             overflow: "hidden",
           }}
         >

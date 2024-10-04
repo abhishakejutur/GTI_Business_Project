@@ -9,8 +9,8 @@ import { useState, useEffect } from "react";
 import 'handsontable/dist/handsontable.full.min.css';
 
 const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
+  src: "./fonts/GeistMonoVF.woff",
+  variable: "--font-geist-mono",
   weight: "100 900",
 });
 const geistMono = localFont({
@@ -73,6 +73,7 @@ export default function RootLayout({ children }) {
           margin: 0,
           position: 'relative',
           overflow: loading ? 'hidden' : 'auto',
+          fontFamily: 'Arial Black'
         }}
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

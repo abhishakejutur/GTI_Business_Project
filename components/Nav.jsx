@@ -102,9 +102,9 @@ const Nav = ({ toggleSidebar, toggleDarkMode, isDarkMode, onSearch, emp }) => {
   return (
     <nav>
       <button onClick={toggleSidebar} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-        <FontAwesomeIcon icon={faBars} style={{ color: isDarkMode ? 'white' : 'black' }} />
+        <FontAwesomeIcon icon={faBars} className="menuicon" />
       </button>
-      <a href="#" className="nav-link">Business</a>
+      <a href="#" className="nav-link"><b>Business</b></a>
       <form action="#">
         <div className="form-input">
           <input 
@@ -138,7 +138,7 @@ const Nav = ({ toggleSidebar, toggleDarkMode, isDarkMode, onSearch, emp }) => {
           onMouseLeave={() => setIsHovered(false)}
           style={{ position: 'relative', display: 'inline-block' }}
         >
-          <FontAwesomeIcon icon={faUser} style={{ cursor:"pointer", color: isDarkMode ? 'white' : 'black' }} />
+          <FontAwesomeIcon icon={faUser} style={{ cursor:"pointer" }} />
           {isHovered && (
               <div
                 style={{
@@ -156,8 +156,8 @@ const Nav = ({ toggleSidebar, toggleDarkMode, isDarkMode, onSearch, emp }) => {
                   whiteSpace: 'nowrap', 
                 }}
               >
-                <div style={{ fontWeight: 'bold' }}>Employee ID</div>
-                <div>{emp}</div>
+                <div className="emp_id" style={{ fontWeight: 'bold' }}>Employee ID</div>
+                <div className="emp_id">{emp}</div>
             </div>
           )}
         </div>
