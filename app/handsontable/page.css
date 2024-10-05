@@ -162,7 +162,6 @@ color: #fff;
   background-color: #1e7e34;
   transform: scale(0.98); 
 }
-/* Custom Alert Modal */
 .alert-modal {
   display: none; 
   position: fixed; 
@@ -221,3 +220,18 @@ color: #fff;
     transform: scale(1);
   }
 }
+/* .handsontable.#example .changeType {
+  background: #e2e2e2;
+  border-radius: 100%;
+  width: 16px;
+  color: #0075ff;
+  height: 16px;
+  padding: 3px 2px;
+  border: none;
+}
+
+.handsontable.#example .changeType::before {
+  content: '▼ ';
+  zoom: 0.9;
+} */
+

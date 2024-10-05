@@ -15,14 +15,14 @@ function Page({ isDarkMode }) {
   let nextId = data.length + 1;
 
   const columnHeaders = [
-    'ID', 'Part No.', 'Part Name', 'Customer', 'Location', 'Sale Type',
+    'ID', 'Product ID', 'Project Name', 'Part No.', 'Part Name', 'Customer', 'Location', 'Sale Type',
     'Week No.', 'Date', 'QTY .', 'Box', 'Week No.', 'Date', 'QTY .', 'Box',
     'Week No.', 'Date', 'QTY .', 'Box', 'Week No.', 'Date', 'QTY .', 'Box',
     'Week No.', 'Date', 'QTY .', 'Box', 'Week No.', 'Date', 'QTY .', 'Box'
   ];
 
   const columnKeys = [
-    'product_Id', 'partNo', 'partName', 'customer', 'location', 'saleType',
+    'id', 'product_Id', 'projectName', 'partNo', 'partName', 'customer', 'custLoc', 'saleType',
     'week1', 'date1', 'qty1', 'box1', 'week2', 'date2', 'qty2', 'box2',
     'week3', 'date3', 'qty3', 'box3', 'week4', 'date4', 'qty4', 'box4',
     'week5', 'date5', 'qty5', 'box5', 'week6', 'date6', 'qty6', 'box6'
@@ -54,11 +54,13 @@ function Page({ isDarkMode }) {
       .then(response => response.json())
       .then(fetchedData => {
         const tableData = fetchedData.map(item => [
+          item.id,
           item.product_Id,
+          item.projectName,
           item.partNo,
           item.partName,
           item.customer,
-          item.location,
+          item.custLoc,
           item.saleType,
           item.week1,
           formatDateForDisplay(item.date1),
@@ -100,7 +102,7 @@ function Page({ isDarkMode }) {
         const rowData = {};
         columnKeys.forEach((key, index) => {
           if (key.includes('date')) {
-            rowData[key] = formatDateForBackend(row[index]);
+            rowData[key] = row[index] === '00/00/0000' ? null : formatDateForBackend(row[index]);
           } else {
             rowData[key] = row[index];
           }
@@ -134,6 +136,7 @@ function Page({ isDarkMode }) {
   };
 
   const formatDateForDisplay = (dateStr) => {
+    if (!dateStr) return '00/00/0000';
     const dateObj = new Date(dateStr);
     const day = String(dateObj.getDate()).padStart(2, '0');
     const month = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -171,20 +174,30 @@ function Page({ isDarkMode }) {
       ],
       height: "100%",
       width: "100%",
-      rowHeights: 35,
-      colWidths: 170,
+      rowHeights: 5,
+      colWidths: 120,
       autoWrapRow: true,
       autoWrapCol: true,
       licenseKey: 'non-commercial-and-evaluation',
       stretchH: 'all',
       headerTooltips: true,
       columnSorting: true,
-      dropdownMenu: true,
+      dropdownMenu: ['make_read_only', 'alignment', 'filter_by_condition', 'filter_by_value', 'filter_action_bar'],
+      minSpareRows: 0,
+      minSpareCols: 0,
       filters: true,
+      allowRemoveRow: false,
+      allowInsertRow: false,
+      allowInsertColumn: false,
+      allowRemoveColumn: false,
       fixedColumnsStart: 6,
       contextMenu: true,
       formulas: {
         engine: HyperFormula,
+      },
+      hiddenColumns: {
+        columns: [0, 1], // Hides ID and Product ID
+        indicators: false
       },
       afterGetColHeader: function (col, TH) {
         TH.style.background = '#eee';
@@ -204,19 +217,19 @@ function Page({ isDarkMode }) {
       afterCreateRow: (index, amount) => {
         for (let i = 0; i < amount; i++) {
           const rowIndex = index + i;
-          hotInstance.setDataAtCell(rowIndex, 0, nextId);  
-          nextId++;  
+          hotInstance.setDataAtCell(rowIndex, 0, nextId);
+          nextId++;
         }
       },
       columns: [
-        { readOnly: true, width: "2%" },
-        { width: "4%" }, { width: "4%" }, { width: "4%" }, { width: "4%" }, { width: "3%" },
-        { width: "6%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, {}, {},
-        { width: "6%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, {}, {},
-        { width: "6%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, {}, {},
-        { width: "6%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, {}, {},
-        { width: "6%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, {}, {},
-        { width: "6%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, {}, {}
+        { readOnly: true, width: "2%" }, { readOnly: true, width: "5%" },
+        { width: "300%" }, { width: "100%" }, { width: "100%" }, { width: "100%" }, { width: "3%" }, { width: "4%" },
+        { width: "4%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, {},
+        { width: "4%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, {},
+        { width: "4%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, {},
+        { width: "4%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, {},
+        { width: "4%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, {},
+        { width: "4%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, {}
       ],
       cells: function (row, col) {
         const cellProperties = {};

@@ -51,7 +51,7 @@ export default function Home() {
       <Card className="w-[350px]">
         <CardHeader>
           <CardTitle>Login</CardTitle>
-          <CardDescription>Enter your login details</CardDescription>
+          <CardDescription>Enter your credentials</CardDescription>
         </CardHeader>
         <CardContent>
           <form>
