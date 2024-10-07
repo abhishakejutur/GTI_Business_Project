@@ -196,7 +196,7 @@ function Page({ isDarkMode }) {
         engine: HyperFormula,
       },
       hiddenColumns: {
-        columns: [0, 1], // Hides ID and Product ID
+        columns: [0, 1], 
         indicators: false
       },
       afterGetColHeader: function (col, TH) {
