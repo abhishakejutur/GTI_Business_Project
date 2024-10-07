@@ -43,7 +43,7 @@ function Page({ isDarkMode }) {
     }
 
     setIsLoggedIn(true);
-    fetch('http://localhost:5227/Product')
+    fetch('http://localhost:5227/Product/all')
       .then(response => response.json())
       .then(data => {
         const tableData = data.map(item => [

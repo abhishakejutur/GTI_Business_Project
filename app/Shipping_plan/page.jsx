@@ -8,21 +8,22 @@ import '../globals.css';
 
 function Page({ isDarkMode }) {
   const [data, setData] = useState([
-    ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+    ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
   ]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [partNoOptions, setPartNoOptions] = useState([]);
   let hotInstance;
   let nextId = data.length + 1;
 
   const columnHeaders = [
-    'ID', 'Product ID', 'Project Name', 'Part No.', 'Part Name', 'Customer', 'Location', 'Sale Type',
+    'ID', 'Product ID', 'Project Name', 'Part No.', 'Part Name', 'Box Qty', 'Customer', 'Location', 'Sale Type',
     'Week No.', 'Date', 'QTY .', 'Box', 'Week No.', 'Date', 'QTY .', 'Box',
     'Week No.', 'Date', 'QTY .', 'Box', 'Week No.', 'Date', 'QTY .', 'Box',
     'Week No.', 'Date', 'QTY .', 'Box', 'Week No.', 'Date', 'QTY .', 'Box'
   ];
 
   const columnKeys = [
-    'id', 'product_Id', 'projectName', 'partNo', 'partName', 'customer', 'custLoc', 'saleType',
+    'id', 'product_Id', 'projectName', 'partNo', 'partName', 'boxqty', 'customer', 'custLoc', 'saleType',
     'week1', 'date1', 'qty1', 'box1', 'week2', 'date2', 'qty2', 'box2',
     'week3', 'date3', 'qty3', 'box3', 'week4', 'date4', 'qty4', 'box4',
     'week5', 'date5', 'qty5', 'box5', 'week6', 'date6', 'qty6', 'box6'
@@ -31,9 +32,10 @@ function Page({ isDarkMode }) {
   const alphabeticHeaders = () => {
     return columnHeaders.map((_, index) => {
       let letter = '';
-      while (index >= 0) {
-        letter = String.fromCharCode((index % 26) + 65) + letter;
-        index = Math.floor(index / 26) - 1;
+      let currentIndex = index;
+      while (currentIndex >= 0) {
+        letter = String.fromCharCode((currentIndex % 26) + 65) + letter;
+        currentIndex = Math.floor(currentIndex / 26) - 1;
       }
       return letter;
     });
@@ -50,7 +52,7 @@ function Page({ isDarkMode }) {
 
     setIsLoggedIn(true);
 
-    fetch('http://localhost:5227/BTrail')
+    fetch('http://localhost:5227/BTrail/all')
       .then(response => response.json())
       .then(fetchedData => {
         const tableData = fetchedData.map(item => [
@@ -59,6 +61,7 @@ function Page({ isDarkMode }) {
           item.projectName,
           item.partNo,
           item.partName,
+          item.boxqty,
           item.customer,
           item.custLoc,
           item.saleType,
@@ -92,6 +95,11 @@ function Page({ isDarkMode }) {
         nextId = tableData.length + 1;
       })
       .catch(error => console.error(error));
+
+    fetch('http://localhost:5227/Product/partnoview')
+      .then(response => response.json())
+      .then(setPartNoOptions)
+      .catch(error => console.error('Error fetching part numbers:', error));
   }, []);
 
   const handleSaveChanges = async () => {
@@ -110,7 +118,7 @@ function Page({ isDarkMode }) {
         return rowData;
       });
 
-      const response = await fetch('http://localhost:5227/BTrail', {
+      const response = await fetch('http://localhost:5227/BTrail/save', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -174,7 +182,7 @@ function Page({ isDarkMode }) {
       ],
       height: "100%",
       width: "100%",
-      rowHeights: 5,
+      rowHeights: 30,
       colWidths: 120,
       autoWrapRow: true,
       autoWrapCol: true,
@@ -186,17 +194,17 @@ function Page({ isDarkMode }) {
       minSpareRows: 0,
       minSpareCols: 0,
       filters: true,
-      allowRemoveRow: false,
-      allowInsertRow: false,
+      allowRemoveRow: true,
+      allowInsertRow: true,
       allowInsertColumn: false,
       allowRemoveColumn: false,
-      fixedColumnsStart: 6,
+      fixedColumnsStart: 9,
       contextMenu: true,
       formulas: {
         engine: HyperFormula,
       },
       hiddenColumns: {
-        columns: [0, 1], 
+        columns: [0, 1],
         indicators: false
       },
       afterGetColHeader: function (col, TH) {
@@ -223,23 +231,36 @@ function Page({ isDarkMode }) {
       },
       columns: [
         { readOnly: true, width: "2%" }, { readOnly: true, width: "5%" },
-        { width: "300%" }, { width: "100%" }, { width: "100%" }, { width: "100%" }, { width: "3%" }, { width: "4%" },
-        { width: "4%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, {},
-        { width: "4%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, {},
-        { width: "4%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, {},
-        { width: "4%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, {},
-        { width: "4%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, {},
-        { width: "4%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, {}
+        { width: "300%" }, { type: 'dropdown', source: partNoOptions }, { width: "100%" }, { width: "100%" },
+        { width: "100%" }, { width: "3%" }, { width: "4%" },
+        { width: "4%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" },
+        { width: "4%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" },
+        { width: "4%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" },
+        { width: "4%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" },
+        { width: "4%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" },
+        { width: "4%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" }
       ],
       cells: function (row, col) {
         const cellProperties = {};
         cellProperties.renderer = cellRenderer;
         return cellProperties;
       },
+      afterChange: (changes, source) => {
+        if (source === 'loadData' || !changes) return;
+        changes.forEach(([row, prop, oldValue, newValue]) => {
+          if ([11, 15, 19, 23, 27, 31].includes(prop)) {
+            const boxCol = prop + 1;
+            const boxqty = hotInstance.getDataAtCell(row, 5);
+            const qty = newValue;
+            const boxValue = boxqty ? (parseFloat(qty) / parseFloat(boxqty)).toFixed(2) : '';
+            hotInstance.setDataAtCell(row, boxCol, boxValue, 'formula');
+          }
+        });
+      },
     });
 
     return () => hotInstance.destroy();
-  }, [data, isDarkMode]);
+  }, [data, isDarkMode, partNoOptions]);
 
   return (
     <div className='card'>
