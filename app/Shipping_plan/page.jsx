@@ -7,117 +7,154 @@ import '../handsontable/page.css';
 import '../globals.css';
 
 function Page({ isDarkMode }) {
-  const [data, setData] = useState([
-    ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
-  ]);
+  const [data, setData] = useState([['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [partNoOptions, setPartNoOptions] = useState([]);
-  let hotInstance;
+  const [weekOptions, setWeekOptions] = useState([]);
+  const [selectedWeek, setSelectedWeek] = useState('');
+  const [locationOptions, setLocationOptions] = useState([]);
+  const [hotInstance, setHotInstance] = useState(null);
   let nextId = data.length + 1;
 
   const columnHeaders = [
-    'ID', 'Product ID', 'Project Name', 'Part No.', 'Part Name', 'Box Qty', 'Customer', 'Location', 'Sale Type',
+    'Project Name', 'Part No.', 'Part Name', 'Location', 'Box Qty', 'Customer', 'Sale Type',
     'Week No.', 'Date', 'QTY .', 'Box', 'Week No.', 'Date', 'QTY .', 'Box',
     'Week No.', 'Date', 'QTY .', 'Box', 'Week No.', 'Date', 'QTY .', 'Box',
     'Week No.', 'Date', 'QTY .', 'Box', 'Week No.', 'Date', 'QTY .', 'Box'
   ];
 
   const columnKeys = [
-    'id', 'product_Id', 'projectName', 'partNo', 'partName', 'boxqty', 'customer', 'custLoc', 'saleType',
+    'projectName', 'partNo', 'partName', 'custLoc', 'boxqty', 'customer', 'saleType',
     'week1', 'date1', 'qty1', 'box1', 'week2', 'date2', 'qty2', 'box2',
     'week3', 'date3', 'qty3', 'box3', 'week4', 'date4', 'qty4', 'box4',
     'week5', 'date5', 'qty5', 'box5', 'week6', 'date6', 'qty6', 'box6'
   ];
 
-  const alphabeticHeaders = () => {
-    return columnHeaders.map((_, index) => {
-      let letter = '';
-      let currentIndex = index;
-      while (currentIndex >= 0) {
-        letter = String.fromCharCode((currentIndex % 26) + 65) + letter;
-        currentIndex = Math.floor(currentIndex / 26) - 1;
-      }
-      return letter;
-    });
-  };
-
   useEffect(() => {
     const employeeId = localStorage.getItem("employeeId");
-
     if (!employeeId) {
       alert("Please log in to access this page...");
       window.location.href = "/";
       return;
     }
-
     setIsLoggedIn(true);
 
-    fetch('http://localhost:5227/BTrail/all')
+    fetch('http://localhost:5227/BTrail/weeks')
       .then(response => response.json())
-      .then(fetchedData => {
+      .then(fetchedWeekOptions => setWeekOptions(fetchedWeekOptions))
+      .catch(error => console.error('Error fetching week options:', error));
+
+    fetch('http://localhost:5227/Product/locations')
+      .then(response => response.json())
+      .then(fetchedLocations => setLocationOptions(fetchedLocations.map(loc => loc.custCountry.trim())))
+      .catch(error => console.error('Error fetching location options:', error));
+  }, []);
+
+  const handleWeekChange = (event) => {
+    const selectedWeekValue = event.target.value;
+
+    if (selectedWeekValue === "") {
+      setSelectedWeek(selectedWeekValue);
+      setData([['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']]);
+
+      if (hotInstance) {
+        hotInstance.loadData([['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']]);
+        hotInstance.render();
+      }
+    } else {
+      setSelectedWeek(selectedWeekValue);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedWeek) {
+      fetchWeekData(selectedWeek);
+    }
+  }, [selectedWeek]);
+
+  const fetchWeekData = async (weekValue) => {
+    let [weekNumber, year] = weekValue.split('-');
+    weekNumber = parseInt(weekNumber);
+    year = parseInt(year);
+
+    try {
+      const response = await fetch(`http://localhost:5227/BTrail/weekData?week=${weekNumber}&year=${year}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const fetchedData = await response.json();
         const tableData = fetchedData.map(item => [
-          item.id,
-          item.product_Id,
           item.projectName,
           item.partNo,
           item.partName,
+          item.custLoc,
           item.boxqty,
           item.customer,
-          item.custLoc,
           item.saleType,
           item.week1,
           formatDateForDisplay(item.date1),
           item.qty1,
-          item.box1,
+          item.box1 || '',
           item.week2,
           formatDateForDisplay(item.date2),
           item.qty2,
-          item.box2,
+          item.box2 || '',
           item.week3,
           formatDateForDisplay(item.date3),
           item.qty3,
-          item.box3,
+          item.box3 || '',
           item.week4,
           formatDateForDisplay(item.date4),
           item.qty4,
-          item.box4,
+          item.box4 || '',
           item.week5,
           formatDateForDisplay(item.date5),
           item.qty5,
-          item.box5,
+          item.box5 || '',
           item.week6,
           formatDateForDisplay(item.date6),
           item.qty6,
-          item.box6
+          item.box6 || ''
         ]);
 
         setData(tableData.length ? tableData : data);
-        nextId = tableData.length + 1;
-      })
-      .catch(error => console.error(error));
 
-    fetch('http://localhost:5227/Product/partnoview')
-      .then(response => response.json())
-      .then(setPartNoOptions)
-      .catch(error => console.error('Error fetching part numbers:', error));
-  }, []);
+        if (hotInstance) {
+          hotInstance.loadData(tableData);
+          hotInstance.render(); 
+        }
+
+        nextId = tableData.length + 1;
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
 
   const handleSaveChanges = async () => {
     try {
       const displayedData = hotInstance.getData();
-
       const formattedData = displayedData.map(row => {
         const rowData = {};
         columnKeys.forEach((key, index) => {
-          if (key.includes('date')) {
-            rowData[key] = row[index] === '00/00/0000' ? null : formatDateForBackend(row[index]);
+          if (key.includes('week')) {
+            rowData[key] = row[index] || null;
+          } else if (key.includes('date')) {
+            rowData[key] = row[index] === '' ? null : formatDateForBackend(row[index]);
+          } else if (key.includes('qty') || key.includes('box')) {
+            rowData[key] = row[index] === '' ? null : parseFloat(row[index]) || 0.00;
           } else {
             rowData[key] = row[index];
           }
         });
         return rowData;
       });
-
+  
+      console.log('Formatted data before sending to API:', formattedData);
+  
       const response = await fetch('http://localhost:5227/BTrail/save', {
         method: 'POST',
         headers: {
@@ -125,26 +162,41 @@ function Page({ isDarkMode }) {
         },
         body: JSON.stringify(formattedData),
       });
-
+      console.log('Formatted data before sending to API:', formattedData);
       if (response.ok) {
         alert('Changes saved successfully!');
-        window.location.reload();
       } else {
-        alert('Failed to save changes.');
+        const contentType = response.headers.get('Content-Type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          console.error('Failed to save changes:', errorData);
+          alert('Failed to save changes. Server responded with error: ' + JSON.stringify(errorData));
+        } else {
+          const errorText = await response.text();
+          console.error('Failed to save changes. Server responded with text:', errorText);
+          alert('Failed to save changes. Server responded with: ' + errorText);
+        }
       }
     } catch (error) {
-      console.error('Error saving changes:', error);
-      alert('Error saving changes.');
+      console.error('Error saving changes:', error); 
+      alert('Error saving changes. Check console for details.');
     }
   };
-
+  
+  
+  
   const formatDateForBackend = (dateStr) => {
+    if (!dateStr || dateStr === '') return null; 
+  
     const [day, month, year] = dateStr.split('/');
+    if (!day || !month || !year) return null; 
+    
     return `${year}-${month}-${day}`;
   };
+  
 
   const formatDateForDisplay = (dateStr) => {
-    if (!dateStr) return '00/00/0000';
+    if (!dateStr) return '';
     const dateObj = new Date(dateStr);
     const day = String(dateObj.getDate()).padStart(2, '0');
     const month = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -154,11 +206,9 @@ function Page({ isDarkMode }) {
 
   const cellRenderer = (instance, td, row, col, prop, value, cellProperties) => {
     const textRenderer = Handsontable.renderers.TextRenderer;
-
     if (typeof textRenderer === "function") {
       textRenderer.call(this, instance, td, row, col, prop, value, cellProperties);
     }
-
     if (isDarkMode) {
       td.style.backgroundColor = '#333';
       td.style.color = '#f0f0f0';
@@ -172,12 +222,10 @@ function Page({ isDarkMode }) {
 
   useEffect(() => {
     const container = document.querySelector('#example');
-
-    hotInstance = new Handsontable(container, {
+    const instance = new Handsontable(container, {
       data,
       rowHeaders: true,
       nestedHeaders: [
-        alphabeticHeaders(),
         columnHeaders
       ],
       height: "100%",
@@ -198,47 +246,51 @@ function Page({ isDarkMode }) {
       allowInsertRow: true,
       allowInsertColumn: false,
       allowRemoveColumn: false,
-      fixedColumnsStart: 9,
+      fixedColumnsStart: 6,
       contextMenu: true,
       formulas: {
         engine: HyperFormula,
       },
       hiddenColumns: {
-        columns: [0, 1],
         indicators: false
       },
       afterGetColHeader: function (col, TH) {
         TH.style.background = '#eee';
         TH.style.color = '#333';
-        TH.style.borderBottom = '2px solid #ccc';
+        TH.style.borderBottom = '1px solid #ccc';
       },
       afterOnCellMouseOver: function (event, coords, TD) {
         if (coords.row >= 0) {
-          TD.style.background = '#f1f1f1';
+          TD.style.background = '#9EA3AD';
+          TD.style.color = '#fff';
         }
       },
       afterOnCellMouseOut: function (event, coords, TD) {
         if (coords.row >= 0) {
           TD.style.background = '';
+          TD.style.color = '';
         }
       },
       afterCreateRow: (index, amount) => {
         for (let i = 0; i < amount; i++) {
           const rowIndex = index + i;
-          hotInstance.setDataAtCell(rowIndex, 0, nextId);
+          instance.setDataAtCell(rowIndex, 0, nextId);
           nextId++;
         }
       },
       columns: [
-        { readOnly: true, width: "2%" }, { readOnly: true, width: "5%" },
-        { width: "300%" }, { type: 'dropdown', source: partNoOptions }, { width: "100%" }, { width: "100%" },
-        { width: "100%" }, { width: "3%" }, { width: "4%" },
-        { width: "4%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" },
-        { width: "4%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" },
-        { width: "4%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" },
-        { width: "4%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" },
-        { width: "4%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" },
-        { width: "4%" }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" }
+        { width: "300%", readOnly: true }, { width: "100%", readOnly: true }, { width: "100%", readOnly: true },
+        {
+          type: 'dropdown',
+          source: locationOptions,
+          width: "100%"
+        }, { width: "100%", readOnly: true }, { width: "100%", readOnly: true }, { width: "4%", readOnly: true },
+        { width: "4%", readOnly: true }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" },
+        { width: "4%", readOnly: true }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" },
+        { width: "4%", readOnly: true }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" },
+        { width: "4%", readOnly: true }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" },
+        { width: "4%", readOnly: true }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" },
+        { width: "4%", readOnly: true }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" }
       ],
       cells: function (row, col) {
         const cellProperties = {};
@@ -248,27 +300,65 @@ function Page({ isDarkMode }) {
       afterChange: (changes, source) => {
         if (source === 'loadData' || !changes) return;
         changes.forEach(([row, prop, oldValue, newValue]) => {
-          if ([11, 15, 19, 23, 27, 31].includes(prop)) {
+          if ([9, 13, 17, 21, 25, 29].includes(prop)) {
             const boxCol = prop + 1;
-            const boxqty = hotInstance.getDataAtCell(row, 5);
-            const qty = newValue;
-            const boxValue = boxqty ? (parseFloat(qty) / parseFloat(boxqty)).toFixed(2) : '';
-            hotInstance.setDataAtCell(row, boxCol, boxValue, 'formula');
+            const boxqty = parseFloat(instance.getDataAtCell(row, 4)) || 0;
+            const qty = parseFloat(newValue) || 0;
+            const boxValue = boxqty === 0 || qty === 0 ? '' : (qty / boxqty).toFixed(2);
+            instance.setDataAtCell(row, boxCol, boxValue, 'formula');
           }
         });
-      },
+      }
     });
 
-    return () => hotInstance.destroy();
-  }, [data, isDarkMode, partNoOptions]);
+    setHotInstance(instance);
+
+    return () => instance.destroy();
+  }, [data, locationOptions]);
 
   return (
     <div className='card'>
-      <div className='card-header'>
+      <div className='card-header' style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2 className='hanson-title'>Shipping Schedule</h2>
-        <button className='save-button' onClick={handleSaveChanges}>
-          Save Changes
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div style={{ display: 'inline-block' }}>
+            <select
+              id="week-select"
+              value={selectedWeek}
+              onChange={handleWeekChange}
+              style={{
+                padding: '8px',
+                paddingRight: "8px",
+                borderRadius: '5px',
+                border: '1px solid #ccc',
+                fontSize: '14px',
+                width: '180px',
+                marginRight: "12px",
+                backgroundColor: "#eee"
+              }}
+            >
+              <option value="">Select Week</option>
+              {weekOptions.map(week => (
+                <option key={week.value} value={week.value}>{week.text}</option>
+              ))}
+            </select>
+          </div>
+          <button
+            className='save-button'
+            onClick={handleSaveChanges}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#4CAF50',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '5px',
+              cursor: 'pointer',
+              fontSize: '12px',
+            }}
+          >
+            Save Changes
+          </button>
+        </div>
       </div>
       <div className="handsontable-wrapper">
         <div id="example" className="custom-table"></div>
