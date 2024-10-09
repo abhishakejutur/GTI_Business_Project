@@ -31,7 +31,7 @@
   height: 100vh;
   width: calc(100% - 20px); 
   max-width: 95vw;
-  max-height: calc(90vh - 70px);
+  max-height: calc(92vh - 70px);
   margin: 20px auto;
   overflow: auto;
   border-radius: 15px;

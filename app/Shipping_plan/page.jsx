@@ -135,6 +135,15 @@ function Page({ isDarkMode }) {
   };
 
   const handleSaveChanges = async () => {
+    if (!selectedWeek) {
+      alert('Please select a week before saving changes.');
+      return;
+    }
+    
+    let [weekNumber, year] = selectedWeek.split('-');
+    weekNumber = parseInt(weekNumber);
+    year = parseInt(year);
+  
     try {
       const displayedData = hotInstance.getData();
       const formattedData = displayedData.map(row => {
@@ -153,32 +162,23 @@ function Page({ isDarkMode }) {
         return rowData;
       });
   
-      console.log('Formatted data before sending to API:', formattedData);
-  
       const response = await fetch('http://localhost:5227/BTrail/save', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formattedData),
+        body: JSON.stringify({ tableData: formattedData, weekNumber, year }),
       });
-      console.log('Formatted data before sending to API:', formattedData);
+  
       if (response.ok) {
         alert('Changes saved successfully!');
       } else {
-        const contentType = response.headers.get('Content-Type');
-        if (contentType && contentType.includes('application/json')) {
-          const errorData = await response.json();
-          console.error('Failed to save changes:', errorData);
-          alert('Failed to save changes. Server responded with error: ' + JSON.stringify(errorData));
-        } else {
-          const errorText = await response.text();
-          console.error('Failed to save changes. Server responded with text:', errorText);
-          alert('Failed to save changes. Server responded with: ' + errorText);
-        }
+        const errorText = await response.text();
+        console.error('Failed to save changes:', errorText);
+        alert('Failed to save changes: ' + errorText);
       }
     } catch (error) {
-      console.error('Error saving changes:', error); 
+      console.error('Error saving changes:', error);
       alert('Error saving changes. Check console for details.');
     }
   };
