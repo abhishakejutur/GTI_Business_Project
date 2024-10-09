@@ -16,14 +16,14 @@ function Page({ isDarkMode }) {
   let nextId = data.length + 1;
 
   const columnHeaders = [
-    'Project Name', 'Part No.', 'Part Name', 'Location', 'Box Qty', 'Customer', 'Sale Type',
+    'Project Name', 'Part No.', 'Part Name', 'Customer', 'Location', 'Box Qty', 'Sale Type',
     'Week No.', 'Date', 'QTY .', 'Box', 'Week No.', 'Date', 'QTY .', 'Box',
     'Week No.', 'Date', 'QTY .', 'Box', 'Week No.', 'Date', 'QTY .', 'Box',
     'Week No.', 'Date', 'QTY .', 'Box', 'Week No.', 'Date', 'QTY .', 'Box'
   ];
 
   const columnKeys = [
-    'projectName', 'partNo', 'partName', 'custLoc', 'boxqty', 'customer', 'saleType',
+    'projectName', 'partNo', 'partName', 'customer', 'custLoc', 'boxqty', 'saleType',
     'week1', 'date1', 'qty1', 'box1', 'week2', 'date2', 'qty2', 'box2',
     'week3', 'date3', 'qty3', 'box3', 'week4', 'date4', 'qty4', 'box4',
     'week5', 'date5', 'qty5', 'box5', 'week6', 'date6', 'qty6', 'box6'
@@ -90,9 +90,9 @@ function Page({ isDarkMode }) {
           item.projectName,
           item.partNo,
           item.partName,
+          item.customer,
           item.custLoc,
           item.boxqty,
-          item.customer,
           item.saleType,
           item.week1,
           formatDateForDisplay(item.date1),
@@ -246,7 +246,7 @@ function Page({ isDarkMode }) {
       allowInsertRow: true,
       allowInsertColumn: false,
       allowRemoveColumn: false,
-      fixedColumnsStart: 6,
+      fixedColumnsStart: 5,
       contextMenu: true,
       formulas: {
         engine: HyperFormula,
@@ -280,11 +280,13 @@ function Page({ isDarkMode }) {
       },
       columns: [
         { width: "300%", readOnly: true }, { width: "100%", readOnly: true }, { width: "100%", readOnly: true },
+        { width: "100%", readOnly: true },
         {
           type: 'dropdown',
           source: locationOptions,
           width: "100%"
-        }, { width: "100%", readOnly: true }, { width: "100%", readOnly: true }, { width: "4%", readOnly: true },
+        },
+        { width: "100%", readOnly: true }, { width: "4%", readOnly: true },
         { width: "4%", readOnly: true }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" },
         { width: "4%", readOnly: true }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" },
         { width: "4%", readOnly: true }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" },
@@ -302,7 +304,7 @@ function Page({ isDarkMode }) {
         changes.forEach(([row, prop, oldValue, newValue]) => {
           if ([9, 13, 17, 21, 25, 29].includes(prop)) {
             const boxCol = prop + 1;
-            const boxqty = parseFloat(instance.getDataAtCell(row, 4)) || 0;
+            const boxqty = parseFloat(instance.getDataAtCell(row, 5)) || 0;
             const qty = parseFloat(newValue) || 0;
             const boxValue = boxqty === 0 || qty === 0 ? '' : (qty / boxqty).toFixed(2);
             instance.setDataAtCell(row, boxCol, boxValue, 'formula');
