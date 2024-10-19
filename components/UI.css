@@ -168,9 +168,9 @@ body {
   align-items: center;
   border-radius: 48px;
   font-size: 16px;
-  color: var(--dark);
+  /* color: var(--dark);
   white-space: nowrap;
-  overflow-x: hidden;
+  overflow-x: hidden; */
   padding-left: 23px;
 }
 
@@ -644,4 +644,19 @@ body {
   #content.collapsed{
     margin-left:-10px;
   }
+}
+
+.sidebar-icon {
+  flex-shrink: 0;
+}
+
+#sidebar.loading {
+  pointer-events: none;
+  display: block;
+  opacity: 0.5;
+}
+.svg-inline--fa{
+  display: var(--fa-display, inline-block);
+  height: 15px;
+  vertical-align: -0.125em;
 }

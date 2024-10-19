@@ -11,7 +11,7 @@ function Page({ isDarkMode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [weekOptions, setWeekOptions] = useState([]);
   const [selectedWeek, setSelectedWeek] = useState('');
-  const [locationOptions, setLocationOptions] = useState([]);
+  // const [locationOptions, setLocationOptions] = useState([]);
   const [hotInstance, setHotInstance] = useState(null);
   let nextId = data.length + 1;
 
@@ -23,7 +23,7 @@ function Page({ isDarkMode }) {
   ];
 
   const columnKeys = [
-    'projectName', 'partNo', 'partName', 'customer', 'custLoc', 'boxqty', 'saleType',
+    'projectName', 'partNo', 'partName', 'customer', 'custLocation', 'actual_Boxqty', 'saleType',
     'week1', 'date1', 'qty1', 'box1', 'week2', 'date2', 'qty2', 'box2',
     'week3', 'date3', 'qty3', 'box3', 'week4', 'date4', 'qty4', 'box4',
     'week5', 'date5', 'qty5', 'box5', 'week6', 'date6', 'qty6', 'box6'
@@ -38,15 +38,15 @@ function Page({ isDarkMode }) {
     }
     setIsLoggedIn(true);
 
-    fetch('http://localhost:5227/BTrail/weeks')
+    fetch('http://10.40.20.93:300/BTrail/weeks')
       .then(response => response.json())
       .then(fetchedWeekOptions => setWeekOptions(fetchedWeekOptions))
       .catch(error => console.error('Error fetching week options:', error));
 
-    fetch('http://localhost:5227/Product/locations')
-      .then(response => response.json())
-      .then(fetchedLocations => setLocationOptions(fetchedLocations.map(loc => loc.custCountry.trim())))
-      .catch(error => console.error('Error fetching location options:', error));
+    // fetch('http://localhost:5227/Product/locations')
+    //   .then(response => response.json())
+    //   .then(fetchedLocations => setLocationOptions(fetchedLocations.map(loc => loc.custCountry.trim())))
+    //   .catch(error => console.error('Error fetching location options:', error));
   }, []);
 
   const handleWeekChange = (event) => {
@@ -77,7 +77,7 @@ function Page({ isDarkMode }) {
     year = parseInt(year);
 
     try {
-      const response = await fetch(`http://localhost:5227/BTrail/weekData?week=${weekNumber}&year=${year}`, {
+      const response = await fetch(`http://10.40.20.93:300/BTrail/weekData?week=${weekNumber}&year=${year}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -91,8 +91,8 @@ function Page({ isDarkMode }) {
           item.partNo,
           item.partName,
           item.customer,
-          item.custLoc,
-          item.boxqty,
+          item.custLocation,
+          item.actual_Boxqty,
           item.saleType,
           item.week1,
           formatDateForDisplay(item.date1),
@@ -162,7 +162,7 @@ function Page({ isDarkMode }) {
         return rowData;
       });
   
-      const response = await fetch('http://localhost:5227/BTrail/save', {
+      const response = await fetch('http://10.40.20.93:300/BTrail/save', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -238,7 +238,7 @@ function Page({ isDarkMode }) {
       stretchH: 'all',
       headerTooltips: true,
       columnSorting: true,
-      dropdownMenu: ['make_read_only', 'alignment', 'filter_by_condition', 'filter_by_value', 'filter_action_bar'],
+      dropdownMenu: ['filter_by_condition', 'filter_by_value', 'filter_action_bar'],
       minSpareRows: 0,
       minSpareCols: 0,
       filters: true,
@@ -246,7 +246,7 @@ function Page({ isDarkMode }) {
       allowInsertRow: true,
       allowInsertColumn: false,
       allowRemoveColumn: false,
-      fixedColumnsStart: 5,
+      fixedColumnsStart: 6,
       contextMenu: true,
       formulas: {
         engine: HyperFormula,
@@ -254,10 +254,44 @@ function Page({ isDarkMode }) {
       hiddenColumns: {
         indicators: false
       },
+      contextMenu: {
+        items: {
+          'undo': { name: 'Undo' },
+          'redo': { name: 'Redo' },
+          'copy': { name: 'Copy' },
+          'cut': { name: 'Cut' }
+        }
+      },
+      dropdownMenu: {
+        items: {
+          filter_by_condition: {
+            hidden() {
+              const col = this.getSelectedRangeLast().to.col;
+              return ![0, 1, 3, 4].includes(col);
+            },
+          },
+          filter_by_value: {
+            hidden() {
+              const col = this.getSelectedRangeLast().to.col;
+              return ![0, 1, 3, 4].includes(col);
+            },
+          },
+          filter_action_bar: {
+            hidden() {
+              const col = this.getSelectedRangeLast().to.col;
+              return ![0, 1, 3, 4].includes(col);
+            },
+          },
+        },
+      },
       afterGetColHeader: function (col, TH) {
         TH.style.background = '#eee';
-        TH.style.color = '#333';
+        TH.style.color = '#68616E';
         TH.style.borderBottom = '1px solid #ccc';
+        TH.style.fontWeight = 'bold';
+        TH.style.textAlign = 'center';
+        TH.style.verticalAlign = 'middle';
+        TH.style.fontSize = '12px';
       },
       afterOnCellMouseOver: function (event, coords, TD) {
         if (coords.row >= 0) {
@@ -268,7 +302,7 @@ function Page({ isDarkMode }) {
       afterOnCellMouseOut: function (event, coords, TD) {
         if (coords.row >= 0) {
           TD.style.background = '';
-          TD.style.color = '';
+          TD.style.color = '#333';
         }
       },
       afterCreateRow: (index, amount) => {
@@ -279,26 +313,37 @@ function Page({ isDarkMode }) {
         }
       },
       columns: [
-        { width: "300%", readOnly: true }, { width: "100%", readOnly: true }, { width: "100%", readOnly: true },
-        { width: "100%", readOnly: true },
+        { className: 'htLeft htMiddle' ,width: "300%", readOnly: true, dropdownMenu: false }, { width: "100%", readOnly: true, className: 'htCenter htMiddle' }, { width: "100%", readOnly: true, className: 'htCenter htMiddle' },
+        { className: 'htCenter htMiddle', width: "100%", readOnly: true},
         {
-          type: 'dropdown',
-          source: locationOptions,
-          width: "100%"
+          // type: 'dropdown',
+          // source: locationOptions,
+          readOnly: true,
+          width: "80%", 
+          className: 'htCenter htMiddle',
         },
-        { width: "100%", readOnly: true }, { width: "4%", readOnly: true },
-        { width: "4%", readOnly: true }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" },
-        { width: "4%", readOnly: true }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" },
-        { width: "4%", readOnly: true }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" },
-        { width: "4%", readOnly: true }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" },
-        { width: "4%", readOnly: true }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" },
-        { width: "4%", readOnly: true }, { type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true }, { width: "3%" }, { readOnly: true, width: "3%" }
+        { width: "30%", className: 'htRight htMiddle' }, { width: "4%", readOnly: true, className: 'htCenter htMiddle' },
+        { width: "4%", readOnly: true, className: 'htCenter htMiddle' }, { width: "80%", type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true, className: 'htCenter htMiddle' }, { width: "3%", className: 'htRight htMiddle' }, { readOnly: true, width: "3%", className: 'htRight htMiddle' },
+        { width: "4%", readOnly: true, className: 'htCenter htMiddle' }, { width: "80%", type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true, className: 'htCenter htMiddle' }, { width: "3%", className: 'htRight htMiddle' }, { readOnly: true, width: "3%", className: 'htRight htMiddle' },
+        { width: "4%", readOnly: true, className: 'htCenter htMiddle' }, { width: "80%", type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true, className: 'htCenter htMiddle' }, { width: "3%", className: 'htRight htMiddle' }, { readOnly: true, width: "3%", className: 'htRight htMiddle' },
+        { width: "4%", readOnly: true, className: 'htCenter htMiddle' }, { width: "80%", type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true, className: 'htCenter htMiddle' }, { width: "3%", className: 'htRight htMiddle' }, { readOnly: true, width: "3%", className: 'htRight htMiddle' },
+        { width: "4%", readOnly: true, className: 'htCenter htMiddle' }, { width: "80%", type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true, className: 'htCenter htMiddle' }, { width: "3%", className: 'htRight htMiddle' }, { readOnly: true, width: "3%", className: 'htRight htMiddle' },
+        { width: "4%", readOnly: true, className: 'htCenter htMiddle' }, { width: "80%", type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true, className: 'htCenter htMiddle' }, { width: "3%", className: 'htRight htMiddle' }, { readOnly: true, width: "3%", className: 'htRight htMiddle' }
       ],
       cells: function (row, col) {
         const cellProperties = {};
         cellProperties.renderer = cellRenderer;
         return cellProperties;
       },
+      cells: function (row, col) {
+        const cellProperties = {};
+        cellProperties.renderer = cellRenderer;
+        if (col < 6) {
+            cellProperties.className = 'fixed-column-shadow';
+        }
+
+        return cellProperties;
+    },
       afterChange: (changes, source) => {
         if (source === 'loadData' || !changes) return;
         changes.forEach(([row, prop, oldValue, newValue]) => {
@@ -316,7 +361,7 @@ function Page({ isDarkMode }) {
     setHotInstance(instance);
 
     return () => instance.destroy();
-  }, [data, locationOptions]);
+  }, [data]); // <- , locationOptions
 
   return (
     <div className='card'>
@@ -336,7 +381,8 @@ function Page({ isDarkMode }) {
                 fontSize: '14px',
                 width: '180px',
                 marginRight: "12px",
-                backgroundColor: "#eee"
+                backgroundColor: "#eee",
+                cursor: "pointer"
               }}
             >
               <option value="">Select Week</option>

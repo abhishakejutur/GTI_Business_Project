@@ -119,14 +119,13 @@ const Nav = ({ toggleSidebar, toggleDarkMode, isDarkMode, onSearch, emp }) => {
           </button>
         </div>
       </form>
-      <input
+      {/* <input
         type="checkbox"
         id="switch-mode"
         checked={isDarkMode}
         onChange={toggleDarkMode} 
-        hidden
-      />
-      <label htmlFor="switch-mode" className="switch-mode"></label>
+        hidden />
+      <label htmlFor="switch-mode" className="switch-mode" hidden ></label> */}
       <a href="#" className="notification" hidden>
         <FontAwesomeIcon icon={faBell} hidden />
         <span className="num">8</span>

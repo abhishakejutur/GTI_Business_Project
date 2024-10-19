@@ -27,7 +27,6 @@ export default function RootLayout({ children }) {
   const [emp, setEmp] = useState(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1000);
     const employeeId = localStorage.getItem("employeeId");
     setEmp(employeeId);
 
@@ -43,9 +42,16 @@ export default function RootLayout({ children }) {
 
     handleResize();
     window.addEventListener("resize", handleResize);
+    const loadData = async () => {
+      setLoading(true);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setLoading(false);
+    };
+  
+    loadData();
 
     return () => {
-      clearTimeout(timer);
+      // clearTimeout(timer);
       window.removeEventListener("resize", handleResize);
     };
   }, []);
@@ -78,7 +84,7 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <div style={{ position: 'relative', flex: 1 }}>
-          {loading && (
+          {/* {loading && (
             <div
               style={{
                 position: 'absolute',
@@ -105,25 +111,22 @@ export default function RootLayout({ children }) {
                 }}
               />
             </div>
-          )}
+          )} */}
           <div id="content" style={{ display: 'flex' }}>
-            <Sidebar
-              isCollapsed={isSidebarCollapsed}
-              setIsCollapsed={setIsSidebarCollapsed}
-              style={{
-                opacity: loading ? 0.5 : 1,
-                filter: loading ? 'blur(5px)' : 'none',
-                transition: 'opacity 0.3s ease, filter 0.3s ease',
-                width: isSidebarCollapsed
-                  ? isMobileView
-                    ? '60px'
-                    : '80px'
-                  : '280px',
-                height: '100vh',
-                transition: 'width 0.3s ease',
-                position: 'fixed',
-              }}
-            />
+          <Sidebar
+            isCollapsed={isSidebarCollapsed}
+            setIsCollapsed={setIsSidebarCollapsed}
+            style={{
+              opacity: loading ? 0.5 : 1,
+              filter: loading ? 'blur(5px)' : 'none',
+              transition: 'opacity 0.3s ease, filter 0.3s ease',
+              width: isSidebarCollapsed ? (isMobileView ? '60px' : '80px') : '280px',
+              height: '100vh',
+              transition: 'width 0.3s ease',
+              position: 'fixed',
+              overflow: loading ? 'hidden' : 'visible',
+            }}
+          />
             <div
               id="main-content"
               style={{

@@ -11,7 +11,8 @@ import {
   faShippingFast,  
   faAngleDown,
   faAngleRight,
-  faAngleUp
+  faAngleUp,
+  faClipboardList
 } from "@fortawesome/free-solid-svg-icons";
 import './UI.css';
 
@@ -122,8 +123,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           <a href="/dashboard" onClick={(e) => handleLinkClick("/dashboard", e)}>
             <FontAwesomeIcon icon={faTachometerAlt} />
             {!isCollapsed && (
-              <span style={{ marginLeft: "6px" }} className="text">
-                <b>Dashboard</b>
+              <span style={{ marginLeft: "6px", marginTop:"-1.5px" }} className="text">
+                <p style={{fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Dashboard</p>
               </span>
             )}
           </a>
@@ -134,7 +135,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             {!isCollapsed && (
               <>
                 <span className="text" style={{ marginLeft: "6px" }}>
-                  <b>Tables</b>
+                  <p style={{fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Tables</p>
                 </span>
                 <FontAwesomeIcon
                   icon={isTablesOpen ? faAngleDown : faAngleRight}
@@ -155,13 +156,13 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           <li className={activeLink === "/table" ? "active" : ""}>
             <a href="/table" onClick={(e) => handleLinkClick("/table", e)}>
               <FontAwesomeIcon icon={faColumns} />
-              {!isCollapsed && <span className="text"><b>JExcel</b></span>}
+              {!isCollapsed && <span className="text"><p style={{fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>JExcel</p></span>}
             </a>
           </li>
           <li className={activeLink === "/handsontable" ? "active" : ""}>
             <a href="/handsontable" onClick={(e) => handleLinkClick("/handsontable", e)}>
               <FontAwesomeIcon icon={faThList} />
-              {!isCollapsed && <span className="text"><b>Handsontable</b></span>}
+              {!isCollapsed && <span className="text"><p style={{fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Handsontable</p></span>}
             </a>
           </li>
         </ul>
@@ -170,7 +171,17 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             <FontAwesomeIcon icon={faShippingFast} /> 
             {!isCollapsed && (
               <span style={{ marginLeft: "2px" }} className="text">
-                <b>Shipping Plan</b>
+                <p style={{fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Shipping Plan</p>
+              </span>
+            )}
+          </a>
+        </li>
+        <li className={activeLink === "/Forecast" ? "active" : ""}>
+          <a href="/Forecast" onClick={(e) => handleLinkClick("/Forecast", e)}>
+            <FontAwesomeIcon icon={faClipboardList} style={{ marginLeft: "4px"}} /> 
+            {!isCollapsed && (
+              <span style={{ marginLeft: "7px" }} className="text">
+                <p style={{fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Forecast</p>
               </span>
             )}
           </a>
@@ -179,20 +190,20 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       <ul className="side-menu down">
         <li className={activeLink === "/settings" ? "active" : ""}>
           <a href="/settings" onClick={(e) => handleLinkClick("/settings", e)}>
-            <FontAwesomeIcon icon={faCog} />
+            <FontAwesomeIcon icon={faCog} style={{ marginLeft: "2px" }} />
             {!isCollapsed && (
-              <span style={{ marginLeft: "6px" }} className="text">
-                <b>Settings</b>
+              <span style={{ marginLeft: "5px" }} className="text">
+                <p style={{fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Settings</p>
               </span>
             )}
           </a>
         </li>
         <li>
           <a onClick={handleLogout} className="logout" style={{ cursor: "pointer" }}>
-            <FontAwesomeIcon icon={faSignOutAlt} />
+            <FontAwesomeIcon icon={faSignOutAlt} style={{ marginLeft: "3px" }} />
             {!isCollapsed && (
-              <span style={{ marginLeft: "6px" }} className="text">
-                <b>Logout</b>
+              <span style={{ marginLeft: "5px" }} className="text">
+                <p style={{fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Logout</p>
               </span>
             )}
           </a>
