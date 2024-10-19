@@ -19,7 +19,7 @@ function Page({ isDarkMode }) {
 
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const currentDate = new Date();
-  currentDate.setDate(currentDate.getDate() + 20);
+  currentDate.setDate(currentDate.getDate());
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
 
@@ -134,29 +134,29 @@ function Page({ isDarkMode }) {
       ] = row;
   
       return {
-        product_Id: parseInt(product_Id) || 0,
-        customer: customer || '',
-        projectName: projectName || '',
-        projectDesc: projectDesc || '',
-        cast_PartNo: cast_PartNo || '',
-        mach_PartNo: mach_PartNo || '',
-        assy_PartNo: assy_PartNo || '',
-        idm: idm || '',
+        product_Id: product_Id || 0,
+        customer: customer || 'string',
+        projectName: projectName || 'string',
+        projectDesc: projectDesc || 'string',
+        cast_PartNo: cast_PartNo || 'string',
+        mach_PartNo: mach_PartNo || 'string',
+        assy_PartNo: assy_PartNo || 'string',
+        idm: idm || 'string',
         cast_wt: parseFloat(cast_wt) || 0,
         month_No: parseInt(month_No) || 0,
         year_No: parseInt(year_No) || 0,
-        a: a || '',
-        b: b || '',
-        c: c || '',
-        d: d || '',
-        e: e || '',
-        f: f || '',
-        g: g || '',
-        h: h || '',
-        i: i || '',
-        j: j || '',
-        k: k || '',
-        l: l || '',
+        a: parseInt(a) || null,
+        b: parseInt(b) || null,
+        c: parseInt(c) || null,
+        d: parseInt(d) || null,
+        e: parseInt(e) || null,
+        f: parseInt(f) || null,
+        g: parseInt(g) || null,
+        h: parseInt(h) || null,
+        i: parseInt(i) || null,
+        j: parseInt(j) || null,
+        k: parseInt(k) || null,
+        l: parseInt(l) || null,
       };
     });
   
@@ -189,6 +189,7 @@ function Page({ isDarkMode }) {
       alert('An error occurred while saving changes.');
     }
   };
+  
   
   useEffect(() => {
     fetchData();
@@ -252,9 +253,9 @@ function Page({ isDarkMode }) {
       fixedColumnsStart: 7,
       contextMenu: true,
       formulas: { engine: HyperFormula },
-      hiddenColumns: { indicators: false, columns: [0 , 9, 10] },
+      hiddenColumns: { indicators: false, columns: [0 , 8, 9, 10] },
       columns: [
-        { width: "5%", readOnly: true, className: 'htLeft htMiddle' },
+        { width: "5%", readOnly: true, className: 'htLeft htMiddle'},
         { width: "98%", readOnly: true, className: 'htLeft htMiddle' },
         { width: "250%", readOnly: true, className: 'htLeft htMiddle' },
         { width: "5%", readOnly: true, className: 'htCenter htMiddle' },
@@ -265,18 +266,18 @@ function Page({ isDarkMode }) {
         { width: "5%", readOnly: true, className: 'htRight htMiddle' },
         { width: "10%", readOnly: true, className: 'htCenter htMiddle' },
         { width: "10%", readOnly: true, className: 'htCenter htMiddle' },
-        { width: "10%", className: 'htRight htMiddle' },
-        { width: "10%", className: 'htRight htMiddle' },
-        { width: "10%", className: 'htRight htMiddle' },
-        { width: "10%", className: 'htRight htMiddle' },
-        { width: "10%", className: 'htRight htMiddle' },
-        { width: "10%", className: 'htRight htMiddle' },
-        { width: "10%", className: 'htRight htMiddle' },
-        { width: "10%", className: 'htRight htMiddle' },
-        { width: "10%", className: 'htRight htMiddle' },
-        { width: "10%", className: 'htRight htMiddle' },
-        { width: "10%", className: 'htRight htMiddle' },
-        { width: "10%", className: 'htRight htMiddle' },
+        { width: "10%", className: 'htRight htMiddle', type: 'numeric', numericFormat: { pattern: '###,00' } },
+        { width: "10%", className: 'htRight htMiddle', type: 'numeric', numericFormat: { pattern: '###,00' } },
+        { width: "10%", className: 'htRight htMiddle', type: 'numeric', numericFormat: { pattern: '###,00' } },
+        { width: "10%", className: 'htRight htMiddle', type: 'numeric', numericFormat: { pattern: '###,00' } },
+        { width: "10%", className: 'htRight htMiddle', type: 'numeric', numericFormat: { pattern: '###,00' } },
+        { width: "10%", className: 'htRight htMiddle', type: 'numeric', numericFormat: { pattern: '###,00' } },
+        { width: "10%", className: 'htRight htMiddle', type: 'numeric', numericFormat: { pattern: '###,00' } },
+        { width: "10%", className: 'htRight htMiddle', type: 'numeric', numericFormat: { pattern: '###,00' } },
+        { width: "10%", className: 'htRight htMiddle', type: 'numeric', numericFormat: { pattern: '###,00' } },
+        { width: "10%", className: 'htRight htMiddle', type: 'numeric', numericFormat: { pattern: '###,00' } },
+        { width: "10%", className: 'htRight htMiddle', type: 'numeric', numericFormat: { pattern: '###,00' } },
+        { width: "10%", className: 'htRight htMiddle', type: 'numeric', numericFormat: { pattern: '###,00' } },
       ],
       cells: (row, col) => {
         return {

@@ -255,3 +255,15 @@ color: #fff;
 .invalid-input {
   background-color: red !important;
 }
+
+.htLeft {
+  text-align: left !important;
+}
+
+.htCenter {
+  text-align: center !important;
+}
+
+.htRight {
+  text-align: right !important;
+}
