@@ -12,6 +12,7 @@ body {
   margin: 0 auto;
   transition: width 0.3s ease;
   background-color: var(--grey);
+  /* box-shadow: inset 0 20px 80px -20px #333; */
 }
 @layer utilities {
   .text-balance {
@@ -84,5 +85,10 @@ body {
     width: 90vw;
     margin: 0 auto;
     transition: width 0.3s ease;
+  }
+  @media (min-resolution: 125dpi) {
+    .login-container {
+      padding-top: -500%;
+    }
   }
 }

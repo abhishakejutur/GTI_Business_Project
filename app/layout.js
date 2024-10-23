@@ -80,6 +80,7 @@ export default function RootLayout({ children }) {
           position: 'relative',
           overflow: loading ? 'hidden' : 'auto',
           fontFamily: 'Arial Black'
+          
         }}
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
@@ -145,7 +146,7 @@ export default function RootLayout({ children }) {
                 style={{
                   opacity: loading ? 0.5 : 1,
                   filter: loading ? 'blur(5px)' : 'none',
-                  transition: 'opacity 0.3s ease, filter 0.3s ease',
+                  transition: 'opacity 0.3s ease, filter 0.3s ease'
                 }}
               />
               <main>{children}</main>

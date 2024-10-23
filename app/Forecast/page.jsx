@@ -2,6 +2,8 @@
 import { useEffect, useState, useRef } from 'react';
 import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.min.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSync } from '@fortawesome/free-solid-svg-icons';
 import HyperFormula from 'hyperformula';
 import '../handsontable/page.css';
 import '../globals.css';
@@ -9,17 +11,18 @@ import '../globals.css';
 function Page({ isDarkMode }) {
   const [data, setData] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isSaveEnabled, setIsSaveEnabled] = useState(false);
   const hotInstanceRef = useRef(null);
   const containerRef = useRef(null);
 
   const columnHeaders = [
-    'Id', 'Customer', 'Project Name', 'Desc', 'Cast PartNo', 'Mach PartNo', 'Assy PartNo', 'Material',
+    'Id', 'Project Name', 'Customer', 'Desc', 'Cast PartNo', 'Mach PartNo', 'Assy PartNo', 'Ship PartNo', 'Sale', 'Material',
     'Cast_wt', 'Month', 'Year'
   ];
 
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const currentDate = new Date();
-  currentDate.setDate(currentDate.getDate());
+  currentDate.setDate(currentDate.getDate()+20);
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
 
@@ -31,7 +34,7 @@ function Page({ isDarkMode }) {
   }
 
   const columnKeys = [
-    'product_Id', 'customer', 'projectName', 'projectDesc', 'cast_PartNo', 'mach_PartNo', 'assy_PartNo', 'idm',
+    'product_Id', 'projectName', 'customer', 'projectDesc', 'cast_PartNo', 'mach_PartNo', 'assy_PartNo', 'ship_PartNo', 'saletype', 'idm',
     'cast_wt', 'month_No', 'year_No', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'
   ];
 
@@ -67,12 +70,14 @@ function Page({ isDarkMode }) {
 
         const tableData = fetchedData.map(item => [
           item.product_Id,
-          item.customer,
           item.projectName,
+          item.customer,
           item.projectDesc,
           item.cast_PartNo,
           item.mach_PartNo,
           item.assy_PartNo,
+          item.ship_PartNo,
+          item.saletype,
           item.idm,
           item.cast_wt,
           item.month_No,
@@ -115,6 +120,8 @@ function Page({ isDarkMode }) {
         cast_PartNo,
         mach_PartNo,
         assy_PartNo,
+        ship_PartNo,
+        saletype,
         idm,
         cast_wt,
         month_No,
@@ -141,6 +148,8 @@ function Page({ isDarkMode }) {
         cast_PartNo: cast_PartNo || 'string',
         mach_PartNo: mach_PartNo || 'string',
         assy_PartNo: assy_PartNo || 'string',
+        ship_PartNo: ship_PartNo || 'string',
+        saletype: saletype || 'string',
         idm: idm || 'string',
         cast_wt: parseFloat(cast_wt) || 0,
         month_No: parseInt(month_No) || 0,
@@ -177,7 +186,8 @@ function Page({ isDarkMode }) {
   
       if (response.ok) {
         const result = await response.json();
-        alert(result.message);
+        // alert(result.message);
+        setIsSaveEnabled(false);
       } else {
         console.error('Error saving changes:', response.status, response.statusText);
         const errorText = await response.text();
@@ -189,7 +199,29 @@ function Page({ isDarkMode }) {
       alert('An error occurred while saving changes.');
     }
   };
-  
+  const handleRefresh = async () => {
+    try {
+      const response = await fetch(`http://10.40.20.93:300/refresh?Month_No=${currentMonth + 1}&Year_No=${currentYear}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        alert('Data refreshed successfully');
+        console.log('Data refreshed successfully');
+        console.log('Post request parameters:', 'Month : ', currentMonth+1, 'Year : ', currentYear);
+        fetchData();
+      } else {
+        console.error('Failed to refresh data:', response.status, response.statusText);
+        alert('Failed to refresh data. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+      alert('An error occurred while refreshing data.');
+    }
+  };
   
   useEffect(() => {
     fetchData();
@@ -251,19 +283,30 @@ function Page({ isDarkMode }) {
       allowInsertColumn: false,
       allowRemoveColumn: false,
       fixedColumnsStart: 7,
-      contextMenu: true,
+      contextMenu: false,
+      clipboard: true,
+      // contextMenu: {
+      //   items: {
+      //     'copy': { name: 'Copy' },
+      //     'cut': { name: 'Cut' },
+      //     'paste': { name: 'Paste' },
+      //   }
+      // },
       formulas: { engine: HyperFormula },
-      hiddenColumns: { indicators: false, columns: [0 , 8, 9, 10] },
+      manualRowPaste: true,
+      hiddenColumns: { indicators: false, columns: [0, 4, 5, 6, 9, 10, 11, 12] },
       columns: [
         { width: "5%", readOnly: true, className: 'htLeft htMiddle'},
-        { width: "98%", readOnly: true, className: 'htLeft htMiddle' },
         { width: "250%", readOnly: true, className: 'htLeft htMiddle' },
+        { width: "98%", readOnly: true, className: 'htLeft htMiddle' },
         { width: "5%", readOnly: true, className: 'htCenter htMiddle' },
         { width: "70%", readOnly: true, className: 'htCenter htMiddle' },
         { width: "70%", readOnly: true, className: 'htCenter htMiddle' },
         { width: "70%", readOnly: true, className: 'htCenter htMiddle' },
-        { width: "170%", readOnly: true, className: 'htCenter htMiddle' },
-        { width: "5%", readOnly: true, className: 'htRight htMiddle' },
+        { width: "70%", readOnly: true, className: 'htCenter htMiddle' },
+        { width: "70%", readOnly: true, className: 'htCenter htMiddle' },
+        { width: "5%", readOnly: true, className: 'htCenter htMiddle' },
+        { width: "5%", readOnly: true, className: 'htCenter htMiddle' },
         { width: "10%", readOnly: true, className: 'htCenter htMiddle' },
         { width: "10%", readOnly: true, className: 'htCenter htMiddle' },
         { width: "10%", className: 'htRight htMiddle', type: 'numeric', numericFormat: { pattern: '###,00' } },
@@ -283,6 +326,11 @@ function Page({ isDarkMode }) {
         return {
           renderer: cellRenderer,
         };
+      },
+      afterChange: (changes, source) => {
+        if (source === 'edit' && !isSaveEnabled) {
+          setIsSaveEnabled(true);
+        }
       },
       afterGetColHeader: function (col, TH) {
         TH.style.background = '#eee';
@@ -317,18 +365,26 @@ function Page({ isDarkMode }) {
   return (
     <div className='card'>
       <div className='card-header' style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 className='hanson-title'>Customer Forecast</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <h2 className='hanson-title'>Customer Forecast</h2>
+          <FontAwesomeIcon
+              icon={faSync}
+              onClick={handleRefresh}
+              style={{ cursor: 'pointer', fontSize: '20px', color: '#4CAF50', fontWeight:'bold' }}
+            />
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <button
             className='save-button'
             onClick={handleSaveChanges}
+            disabled={!isSaveEnabled}
             style={{
               padding: '10px 20px',
-              backgroundColor: '#4CAF50',
+              backgroundColor: isSaveEnabled ? '#4CAF50' : '#888',
               color: '#fff',
               border: 'none',
               borderRadius: '5px',
-              cursor: 'pointer',
+              cursor: isSaveEnabled ? 'pointer' : 'not-allowed',
               fontSize: '12px',
             }}
           >

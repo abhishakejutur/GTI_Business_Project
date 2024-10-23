@@ -217,9 +217,10 @@ function Page({ isDarkMode }) {
       td.style.backgroundColor = '#fff';
       td.style.color = '#333';
       td.style.border = '1px solid #ddd';
+      td.style.fontSize = '11px';
     }
   };
-
+  
   useEffect(() => {
     const container = document.querySelector('#example');
     const instance = new Handsontable(container, {

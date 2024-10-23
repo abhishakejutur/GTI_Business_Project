@@ -12,73 +12,81 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import './globals.css';
 
 export default function Home() {
   const [employeeId, setEmployeeId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false); 
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
     setError("");
-    setIsLoading(true); 
+    setIsLoading(true);
 
     if (!employeeId || !password) {
       setError("Both Employee ID and Password are required.");
-      setIsLoading(false); 
+      setIsLoading(false);
       return;
     }
 
     try {
-      const response = await fetch("/api/login", {
+      const response = await fetch("http://10.40.20.93:300/api/Login/authenticate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ employeeId, password }),
       });
-      const data = await response.json();
+
       if (response.ok) {
+        const data = await response.json();
         localStorage.setItem("employeeId", data.employeeId);
         window.location.href = "/dashboard";
       } else {
-        setError(data.error || "Login failed. Please try again.");
+        const errorData = await response.json();
+        setError(errorData.error || "Login failed. Please try again.");
       }
     } catch (err) {
-      setError("Something went wrong. Please try again.");
+      setError("Incorrect Employee ID or Password.");
     } finally {
-      setIsLoading(false); 
+      setIsLoading(false);
     }
   };
 
   return (
-    <div style={{ paddingTop: "15%" }} className="flex items-center justify-center max-h-screen sm:p-20 font-[family-name:var(--font-geist-sans)]">
+    <div
+      style={{ paddingTop: "15%" }}
+      className="flex items-center justify-center max-h-screen sm:p-20 font-[family-name:var(--font-geist-sans)] login-container"
+    >
       <Card
         className="w-[350px]"
         style={{
           backgroundColor: "transparent",
           border: "0.1px solid black",
           boxShadow: "0px 0px 10px rgba(0, 0, 0, 1)",
-        }}>
+        }}
+      >
         <CardHeader>
           <CardTitle>Login</CardTitle>
           <CardDescription>Enter your credentials</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onKeyPress={(e) => {
+          <form
+            onKeyPress={(e) => {
             if (e.key === 'Enter') {
               handleLogin();
-            }
-          }}>
+            }}}
+          >
             <div className="grid w-full items-center gap-4">
               <div className="flex flex-col space-y-1.5">
                 <Label htmlFor="emp_id">Employee ID</Label>
                 <Input
                   id="emp_id"
-                  placeholder="enter employee id"
+                  placeholder="Enter employee ID"
                   value={employeeId}
                   onChange={(e) => setEmployeeId(e.target.value)}
-                  style={{backgroundColor:"transparent", border:"1px solid black" }}
+                  style={{ backgroundColor: "transparent", border: "1px solid black" }}
                   required
                 />
               </div>
@@ -87,10 +95,10 @@ export default function Home() {
                 <Input
                   id="psw"
                   type="password"
-                  placeholder="enter password"
+                  placeholder="Enter password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  style={{backgroundColor:"transparent", border:"1px solid black"}}
+                  style={{ backgroundColor: "transparent", border: "1px solid black" }}
                   required
                 />
               </div>
@@ -98,8 +106,8 @@ export default function Home() {
           </form>
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button onClick={handleLogin} style={{ width: "100%" }}>
-            {isLoading ? "please wait..." : "Login"} 
+          <Button onClick={handleLogin} disabled={isLoading} style={{ width: "100%" }}>
+            {isLoading ? "Please wait..." : "Login"}
           </Button>
         </CardFooter>
         {error && (
@@ -113,7 +121,8 @@ export default function Home() {
           >
             {error}
           </div>
-        )}<br />
+        )}
+        <br />
       </Card>
     </div>
   );

@@ -123,10 +123,10 @@ background-color: var(--hover-bg-color);
   background: #777;
 }
 .hanson-title{
-font-size: 1.5rem;
-color: var(--foreground);
-margin-left: 20px;
-font-weight: bold;
+  font-size: 1.5rem;
+  color: var(--foreground);
+  margin-left: 20px;
+  font-weight: bold;
 }
 body.dark .hanson-title {
 color: #fff; 
@@ -266,4 +266,20 @@ color: #fff;
 
 .htRight {
   text-align: right !important;
+}
+/* @media screen and (min-width: 150%) {
+  .handsontable-wrapper{
+    max-height: 75vh;
+  }
+  
+} */
+
+@media screen and (min-width: 100px) {
+  body{
+    overflow-y: hidden;
+  }
+  
+}
+body{
+  overflow-y: hidden;
 }

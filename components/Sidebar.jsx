@@ -16,6 +16,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import './UI.css';
 
+
 const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const [activeLink, setActiveLink] = useState("");
   const [isTablesOpen, setIsTablesOpen] = useState(false);
@@ -129,7 +130,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             )}
           </a>
         </li>
-        <li className={activeLink === "/tables" || isSubmenuActive || isTablesOpen ? "active" : ""}>
+        <li className={activeLink === "/tables" || isSubmenuActive || isTablesOpen ? "active" : ""} hidden>
           <a href="#" onClick={handleTablesClick} style={{ display: "flex", alignItems: "center" }}>
             <FontAwesomeIcon icon={faTable} />
             {!isCollapsed && (
@@ -170,7 +171,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           <a href="/Shipping_plan" onClick={(e) => handleLinkClick("/Shipping_plan", e)}>
             <FontAwesomeIcon icon={faShippingFast} /> 
             {!isCollapsed && (
-              <span style={{ marginLeft: "2px" }} className="text">
+              <span style={{ marginLeft: "1.5px" }} className="text">
                 <p style={{fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Shipping Plan</p>
               </span>
             )}
@@ -188,7 +189,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         </li>
       </ul>
       <ul className="side-menu down">
-        <li className={activeLink === "/settings" ? "active" : ""}>
+        <li className={activeLink === "/settings" ? "active" : ""} hidden>
           <a href="/settings" onClick={(e) => handleLinkClick("/settings", e)}>
             <FontAwesomeIcon icon={faCog} style={{ marginLeft: "2px" }} />
             {!isCollapsed && (

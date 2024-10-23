@@ -79,6 +79,7 @@ body {
   transition: .3s ease;
   overflow-x: hidden;
   scrollbar-width: none;
+  box-shadow: -5px 0 1px -5px #333;
 }
 
 #sidebar.collapsed {
@@ -230,6 +231,7 @@ body {
   top: 0;
   left: 0;
   z-index: 1000;
+  box-shadow: 0 5px px -5px #333;
 }
 
 #content nav::before {
