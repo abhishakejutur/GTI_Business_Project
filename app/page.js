@@ -42,6 +42,7 @@ export default function Home() {
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem("employeeId", data.employeeId);
+        localStorage.setItem("username", data.username);
         window.location.href = "/dashboard";
       } else {
         const errorData = await response.json();

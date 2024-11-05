@@ -130,7 +130,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             )}
           </a>
         </li>
-        <li className={activeLink === "/tables" || isSubmenuActive || isTablesOpen ? "active" : ""} hidden>
+        <li className={activeLink === "/Forecast" || isSubmenuActive || isTablesOpen ? "active" : ""} hidden>
           <a href="#" onClick={handleTablesClick} style={{ display: "flex", alignItems: "center" }}>
             <FontAwesomeIcon icon={faTable} />
             {!isCollapsed && (
@@ -183,6 +183,16 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             {!isCollapsed && (
               <span style={{ marginLeft: "7px" }} className="text">
                 <p style={{fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Forecast</p>
+              </span>
+            )}
+          </a>
+        </li>
+        <li className={activeLink === "/NWS" ? "active" : ""}>
+          <a href="/NWS" onClick={(e) => handleLinkClick("/NWS", e)}>
+            <FontAwesomeIcon icon={faTable} style={{ marginLeft: "3px"}} /> 
+            {!isCollapsed && (
+              <span style={{ marginLeft: "5px" }} className="text">
+                <p style={{fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>NWS</p>
               </span>
             )}
           </a>

@@ -155,7 +155,7 @@ const Nav = ({ toggleSidebar, toggleDarkMode, isDarkMode, onSearch, emp }) => {
                   whiteSpace: 'nowrap', 
                 }}
               >
-                <div className="emp_id" style={{ fontWeight: 'bold' }}>Employee ID</div>
+                {/* <div className="emp_id" style={{ fontWeight: 'bold' }}>Employee ID</div> */}
                 <div className="emp_id">{emp}</div>
             </div>
           )}

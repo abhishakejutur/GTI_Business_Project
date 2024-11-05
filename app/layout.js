@@ -27,8 +27,8 @@ export default function RootLayout({ children }) {
   const [emp, setEmp] = useState(null);
 
   useEffect(() => {
-    const employeeId = localStorage.getItem("employeeId");
-    setEmp(employeeId);
+    const user = localStorage.getItem("username");
+    setEmp(user);
 
     const handleResize = () => {
       if (window.innerWidth <= 768) {
@@ -78,7 +78,7 @@ export default function RootLayout({ children }) {
           maxWidth: '100vw',
           margin: 0,
           position: 'relative',
-          overflow: loading ? 'hidden' : 'auto',
+          overflowY: loading ? 'hidden' : 'auto',
           fontFamily: 'Arial Black'
           
         }}

@@ -30,9 +30,8 @@ function Page({ isDarkMode }) {
   ];
 
   useEffect(() => {
-    const employeeId = localStorage.getItem("employeeId");
+    const employeeId = localStorage.getItem("username");
     if (!employeeId) {
-      alert("Please log in to access this page...");
       window.location.href = "/";
       return;
     }
@@ -162,7 +161,7 @@ function Page({ isDarkMode }) {
         return rowData;
       });
   
-      const response = await fetch('http://10.40.20.93:300/BTrail/save', {
+      const response = await fetch(`http://10.40.20.93:300/BTrail/save`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -213,6 +212,7 @@ function Page({ isDarkMode }) {
       td.style.backgroundColor = '#333';
       td.style.color = '#f0f0f0';
       td.style.border = '1px solid #555';
+      td.style.fontSize = '10px';
     } else {
       td.style.backgroundColor = '#fff';
       td.style.color = '#333';
@@ -320,7 +320,7 @@ function Page({ isDarkMode }) {
           // type: 'dropdown',
           // source: locationOptions,
           readOnly: true,
-          width: "80%", 
+          width: "95%", 
           className: 'htCenter htMiddle',
         },
         { width: "30%", className: 'htRight htMiddle' }, { width: "4%", readOnly: true, className: 'htCenter htMiddle' },
@@ -335,7 +335,7 @@ function Page({ isDarkMode }) {
         const cellProperties = {};
         cellProperties.renderer = cellRenderer;
         return cellProperties;
-      },
+      }, 
       cells: function (row, col) {
         const cellProperties = {};
         cellProperties.renderer = cellRenderer;

@@ -7,11 +7,13 @@ import { faSync } from '@fortawesome/free-solid-svg-icons';
 import HyperFormula from 'hyperformula';
 import '../handsontable/page.css';
 import '../globals.css';
+// import { truncate } from 'fs/promises';
 
 function Page({ isDarkMode }) {
   const [data, setData] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isSaveEnabled, setIsSaveEnabled] = useState(false);
+  const [SaveBtnEnabled,setSaveBtnEnabled] = useState(true);
   const hotInstanceRef = useRef(null);
   const containerRef = useRef(null);
 
@@ -37,16 +39,40 @@ function Page({ isDarkMode }) {
     'product_Id', 'projectName', 'customer', 'projectDesc', 'cast_PartNo', 'mach_PartNo', 'assy_PartNo', 'ship_PartNo', 'saletype', 'idm',
     'cast_wt', 'month_No', 'year_No', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'
   ];
-
+  const fetchSaveButtonStatus = async () => {
+    try {
+      const response = await fetch(`http://localhost:5227/customerForecast/getsaveBtn?month=${currentMonth+1}&year=${currentYear}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          month: currentMonth + 1,
+          year: currentYear
+        })
+      });
+  
+      if (response.ok) {
+        const { saveBtn } = await response.json();
+        setSaveBtnEnabled(saveBtn !== 1);
+        console.log(saveBtn);
+      } else {
+        console.error("Failed to fetch save button status");
+      }
+    } catch (error) {
+      console.error("Error fetching save button status:", error);
+    }
+  };
+  
   useEffect(() => {
-    const employeeId = localStorage.getItem("employeeId");
+    const employeeId = localStorage.getItem("username");
     if (!employeeId) {
-      alert("Please log in to access this page...");
       window.location.href = "/";
       return;
     }
     setIsLoggedIn(true);
     // fetchData();
+    fetchSaveButtonStatus();
   }, []);
 
   const fetchData = async () => {
@@ -108,7 +134,33 @@ function Page({ isDarkMode }) {
       console.error('Error fetching data:', error);
     }
   };
+  const handleFinalSave = async () => {
+    if (!SaveBtnEnabled) return;
+    try {
+      const response = await fetch(`http://localhost:5227/customerForecast/saveBtn?month=${currentMonth+1}&year=${currentYear}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (response.ok) {
+        alert("Final save successful!");
+        handleSaveChanges();
+        setSaveBtnEnabled(false);
+        await fetchSaveButtonStatus();
+        
+      } else {
+        console.error('Final save failed:', response.status, response.statusText);
+        alert("Failed to finalize the save. Please try again.");
+      }
+    } catch (error) {
+      console.error('Error during final save:', error);
+      alert("An error occurred while saving.");
+    }
+  };
   const handleSaveChanges = async () => {
+    if (!isSaveEnabled || !SaveBtnEnabled) return;
     if (!hotInstanceRef.current) return;
   
     const tableData = hotInstanceRef.current.getData().map((row) => {
@@ -227,7 +279,7 @@ function Page({ isDarkMode }) {
     fetchData();
   }, []);
 
-  const cellValidator = (value) => {
+    const cellValidator = (value) => {
     if (value !== null && value !== '' && !Number.isInteger(parseFloat(value))) {
       return false;
     }
@@ -328,7 +380,7 @@ function Page({ isDarkMode }) {
         };
       },
       afterChange: (changes, source) => {
-        if (source === 'edit' && !isSaveEnabled) {
+        if (source === 'edit' && SaveBtnEnabled) {
           setIsSaveEnabled(true);
         }
       },
@@ -377,18 +429,34 @@ function Page({ isDarkMode }) {
           <button
             className='save-button'
             onClick={handleSaveChanges}
-            disabled={!isSaveEnabled}
+            disabled={!isSaveEnabled || !SaveBtnEnabled}
             style={{
               padding: '10px 20px',
-              backgroundColor: isSaveEnabled ? '#4CAF50' : '#888',
+              backgroundColor: isSaveEnabled && SaveBtnEnabled ? '#4CAF50' : '#888',
               color: '#fff',
               border: 'none',
               borderRadius: '5px',
-              cursor: isSaveEnabled ? 'pointer' : 'not-allowed',
+              cursor: isSaveEnabled && SaveBtnEnabled ? 'pointer' : 'not-allowed',
               fontSize: '12px',
             }}
           >
             Save Changes
+          </button>
+          <button
+            className='save-button'
+            onClick={handleFinalSave}
+            disabled={!SaveBtnEnabled}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: SaveBtnEnabled ? '#df3e1b' : '#946f67',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '5px',
+              cursor: SaveBtnEnabled ? 'pointer' : 'not-allowed',
+              fontSize: '12px',
+            }}
+          >
+            Final save
           </button>
         </div>
       </div>
