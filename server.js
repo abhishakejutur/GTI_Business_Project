@@ -20,6 +20,8 @@ app.prepare().then(() => {
       app.render(req, res, '/handsontable', query);
     } else if (pathname === '/Shipping_plan') {
       app.render(req, res, '/Shipping_plan', query);
+    } else if (pathname === '/NWS') {
+      app.render(req, res, '/NWS', query);
     } else {
       handle(req, res, parsedUrl);
     }

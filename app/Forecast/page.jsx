@@ -7,13 +7,13 @@ import { faSync } from '@fortawesome/free-solid-svg-icons';
 import HyperFormula from 'hyperformula';
 import '../handsontable/page.css';
 import '../globals.css';
-// import { truncate } from 'fs/promises';
 
 function Page({ isDarkMode }) {
   const [data, setData] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isSaveEnabled, setIsSaveEnabled] = useState(false);
-  const [SaveBtnEnabled,setSaveBtnEnabled] = useState(true);
+  const [SaveBtnEnabled,setSaveBtnEnabled] = useState(false);
+  const [SaveBtn, setSaveBtn] = useState(false);
   const hotInstanceRef = useRef(null);
   const containerRef = useRef(null);
 
@@ -240,6 +240,7 @@ function Page({ isDarkMode }) {
         const result = await response.json();
         // alert(result.message);
         setIsSaveEnabled(false);
+        setSaveBtn(true);
       } else {
         console.error('Error saving changes:', response.status, response.statusText);
         const errorText = await response.text();
@@ -440,23 +441,23 @@ function Page({ isDarkMode }) {
               fontSize: '12px',
             }}
           >
-            Save Changes
+            Save
           </button>
           <button
             className='save-button'
             onClick={handleFinalSave}
-            disabled={!SaveBtnEnabled}
+            disabled={!SaveBtnEnabled && !SaveBtn}
             style={{
               padding: '10px 20px',
-              backgroundColor: SaveBtnEnabled ? '#df3e1b' : '#946f67',
+              backgroundColor: SaveBtnEnabled && SaveBtn ? '#0e71c9' : '#946f67',
               color: '#fff',
               border: 'none',
               borderRadius: '5px',
-              cursor: SaveBtnEnabled ? 'pointer' : 'not-allowed',
+              cursor: SaveBtnEnabled && SaveBtn ? 'pointer' : 'not-allowed',
               fontSize: '12px',
             }}
           >
-            Final save
+            Finalize
           </button>
         </div>
       </div>
@@ -466,5 +467,5 @@ function Page({ isDarkMode }) {
     </div>
   );
 }
-
+//
 export default Page;
