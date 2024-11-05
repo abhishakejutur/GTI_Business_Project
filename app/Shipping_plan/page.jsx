@@ -405,7 +405,7 @@ function Page({ isDarkMode }) {
               fontSize: '12px',
             }}
           >
-            Save Changes
+            Save
           </button>
         </div>
       </div>

@@ -41,7 +41,7 @@ function Page({ isDarkMode }) {
   ];
   const fetchSaveButtonStatus = async () => {
     try {
-      const response = await fetch(`http://localhost:5227/customerForecast/getsaveBtn?month=${currentMonth+1}&year=${currentYear}`, {
+      const response = await fetch(`http://10.40.20.93:300/customerForecast/getsaveBtn?month=${currentMonth+1}&year=${currentYear}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -135,9 +135,9 @@ function Page({ isDarkMode }) {
     }
   };
   const handleFinalSave = async () => {
-    if (!SaveBtnEnabled) return;
+    if (!SaveBtnEnabled || !SaveBtn) return;
     try {
-      const response = await fetch(`http://localhost:5227/customerForecast/saveBtn?month=${currentMonth+1}&year=${currentYear}`, {
+      const response = await fetch(`http://10.40.20.93:300/customerForecast/saveBtn?month=${currentMonth+1}&year=${currentYear}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -148,6 +148,7 @@ function Page({ isDarkMode }) {
         alert("Final save successful!");
         handleSaveChanges();
         setSaveBtnEnabled(false);
+        setIsSaveEnabled(false);
         await fetchSaveButtonStatus();
         
       } else {
@@ -383,6 +384,8 @@ function Page({ isDarkMode }) {
       afterChange: (changes, source) => {
         if (source === 'edit' && SaveBtnEnabled) {
           setIsSaveEnabled(true);
+          setSaveBtn(false);
+          console.log(SaveBtn);
         }
       },
       afterGetColHeader: function (col, TH) {
