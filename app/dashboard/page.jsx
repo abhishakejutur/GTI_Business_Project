@@ -1,191 +1,407 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCloudDownloadAlt, faChevronRight } from "@fortawesome/free-solid-svg-icons";
-import "./page.css";
+import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import './page.css';
 
-const formatNumberInternationalStyle = (num) => {
-  if (num === null || num === undefined) return null;
-  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-};
-
-const Page = () => {
-  const [data, setData] = useState([]);
+export default function Dashboard() {
+  const [activeTab, setActiveTab] = useState("Estimated Business");
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [tableData, setTableData] = useState([]);
   const [columns, setColumns] = useState([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
+  const [weekOptions, setWeekOptions] = useState([]);
+  const [selectedWeek, setSelectedWeek] = useState("");
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedTonsForRow, setSelectedTonsForRow] = useState({});
+  
   useEffect(() => {
     const employeeId = localStorage.getItem("username");
     if (!employeeId) {
       window.location.href = "/";
       return;
     }
-    setIsLoggedIn(true);
   }, []);
 
   useEffect(() => {
-    const month = selectedDate.getMonth() + 1;
-    const year = selectedDate.getFullYear();
-    fetchData(month, year);
-    generateColumns(month, year);
-  }, [selectedDate]);
+    if (activeTab === "Estimated Business") {
+      fetchData();
+      generateDynamicColumns(selectedDate);
+    }
+  }, [activeTab, selectedDate]);
 
-  const fetchData = async (month, year) => {
+  useEffect(() => {
+    fetchWeekOptions();
+  }, []);
+
+  const fetchWeekOptions = async () => {
     try {
-      const response = await fetch(`http://10.40.20.93:300/dashboard?Month=${month}&Year=${year}`, {
-        method: "POST",
+      const response = await fetch(`http://10.40.20.93:300/BTrail/weeks`);
+      const data = await response.json();
+      setWeekOptions(data);
+      const currentWeekNumber = getCurrentWeekNumber();
+      const defaultWeek = data.find(week => week.value.startsWith(`${currentWeekNumber}-`));
+      if (defaultWeek) {
+        setSelectedWeek(defaultWeek.value);
+      }
+    } catch (error) {
+      console.error("Error fetching week options:", error);
+    }
+  };
+  const fetchData = async () => {
+    if (activeTab === "Estimated Business") {
+      try {
+        const response = await fetch(`http://10.40.20.93:300/dashboard?Month=${selectedDate.getMonth() + 1}&Year=${selectedDate.getFullYear()}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        const result = await response.json();
+        console.log("Fetched data:", result);
+        setTableData(result);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    } else {
+      setTableData([]);
+    }
+  };
+  const handleWeekChange = (e) => {
+    const selectedValue = e.target.value;
+    const [week, year] = selectedValue.split('-');
+    setSelectedWeek(week);
+    setSelectedYear(year);
+    console.log("Selected week:", week);
+    console.log("Selected year:", year);
+    fetchShippingScheduleData(week, year);
+  };
+  const fetchShippingScheduleData = async (week, year) => {
+    try {
+      const response = await fetch(`http://10.40.20.93:300/dashboard/shippingschedule?PlanWeek=${week}&PlanYear=${year}`, {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json"
+          'Content-Type': 'application/json',
         },
       });
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
       const result = await response.json();
-      setData(result);
+      console.log("Fetched shipping schedule data:", result);
+      setTableData(result);
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.log( "Selected week:", week);
+      console.log( "Selected year:", year);
+      console.error("Error fetching shipping schedule data:", error);
     }
   };
-
-  const generateColumns = (startMonth, startYear) => {
-    const months = [
-      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-    ];
-    let columns = [];
-    let currentMonth = startMonth - 1;
-    let currentYear = startYear;
-
-    for (let i = 0; i < 12; i++) {
-      columns.push(`${months[currentMonth]} ${currentYear.toString().slice(-2)}`);
-      currentMonth++;
-      if (currentMonth === 12) {
-        currentMonth = 0;
-        currentYear++;
+  const handleSaveShippingSchedule = async () => {
+    if (!selectedWeek || !selectedYear) {
+      alert("Please select a valid week and year.");
+      return;
+    }
+    try {
+      const containerWeights = tableData.map((row, index) => ({
+        CustLocation: row.custLocation,
+        Customer: row.customer,
+        Week_no: row.week_no,
+        SaleType: row.saletype,
+        ContainerWeight: selectedTonsForRow[index] || row.containerWeight || 0
+      }));
+      const apiUrl = `http://10.40.20.93:300/dashboard/shippingschedule/save?PlanWeek=${selectedWeek}&PlanYear=${selectedYear}`;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(containerWeights),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to save shipping schedule data.');
       }
+      alert('Shipping schedule saved successfully.');
+    } catch (error) {
+      console.error("Error saving shipping schedule:", error);
+      alert('Failed to save shipping schedule.');
     }
-    setColumns(columns);
   };
-
+  const generateDynamicColumns = (startDate) => {
+    const months = [];
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    
+    for (let i = 0; i < 12; i++) {
+        const monthIndex = (startDate.getMonth() + i) % 12;
+        const year = startDate.getFullYear() + Math.floor((startDate.getMonth() + i) / 12);
+        months.push(`${monthNames[monthIndex]} ${String(year).slice(-2)}`);
+    }
+    setColumns(months);
+  };
   const handleDateChange = (date) => {
     setSelectedDate(date);
-    const month = date.getMonth() + 1;
-    const year = date.getFullYear();
-    fetchData(month, year);
-    generateColumns(month, year);
   };
-
+  const initializeShippingScheduleData = () => {
+    const currentWeek = getCurrentWeekNumber();
+    const currentYear = new Date().getFullYear();
+    setSelectedWeek(currentWeek);
+    setSelectedYear(currentYear);
+    fetchShippingScheduleData(currentWeek, currentYear);
+  };
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (tab === "Estimate Shipping Schedule") {
+      initializeShippingScheduleData();
+      setColumns([]);
+    } else {
+      generateDynamicColumns(selectedDate);
+    }
+  };
+  const formatNumber = (num) => {
+    const parsedNum = parseFloat(num);
+    console.log("Formatting number:", num, "=>", parsedNum); 
+    if (!isNaN(parsedNum)) {
+      return parsedNum.toLocaleString('en-US');
+    }
+    return "0";
+  };
   const getRowBackgroundColor = (index) => {
-    if (index === 18) return { backgroundColor: 'lightgreen' };
-    if ((index + 1) % 3 === 1) return { backgroundColor: '#b1bed5' };
-    if ((index + 1) % 3 === 2) return { backgroundColor: '#bfd8d5' };
-    if ((index + 1) % 3 === 0) return { backgroundColor: '#dfdfdf' };
-    return {};
+    if ((index + 1) % 3 === 0) {
+      return { backgroundColor: '#dfdfdf', borderBottom: '2px solid white' };
+    } else if (index % 3 === 0) {
+      return { backgroundColor: '#b1bed5' };
+    } else if ((index - 1) % 3 === 0) {
+      return { backgroundColor: '#bfd8d5' };
+    }
   };
-
+  const getRowBackgroundColorTab2 = (index) => {
+    const baseStyle = index % 12 < 6 
+      ? { backgroundColor: '#CCFFCC', borderBottom: '1px solid white' } 
+      : { backgroundColor: '#E6FFEB', borderBottom: '1px solid white' };
+    if ((index + 1) % 6 === 0) {
+      return { ...baseStyle, borderBottom: '3px solid white' };
+    }
+    return baseStyle;
+  };
+  const getCurrentWeekNumber = () => {
+    const date = new Date();
+    const startDate = new Date(date.getFullYear(), 0, 1);
+    const days = Math.floor((date - startDate) / (24 * 60 * 60 * 1000));
+    const weekNumber = Math.ceil((days + startDate.getDay() + 1) / 7);
+    return weekNumber;
+  };
+  const calculateEstimatedTrucks = (shipWeight, containerCapacity, saleType) => {
+    if (shipWeight < 10000 && saleType === "EXP") {
+      return "LCL";
+    }
+    if (containerCapacity > 0) {
+      return (shipWeight / (containerCapacity * 1000)).toFixed(1);
+    }
+    return 0.0;
+  };
   return (
-    <div className="dashboard">
-      <div className="head-title">
-        <div className="left">
-          {/* <h1 style={{ fontSize: '24px' }}>Dashboard</h1> */}
-          <ul className="breadcrumb">
-            <li>
-              <a href="/dashboard">Dashboard</a>
-            </li>
-            <li>
-              <FontAwesomeIcon icon={faChevronRight} />
-            </li>
-            <li>
-              <a className="active" href="/dashboard">Estimated Business</a>
-            </li>
-          </ul>
-        </div>
-        <div className="datepicker-container">
-          <DatePicker
-            selected={selectedDate}
-            onChange={handleDateChange}
-            dateFormat="MM/yyyy"
-            showMonthYearPicker
-            placeholderText="Select Month/Year"
-            className="calendar-input styled-datepicker"
-          />
-        </div>
+    <div className="container" style={{ maxWidth: '100%', padding: '20px', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="tab-container" style={{ display: 'flex', borderBottom: '1px solid #ddd', marginTop: '10px' }}>
+        <button
+          className={`tab-button ${activeTab === "Estimated Business" ? "active" : ""}`}
+          onClick={() => handleTabChange("Estimated Business")}
+          style={{
+            padding: '10px 20px',
+            fontWeight: 'bold',
+            backgroundColor: activeTab === "Estimated Business" ? '#007bff' : 'white',
+            color: activeTab === "Estimated Business" ? '#fff' : '#000',
+            borderTopLeftRadius: '8px',
+          }}
+        >
+          Estimated Business
+        </button>
+        <button
+          className={`tab-button ${activeTab === "Estimate Shipping Schedule" ? "active" : ""}`}
+          onClick={() => handleTabChange("Estimate Shipping Schedule")}
+          style={{
+            padding: '10px 20px',
+            fontWeight: 'bold',
+            backgroundColor: activeTab === "Estimate Shipping Schedule" ? '#007bff' : 'white',
+            color: activeTab === "Estimate Shipping Schedule" ? '#fff' : '#000',
+            borderTopRightRadius: '8px',
+          }}
+        >
+          Shipping Schedule
+        </button>
       </div>
-
-      <div className="table-data" style={{ backgroundColor: 'transparent' }}>
-        <div className="order" style={{ backgroundColor: 'transparent' }}>
-          <div className="table-scroll" style={{
-            overflowX: 'auto',
-            borderRadius: '10px',
-            boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
-            width: '100%', 
-            maxWidth: '100%',
-            whiteSpace: 'nowrap',
-          }}>
-            <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: '800px' }}>
-              <thead style={{ position: 'sticky', top: '0', backgroundColor: 'white' }}>
-                <tr style={{ backgroundColor: '#eee' }}>
-                  <th colSpan="2" style={{ textAlign: 'center', backgroundColor: 'grey', color: 'white', borderRight: '3px solid #eee' }} id="material">Estimated Business</th>
+      <div className="header-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 style={{ fontSize: '20px', fontWeight: 'bold' }}></h1>
+        {activeTab === "Estimate Shipping Schedule" ? (
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <select
+              value={`${selectedWeek}-${selectedYear}`}
+              onChange={handleWeekChange}
+              style={{ padding: '5px', fontSize: '16px', borderRadius: '5px', border: '1px solid #333', backgroundColor: 'transparent', cursor: "pointer", padding: "5px 10px", textAlign:"center", marginRight:"20px" }}
+            >
+              {weekOptions.map((week) => (
+                <option style={{ textAlign: "center" }} key={week.value} value={week.value}>
+                  {week.value}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => handleSaveShippingSchedule()}
+              style={{
+                padding: '8px 16px',
+                marginRight: '10px',
+                backgroundColor: '#28a745',
+                color: 'white',
+                fontWeight: 'bold',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                transition: 'background-color 0.3s',
+              }}
+              onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#218838')}
+              onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#28a745')}
+            >
+              Save
+            </button>
+          </div>
+        ) : (
+          <div className="datepicker-container" style={{ position: 'relative', display: 'inline-block' }}>
+            <DatePicker
+              selected={selectedDate}
+              onChange={handleDateChange}
+              dateFormat="MM/yyyy"
+              showMonthYearPicker
+              className="calendar-input styled-datepicker"
+              placeholderText="Select Month/Year"
+              popperPlacement="bottom"
+            />
+          </div>
+        )}
+      </div>
+      </div>
+      <div className="content-container" style={{ padding: '10px', background: '#fff', borderRadius: '8px', borderTopLeftRadius: '0px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', marginTop: '-1px', maxHeight: '100vh', overflowX: 'hidden', overflowY: 'hidden' }}>
+        <div className="table-container" style={{ overflowY: 'auto', maxHeight: '60vh', borderRadius: '8px', borderTopLeftRadius: '8px' }}>
+          {activeTab === "Estimated Business" ? (
+            <table className="min-w-full table-auto border-collapse" style={{ tableLayout: 'fixed', width: '100%', borderRadius: '8px' }}>
+              <thead className="sticky top-0 bg-gray-300" style={{ position: 'sticky', top: '0', zIndex: '1' }}>
+                <tr className="sticky top-0 bg-gray-300" style={{ fontSize: '13px', zIndex: 1, padding: '8px' }}>
+                  <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', width: '200px' }}>Estimated Business</th>
                   {columns.map((col, index) => (
-                    <th style={{ backgroundColor: 'grey', color: 'white' }} id="data" key={index}>{col}</th>
+                    <th key={index} className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', minWidth: '80px', textAlign: 'center', padding: '8px' }}>{col}</th>
                   ))}
-                  <th style={{ backgroundColor: 'grey', color: 'white' }} id="data">Average</th>
+                  <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', width: '100px', fontSize:"13px", padding: '8px' }}>Average</th>
                 </tr>
               </thead>
               <tbody>
-                {data.map((item, index) => {
-                  const values = [
-                    item.a, item.b, item.c, item.d, item.e,
-                    item.f, item.g, item.h, item.i, item.j,
-                    item.k, item.l
-                  ];
-
-                  const average = values.reduce((sum, value) => sum + (value || 0), 0) / values.length;
-                  const rowStyle = getRowBackgroundColor(index);
-                  const borderBottomStyle = (index + 1) % 3 === 0 ? { borderBottom: '4px solid #eee' } : {};
-
-                  return (
-                    <tr key={index} style={{ ...rowStyle, ...borderBottomStyle }}>
-                      <td
-                        id="material"
-                        style={{
-                          textAlign: 'right',                         
-                          fontWeight: 'bold',
-                          borderRadius: '10px 0 0 10px',
-                          paddingLeft:'15px'
-                        }}
-                      >
-                        {item.material}
-                      </td>
-                      <td
-                        id="RW"
-                        style={{
-                          padding: '10px',
-                          borderRight: '3px solid #eee'
-                        }}
-                      >
-                        {item.required_Weights}
-                      </td>
-                      {values.map((value, i) => (
-                        <td key={i} id="data" style={{ padding: '10px' }}>
-                          {value === 0 ? '' : formatNumberInternationalStyle(value)}
+                {tableData.length > 0 ? (
+                  tableData.map((row, index) => {
+                    const monthValues = columns.map((col, i) => row[String.fromCharCode(97 + i)] || 0);
+                    const average = Math.round(monthValues.reduce((sum, val) => sum + val, 0) / monthValues.length);
+                    const isLastRow = index === tableData.length - 1;
+                    const rowStyle = {
+                      ...getRowBackgroundColor(index),
+                      fontFamily: "calibri",
+                      fontSize: '13px',
+                      ...(isLastRow ? { backgroundColor: '#a6f1a6', color: 'black' } : {})
+                    };
+                    return (
+                      <tr key={index} style={rowStyle}>
+                        <td className="border px-4 py-1" style={{ textAlign: 'left' }}>
+                          {row.material} <span style={{ float: 'right', fontWeight: 'normal' }}>{row.required_Weights}</span>
                         </td>
-                      ))}
-                      <td id="data" style={{ padding: '10px' }}>{Math.round(average) === 0 ? '' : formatNumberInternationalStyle(Math.round(average))}</td>
-                    </tr>
-                  );
-                })}
+                        {columns.map((col, i) => {
+                          const key = String.fromCharCode(97 + i);
+                          return (
+                            <td key={i} className="border px-2 py-1" style={{ textAlign: 'right' }}>
+                              {row[key] ? formatNumber(row[key]) : ""}
+                            </td>
+                          );
+                        })}
+                        <td className="border px-4 py-1" style={{ width: '100px', textAlign: 'right' }}>
+                          {formatNumber(average)}
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={columns.length + 1} className="border px-4 py-2 text-center">No Data Available</td>
+                  </tr>
+                )}
               </tbody>
             </table>
-          </div>
+          ) : (
+            <table className="min-w-full table-auto border-collapse">
+              <thead className="sticky top-0 bg-gray-300" style={{ position: 'sticky', top: '0', zIndex: '1' }}>
+                <tr className="sticky top-0 bg-gray-300" style={{ fontSize: '13px', zIndex: 1, padding: '10px' }}>
+                  <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }}>Customer</th>
+                  <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }}>Location</th>
+                  <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }}>Week</th>
+                  <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }}>Parts Count</th>
+                  <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }}>Box Count</th>
+                  <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }}>Shipment Net Weight (Kgs.)</th>
+                  <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }}>Cast Gross Weight (Kgs.)</th>
+                  <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }}>Ship Gross Weight (Kgs.)</th>
+                  <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }}>Container Capacity (Tons)</th>
+                  <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }}>Est. Truck(s)</th>
+                </tr>
+              </thead>
+              <tbody>
+              {tableData.length > 0 ? (
+                tableData.map((row, index) => {
+                  return (
+                    <tr key={index} style={{
+                      ...getRowBackgroundColorTab2(index),
+                      fontFamily: 'calibri',
+                      fontSize: '12px', 
+                      padding: '4px',
+                    }}>
+                      <td className="border px-1 py-1" style={{ textAlign: 'center', border: '1px solid white' }}>{row.customer}</td>
+                      <td className="border px-1 py-1" style={{ textAlign: 'center', border: '1px solid white' }}>{row.custLocation}</td>
+                      <td className="border px-1 py-1" style={{ textAlign: 'center', border: '1px solid white' }}>{row.week_no}</td>
+                      <td className="border px-1 py-1" style={{ textAlign: 'right', border: '1px solid white' }}>{formatNumber(row.parts_count)}</td>
+                      <td className="border px-1 py-1" style={{ textAlign: 'right', border: '1px solid white' }}>{formatNumber(row.box_count)}</td>
+                      <td className="border px-1 py-1" style={{ textAlign: 'right', border: '1px solid white' }}>{formatNumber(row.shipment_net_weight)}</td>
+                      <td className="border px-1 py-1" style={{ textAlign: 'right', border: '1px solid white' }}>{formatNumber(row.cast_gross_weight)}</td>
+                      <td className="border px-1 py-1" style={{ textAlign: 'right', border: '1px solid white' }}>{formatNumber(row.ship_gross_weight)}</td>
+                      <td className="border px-1 py-1" style={{ textAlign: 'center', border: '1px solid white' }}>
+                        <input
+                          type="number"
+                          value={selectedTonsForRow[index] !== undefined ? selectedTonsForRow[index] : (row.containerWeight || (row.saletype === "EXP" ? 17 : 13))}
+                          onChange={(e) => {
+                            const newValue = e.target.value;
+                            setSelectedTonsForRow((prev) => ({
+                              ...prev,
+                              [index]: newValue,
+                            }));
+                          }}
+                          style={{
+                            width: '50%',
+                            textAlign: 'center',
+                            borderRadius: '5px',
+                            border: '1px solid #ddd',
+                            padding: '2px',
+                          }}
+                        />
+                      </td>
+                      <td className="border px-1 py-1" style={{ textAlign: 'right', border: '1px solid white' }}>
+                      {calculateEstimatedTrucks(
+                        row.ship_gross_weight,
+                        selectedTonsForRow[index] ? parseFloat(selectedTonsForRow[index]) : (row.saletype === "EXP" ? 17 : 13),
+                        row.saletype
+                      )}
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan="9" className="border px-4 py-2 text-center">No Data Available</td>
+                </tr>
+              )}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>
   );
-};
-
-export default Page;
+}

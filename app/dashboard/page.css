@@ -289,15 +289,6 @@
 .styled-datepicker {
   padding: 5px;
   border-radius: 5px;
-  width: 66%;
-  border: 1px solid #333333;
-  font-size: 16px;
-  background-color: transparent;
-  margin-right: px;
-}
-.styled-datepicker {
-  padding: 5px;
-  border-radius: 5px;
   width: 90%;
   text-align: center;
   border: 1px solid #333333;
@@ -315,7 +306,7 @@
 
 
 .table-scroll {
-  max-height: 70vh; 
+  max-height: 75vh; 
   overflow-y: auto;
 }
 
@@ -345,14 +336,11 @@ th, td {
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-  margin-left: 10px;
+  width: 0px;
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-  border-radius: 10px;
+::-webkit-scrollbar:hover {
+  width: 5px;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -428,3 +416,26 @@ th, td {
     text-align: center;
   }
 } */
+
+.datepicker-container {
+  z-index: 1050; 
+  height: auto;
+}
+.week-grid {
+  grid-gap: 10px;
+  margin-top: 10px;
+}
+
+.week-grid button {
+  padding: 5px;
+  font-size: 14px;
+  border-radius: 5px;
+  border: 1px solid #333;
+  cursor: pointer;
+}
+.react-datepicker-popper{
+  position: absolute;
+    left: 0px;
+    top: 0px;
+    transform: translate(-42.18182px, -17.5455px);
+}

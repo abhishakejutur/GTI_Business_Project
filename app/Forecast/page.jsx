@@ -7,6 +7,9 @@ import { faSync } from '@fortawesome/free-solid-svg-icons';
 import HyperFormula from 'hyperformula';
 import '../handsontable/page.css';
 import '../globals.css';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import "./page.css";
 
 function Page({ isDarkMode }) {
   const [data, setData] = useState([]);
@@ -14,48 +17,57 @@ function Page({ isDarkMode }) {
   const [isSaveEnabled, setIsSaveEnabled] = useState(false);
   const [SaveBtnEnabled,setSaveBtnEnabled] = useState(false);
   const [SaveBtn, setSaveBtn] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const hotInstanceRef = useRef(null);
   const containerRef = useRef(null);
+  const [columnHeaders, setColumnHeaders] = useState([]);
 
-  const columnHeaders = [
-    'Id', 'Project Name', 'Customer', 'Desc', 'Cast PartNo', 'Mach PartNo', 'Assy PartNo', 'Ship PartNo', 'Sale', 'Material',
-    'Cast_wt', 'Month', 'Year'
-  ];
+ 
 
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const currentDate = new Date();
-  currentDate.setDate(currentDate.getDate()+20);
+  currentDate.setDate(currentDate.getDate());
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
 
-  for (let i = 0; i < 12; i++) {
-    const monthIndex = (currentMonth + i) % 12;
-    const year = currentYear + Math.floor((currentMonth + i) / 12);
-    const monthYear = `${months[monthIndex]}'${year.toString().slice(2)}`;
-    columnHeaders.push(monthYear);
-  }
+  const generateMonthYearHeaders = (month, year) => {
+    console.log("month, year:", month, year);
+    const headers = [
+      'Id', 'Project Name', 'Customer', 'Desc', 'Cast PartNo', 'Mach PartNo', 'Assy PartNo', 'Ship PartNo', 'Sale', 'Material',
+      'Cast_wt', 'Month', 'Year'
+    ];
+
+    for (let i = 0; i < 12; i++) {
+      const monthIndex = (month + i) % 12;
+      const yearValue = year + Math.floor((month + i) / 12);
+      const monthYear = `${months[monthIndex]}'${yearValue.toString().slice(2)}`;
+      headers.push(monthYear);
+    }
+
+    return headers;
+  };
+
+  
 
   const columnKeys = [
     'product_Id', 'projectName', 'customer', 'projectDesc', 'cast_PartNo', 'mach_PartNo', 'assy_PartNo', 'ship_PartNo', 'saletype', 'idm',
     'cast_wt', 'month_No', 'year_No', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'
   ];
-  const fetchSaveButtonStatus = async () => {
+  const fetchSaveButtonStatus = async (month, year) => {
     try {
-      const response = await fetch(`http://10.40.20.93:300/customerForecast/getsaveBtn?month=${currentMonth+1}&year=${currentYear}`, {
+      const response = await fetch(`http://10.40.20.93:300/customerForecast/getsaveBtn?month=${month}&year=${year}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          month: currentMonth + 1,
-          year: currentYear
-        })
+        }
       });
   
       if (response.ok) {
         const { saveBtn } = await response.json();
         setSaveBtnEnabled(saveBtn !== 1);
-        console.log(saveBtn);
+        console.log("month, year, saveBtn :",newMonth, newYear, saveBtn);
+        console.log("saveBtn :", saveBtn);
+        console.log("SaveBtnEnabled :", SaveBtnEnabled);
       } else {
         console.error("Failed to fetch save button status");
       }
@@ -72,25 +84,26 @@ function Page({ isDarkMode }) {
     }
     setIsLoggedIn(true);
     // fetchData();
-    fetchSaveButtonStatus();
+    setColumnHeaders(generateMonthYearHeaders(currentMonth, currentYear));
+    fetchData(currentMonth + 1, currentYear);
+    fetchSaveButtonStatus(newMonth, newYear);
+    // handleRefresh(currentMonth + 1, currentYear);
+
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = async (month, year) => {
     try {
-      const body = JSON.stringify({
-        Month_No: currentMonth + 1,
-        Year_No: currentYear
-      });
+      
 
-      const response = await fetch(`http://10.40.20.93:300/customerForecast?Month_No=${currentMonth + 1}&Year_No=${currentYear}`, {
+      const response = await fetch(`http://10.40.20.93:300/customerForecast?Month_No=${month}&Year_No=${year}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-        },
-        body: body
+        }
       });
 
       if (response.ok) {
+        setIsSaveEnabled(false);
         const fetchedData = await response.json();
         console.log("API Response: ", fetchedData," parameter-->", currentMonth + 1, "-----" ,currentYear);
 
@@ -134,10 +147,27 @@ function Page({ isDarkMode }) {
       console.error('Error fetching data:', error);
     }
   };
+  const [newMonth, setNewMonth] = useState(currentMonth + 1);
+  const [newYear, setNewYear] = useState(currentYear);
+  const handleDateChange = (date) => {
+    
+    const adjustedDate = new Date(date);
+    adjustedDate.setDate(adjustedDate.getDate());
+    console.log("Adjusted Date:", adjustedDate);
+
+    const month = adjustedDate.getMonth()+1;
+    const year = adjustedDate.getFullYear();
+    setSelectedDate(adjustedDate);
+    setColumnHeaders(generateMonthYearHeaders(month-1, year));
+    setNewMonth(month);
+    setNewYear(year);
+    fetchData(month, year);
+    fetchSaveButtonStatus(month, year);
+  };
   const handleFinalSave = async () => {
     if (!SaveBtnEnabled || !SaveBtn) return;
     try {
-      const response = await fetch(`http://10.40.20.93:300/customerForecast/saveBtn?month=${currentMonth+1}&year=${currentYear}`, {
+      const response = await fetch(`http://10.40.20.93:300/customerForecast/saveBtn?month=${newMonth}&year=${newYear}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -146,10 +176,16 @@ function Page({ isDarkMode }) {
 
       if (response.ok) {
         alert("Final save successful!");
+        await fetch(`http://10.40.20.93:300/dashboard/save?Month=${newMonth}&Year=${newYear}`, {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          }
+      });
         handleSaveChanges();
         setSaveBtnEnabled(false);
         setIsSaveEnabled(false);
-        await fetchSaveButtonStatus();
+        window.location.reload();
         
       } else {
         console.error('Final save failed:', response.status, response.statusText);
@@ -225,8 +261,8 @@ function Page({ isDarkMode }) {
     try {
       const body = JSON.stringify({
         tableData,
-        monthNo: currentMonth + 1,
-        yearNo: currentYear,
+        monthNo: newMonth,
+        yearNo: newYear,
       });
   
       const response = await fetch('http://10.40.20.93:300/customerForecast/save', {
@@ -255,7 +291,7 @@ function Page({ isDarkMode }) {
   };
   const handleRefresh = async () => {
     try {
-      const response = await fetch(`http://10.40.20.93:300/refresh?Month_No=${currentMonth + 1}&Year_No=${currentYear}`, {
+      const response = await fetch(`http://10.40.20.93:300/refresh?Month_No=${newMonth}&Year_No=${newYear}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -376,6 +412,29 @@ function Page({ isDarkMode }) {
         { width: "10%", className: 'htRight htMiddle', type: 'numeric', numericFormat: { pattern: '###,00' } },
         { width: "10%", className: 'htRight htMiddle', type: 'numeric', numericFormat: { pattern: '###,00' } },
       ],
+      dropdownMenu: {
+        items: {
+          filter_by_condition: {
+            hidden() {
+              const col = this.getSelectedRangeLast().to.col;
+              return ![0, 1, 2, 3, 4, 5, 6, 7, 8].includes(col);
+            },
+          },
+          filter_by_value: {
+            hidden() {
+              const col = this.getSelectedRangeLast().to.col;
+              return ![0, 1, 2, 3, 4, 5, 6, 7, 8].includes(col);
+
+            },
+          },
+          filter_action_bar: {
+            hidden() {
+              const col = this.getSelectedRangeLast().to.col;
+              return ![0, 1, 2, 3, 4, 5, 6, 7, 8].includes(col);
+            },
+          },
+        },
+      },
       cells: (row, col) => {
         return {
           renderer: cellRenderer,
@@ -417,7 +476,7 @@ function Page({ isDarkMode }) {
 
     return () => instance.destroy();
   }, [data]);
-
+  
   return (
     <div className='card'>
       <div className='card-header' style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -430,6 +489,16 @@ function Page({ isDarkMode }) {
             />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+        <div className="datepicker-container">
+          <DatePicker
+            selected={selectedDate}
+            onChange={handleDateChange}
+            dateFormat="MM/yyyy"
+            showMonthYearPicker
+            placeholderText="Select Month/Year"
+            className="calendar-input styled-datepicker"
+          />
+        </div>
           <button
             className='save-button'
             onClick={handleSaveChanges}

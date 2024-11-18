@@ -1,7 +1,0 @@
-.select-partno{
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    grid-gap: 16px;
-    flex-wrap: wrap;
-}

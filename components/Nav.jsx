@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBars, faBell, faSearch, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faBell, faSearch, faUser, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 import './UI.css';
 
 const Nav = ({ toggleSidebar, toggleDarkMode, isDarkMode, onSearch, emp }) => {
@@ -81,7 +81,6 @@ const Nav = ({ toggleSidebar, toggleDarkMode, isDarkMode, onSearch, emp }) => {
         }
       });
     }
-
     return () => {
       allSideMenu.forEach(item => {
         item.removeEventListener('click', () => {});
@@ -98,6 +97,10 @@ const Nav = ({ toggleSidebar, toggleDarkMode, isDarkMode, onSearch, emp }) => {
       }
     };
   }, []);
+  const handleLogout = () => {
+    localStorage.clear();
+    window.location.href = "/";
+  };
 
   return (
     <nav>
@@ -135,34 +138,21 @@ const Nav = ({ toggleSidebar, toggleDarkMode, isDarkMode, onSearch, emp }) => {
           className="profile"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          style={{ position: 'relative', display: 'inline-block' }}
+          style={{ position: 'relative', display: 'flex', gap: '10px', alignItems: 'center' }}
         >
-          <FontAwesomeIcon icon={faUser} style={{ cursor:"pointer" }} />
-          {isHovered && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '40px',
-                  left: '50%',
-                  transform: 'translateX(-100%)',
-                  backgroundColor: '#fff',
-                  padding: '10px',
-                  borderRadius: '5px',
-                  boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.1)',
-                  zIndex: 100,
-                  maxWidth: '200px',
-                  width: 'fit-content', 
-                  whiteSpace: 'nowrap', 
-                }}
-              >
-                {/* <div className="emp_id" style={{ fontWeight: 'bold' }}>Employee ID</div> */}
-                <div className="emp_id">{emp}</div>
-            </div>
-          )}
+          <FontAwesomeIcon icon={faUser} style={{ cursor:"pointer", alignItems:"center" }} />
+          <div className="emp_id">{emp}</div>
         </div>
       ) : (
         <a href="/" className="login-btn">Login</a>
+        
       )}
+      {emp && (
+        <a onClick={handleLogout} className="logout" style={{ cursor: "pointer" }}>
+            <FontAwesomeIcon icon={faSignOutAlt} style={{ marginLeft: "3px" , color:"red"}} />
+        </a>
+      )}
+      
     </nav>
   );
 };

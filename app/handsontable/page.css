@@ -283,3 +283,24 @@ color: #fff;
 body{
   overflow-y: hidden;
 }
+
+/* .ht_clone_top th {
+  border-bottom: none !important;
+  vertical-align: middle !important; 
+} */
+.pika-single {
+  background: #fff;
+  border: 1px solid;
+  /* border-color: #ccc #ccc #bbb; */
+  color: #333;
+  /* display: block; */
+  font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+  position: absolute;
+  right: 0; 
+  left: auto;
+  z-index: 1;
+  transform: translateX(50%); 
+  margin-right: 50px;
+  border-radius: 10px;
+  border-top-right-radius: 0px;
+}

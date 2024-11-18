@@ -12,7 +12,8 @@ import {
   faAngleDown,
   faAngleRight,
   faAngleUp,
-  faClipboardList
+  faClipboardList,
+  faMinusCircle 
 } from "@fortawesome/free-solid-svg-icons";
 import './UI.css';
 
@@ -124,7 +125,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           <a href="/dashboard" onClick={(e) => handleLinkClick("/dashboard", e)}>
             <FontAwesomeIcon icon={faTachometerAlt} />
             {!isCollapsed && (
-              <span style={{ marginLeft: "6px", marginTop:"-1.5px" }} className="text">
+              <span style={{ marginLeft: "5px", marginTop:"-1.5px" }} className="text">
                 <p style={{fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Dashboard</p>
               </span>
             )}
@@ -181,18 +182,18 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           <a href="/Forecast" onClick={(e) => handleLinkClick("/Forecast", e)}>
             <FontAwesomeIcon icon={faClipboardList} style={{ marginLeft: "4px"}} /> 
             {!isCollapsed && (
-              <span style={{ marginLeft: "7px" }} className="text">
+              <span style={{ marginLeft: "6px" }} className="text">
                 <p style={{fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Forecast</p>
               </span>
             )}
           </a>
         </li>
-        <li className={activeLink === "/NWS" ? "active" : ""}>
-          <a href="/NWS" onClick={(e) => handleLinkClick("/NWS", e)}>
-            <FontAwesomeIcon icon={faTable} style={{ marginLeft: "3px"}} /> 
+        <li className={activeLink === "/exclude" ? "active" : ""}>
+          <a href="/exclude" onClick={(e) => handleLinkClick("/exclude", e)}>
+            <FontAwesomeIcon icon={faMinusCircle} style={{ marginLeft: "3px"}} /> 
             {!isCollapsed && (
-              <span style={{ marginLeft: "5px" }} className="text">
-                <p style={{fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>NWS</p>
+              <span style={{ marginLeft: "3px" }} className="text">
+                <p style={{fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Exclude</p>
               </span>
             )}
           </a>
@@ -209,7 +210,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             )}
           </a>
         </li>
-        <li>
+        <li hidden>
           <a onClick={handleLogout} className="logout" style={{ cursor: "pointer" }}>
             <FontAwesomeIcon icon={faSignOutAlt} style={{ marginLeft: "3px" }} />
             {!isCollapsed && (
