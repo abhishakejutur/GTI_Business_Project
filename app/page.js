@@ -84,7 +84,7 @@ export default function Home() {
   return (
     <div
       className="flex items-center justify-center min-h-screen sm:p-20 font-[family-name:var(--font-geist-sans)] login-container"
-      style={{ height: "100vh", overflowY: "hidden", marginTop: "-30px", gap: "10%", marginLeft: "-10%" }}
+      style={{ height: "100vh", overflowY: "hidden", marginTop: "-50px", gap: "10%", marginLeft: "-14%" }}
     >
       <img 
         src="./assets/loginimg.png" 
@@ -92,8 +92,7 @@ export default function Home() {
         style={{  
           width: "50%", 
           height: "110%", 
-          marginTop:"10%" 
-        }}
+          marginTop:"10%" }}
       />
       <Card
         className="w-[350px]"

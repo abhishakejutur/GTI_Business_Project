@@ -21,6 +21,11 @@ function Page({ isDarkMode }) {
   const [hotInstance, setHotInstance] = useState(null);
   let nextId = data.length + 1;
 
+  useEffect(() => {
+    const content = document.querySelector("#content main");
+    // content.style.overflowY.width="hidden";
+  }, []);
+
   const staticHeaders = [
     { label: 'Project Details', colspan: 8 }
   ];
@@ -371,18 +376,35 @@ function Page({ isDarkMode }) {
       td.style.backgroundColor = '';
       td.title = '';
     }
+    const tooltip = document.createElement('div');
+    
     if (col === 0) {
       td.title = value || '';
+      td.style.color = 'white';
+      // tooltip.className = 'custom-tooltip';
+      // tooltip.innerText = value || '';
     }
+  //   td.addEventListener('mouseenter', (event) => {
+  //   tooltip.style.display = 'block';
+  //   tooltip.style.left = `${event.pageX + 5}px`; 
+  //   tooltip.style.top = `${event.pageY + 5}px`;
+  //   document.body.appendChild(tooltip);
+  // });
+
+  // td.addEventListener('mouseleave', () => {
+  //   tooltip.style.display = 'none';
+  //   if (tooltip.parentNode) {
+  //     tooltip.parentNode.removeChild(tooltip);
+  //   }
+  // });
+
     if (isDarkMode) {
       td.style.backgroundColor = '#333';
       td.style.color = '#f0f0f0';
-      // td.style.border = '1px solid #555';
       td.style.fontSize = '10px';
     } else {
       td.style.backgroundColor = '#fff';
       td.style.color = '#333';
-      // td.style.border = '1px solid #ddd';
       td.style.fontSize = '11px';
       td.style.cursor = 'cell';
     }

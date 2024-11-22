@@ -295,12 +295,11 @@ function Page({ isDarkMode }) {
           'Content-Type': 'application/json',
         },
       });
-
       if (response.ok) {
         alert('Data refreshed successfully');
         console.log('Data refreshed successfully');
         console.log('Post request parameters:', 'Month : ', currentMonth+1, 'Year : ', currentYear);
-        fetchData();
+        fetchData(newMonth, newYear);
       } else {
         console.error('Failed to refresh data:', response.status, response.statusText);
         alert('Failed to refresh data. Please try again.');
