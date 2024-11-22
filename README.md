@@ -4,6 +4,6 @@
 
    **GTI BUSINESS PROJECT**
 
-  [![Click here](https://img.shields.io/badge/Project%20Screen%20Record-Click%20Here-blue?style=for-the-badge)]([[https://abhishakejutur.vercel.app/](https://asset.cloudinary.com/dkwt70u2i/438ab518a7ce8d5b292a42605d15a222)](https://asset.cloudinary.com/dkwt70u2i/438ab518a7ce8d5b292a42605d15a222))
+  [![Click here](https://img.shields.io/badge/Project%20Screen%20Record-Click%20Here-blue?style=for-the-badge)](https://asset.cloudinary.com/dkwt70u2i/438ab518a7ce8d5b292a42605d15a222)
 
 </div>
