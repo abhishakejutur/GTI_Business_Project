@@ -9,7 +9,14 @@ import '../globals.css';
 function Page({ isDarkMode }) {
   const [data, setData] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
+  useEffect(() => {
+    const employeeId = localStorage.getItem("username");
+    
+    if (!employeeId || employeeId) {
+      localStorage.clear();
+      window.location.href = "/";
+      return;
+    }
   const columnHeaders = [
     'Product ID',
     'Project',
@@ -64,14 +71,7 @@ function Page({ isDarkMode }) {
     });
   };
 
-  useEffect(() => {
-    const employeeId = localStorage.getItem("employeeId");
-    
-    if (!employeeId) {
-      alert("Please log in to access this page.");
-      window.location.href = "/";
-      return;
-    }
+  
 
     setIsLoggedIn(true);
     fetch('http://10.40.20.98:82/api/Productmatrix')

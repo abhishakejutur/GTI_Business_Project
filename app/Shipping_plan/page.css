@@ -1,0 +1,24 @@
+.controls-container {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  
+  @media (max-width: 768px) {
+    .controls-container {
+      flex-direction: column; 
+      align-items: flex-start; 
+    }
+  
+    .controls-container select,
+    .controls-container .save-button {
+      width: 100%;
+      margin-bottom: 10px; 
+    }
+  }
+  .handsontable span.colHeader {
+    display: inline-block;
+    font-weight: bold;
+    color: #68616E;
+    line-height: 1.1;
+}

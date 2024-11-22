@@ -19,7 +19,14 @@ function Page({ isDarkMode }) {
     'Mach Part No',
     'Assy Part No',
   ];
-
+  useEffect(() => {
+    const employeeId = localStorage.getItem("username");
+    
+    if (!employeeId || employeeId) {
+      localStorage.clear();
+      window.location.href = "/";
+      return;
+    }}, []);
   const statusOptions = [0, 1, 2, 3, 4]; 
 
   const alphabeticHeaders = () => {
@@ -34,15 +41,6 @@ function Page({ isDarkMode }) {
   };
 
   useEffect(() => {
-    const employeeId = localStorage.getItem("employeeId");
-    
-    if (!employeeId) {
-      alert("Please log in to access this page.");
-      window.location.href = "/";
-      return;
-    }
-
-    setIsLoggedIn(true);
     fetch('http://localhost:5227/Product/all')
       .then(response => response.json())
       .then(data => {

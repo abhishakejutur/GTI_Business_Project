@@ -172,7 +172,7 @@ export default function Dashboard() {
       return { backgroundColor: '#bfd8d5' };
     }
   };
-  const getRowBackgroundColorTab2 = (index) => {
+  const getRowBackgroundColorTab3 = (index) => {
     const baseStyle = index % 12 < 6 
       ? { backgroundColor: '#CCFFCC', borderBottom: '1px solid white' } 
       : { backgroundColor: '#E6FFEB', borderBottom: '1px solid white' };
@@ -180,6 +180,21 @@ export default function Dashboard() {
       return { ...baseStyle, borderBottom: '3px solid white' };
     }
     return baseStyle;
+  };
+  const getRowBackgroundColorTab2 = (index) => {
+    const colors = [
+      '#ACDDDE',
+      '#CAF1DE',
+      '#E1F8DC',
+      '#FEF8DD',
+      '#FFE7C7',
+      '#F7D8BA'
+    ];
+    const rowStyle = { backgroundColor: colors[index % colors.length] };
+    if ((index + 1) % 6 === 0) {
+        rowStyle.borderBottom = '2px solid white';
+    }
+    return rowStyle;
   };
   const getCurrentWeekNumber = () => {
     const date = new Date();
@@ -200,7 +215,7 @@ export default function Dashboard() {
   return (
     <div className="container" style={{ maxWidth: '100%', padding: '20px', overflow: 'hidden' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <div className="tab-container" style={{ display: 'flex', borderBottom: '1px solid #ddd', marginTop: '10px' }}>
+      <div className="tab-container" style={{ display: 'flex', borderBottom: '1px solid #ddd', marginTop: '10px', marginBottom: '1px' }}>
         <button
           className={`tab-button ${activeTab === "Estimated Business" ? "active" : ""}`}
           onClick={() => handleTabChange("Estimated Business")}
@@ -278,9 +293,9 @@ export default function Dashboard() {
       </div>
       </div>
       <div className="content-container" style={{ padding: '10px', background: '#fff', borderRadius: '8px', borderTopLeftRadius: '0px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', marginTop: '-1px', maxHeight: '100vh', overflowX: 'hidden', overflowY: 'hidden' }}>
-        <div className="table-container" style={{ overflowY: 'auto', maxHeight: '60vh', borderRadius: '8px', borderTopLeftRadius: '8px' }}>
+        <div className="table-container" style={{ overflowY: 'auto', maxHeight: '70vh', borderRadius: '8px', borderTopLeftRadius: '8px' }}>
           {activeTab === "Estimated Business" ? (
-            <table className="min-w-full table-auto border-collapse" style={{ tableLayout: 'fixed', width: '100%', borderRadius: '8px' }}>
+            <table className="min-w-full table-auto border-collapse" style={{ tableLayout: 'fixed', width: '100%', borderRadius: '8px', wordWrap:"break-word" }}>
               <thead className="sticky top-0 bg-gray-300" style={{ position: 'sticky', top: '0', zIndex: '1' }}>
                 <tr className="sticky top-0 bg-gray-300" style={{ fontSize: '13px', zIndex: 1, padding: '8px' }}>
                   <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', width: '200px' }}>Estimated Business</th>
@@ -310,7 +325,7 @@ export default function Dashboard() {
                         {columns.map((col, i) => {
                           const key = String.fromCharCode(97 + i);
                           return (
-                            <td key={i} className="border px-2 py-1" style={{ textAlign: 'right' }}>
+                            <td key={i} className="border px-2 py-1" style={{ textAlign: 'right', fontSize: '12px' }}>
                               {row[key] ? formatNumber(row[key]) : ""}
                             </td>
                           );
@@ -351,7 +366,7 @@ export default function Dashboard() {
                     <tr key={index} style={{
                       ...getRowBackgroundColorTab2(index),
                       fontFamily: 'calibri',
-                      fontSize: '12px', 
+                      fontSize: '13px', 
                       padding: '4px',
                     }}>
                       <td className="border px-1 py-1" style={{ textAlign: 'center', border: '1px solid white' }}>{row.customer}</td>

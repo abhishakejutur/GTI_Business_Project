@@ -79,6 +79,7 @@ export default function RootLayout({ children }) {
           margin: 0,
           position: 'relative',
           overflowY: loading ? 'hidden' : 'auto',
+          // overflowY: 'hidden',
           fontFamily: 'Arial Black'
           
         }}

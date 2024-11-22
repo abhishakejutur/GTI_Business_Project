@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import './globals.css';
+import { constants } from "buffer";
 
 export default function Home() {
   const [employeeId, setEmployeeId] = useState("");
@@ -20,6 +21,31 @@ export default function Home() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  useEffect(() => {
+    const sidebar = document.querySelector("#sidebar"); 
+    const nav = document.querySelector("#main-content > nav"); 
+    const body = document.querySelector("body");
+    const content = document.querySelector("#content main");
+    if (sidebar) {
+      sidebar.style.display = "none";
+    }
+    if (nav) {
+      nav.style.display = "none";
+    }
+    body.style.overflowY = "hidden";
+    content.style.overflowY="hidden";
+    document.documentElement.style.overflowY = "hidden"; 
+
+    return () => {
+      if (sidebar) {
+        sidebar.style.display = "";
+      }
+      if (nav) {
+        nav.style.display = "";
+      }
+    };
+  }, []);
+  
   const handleLogin = async () => {
     setError("");
     setIsLoading(true);
@@ -57,9 +83,18 @@ export default function Home() {
 
   return (
     <div
-      style={{ paddingTop: "15%" }}
-      className="flex items-center justify-center max-h-screen sm:p-20 font-[family-name:var(--font-geist-sans)] login-container"
+      className="flex items-center justify-center min-h-screen sm:p-20 font-[family-name:var(--font-geist-sans)] login-container"
+      style={{ height: "100vh", overflowY: "hidden", marginTop: "-30px", gap: "10%", marginLeft: "-10%" }}
     >
+      <img 
+        src="./assets/loginimg.png" 
+        alt="Logo" 
+        style={{  
+          width: "50%", 
+          height: "110%", 
+          marginTop:"10%" 
+        }}
+      />
       <Card
         className="w-[350px]"
         style={{

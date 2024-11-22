@@ -439,3 +439,14 @@ th, td {
     top: 0px;
     transform: translate(-42.18182px, -17.5455px);
 }
+
+@media (max-width: 768px) {
+  .table-container {
+    max-width: 100%;
+    overflow-x: scroll;
+  }
+
+  table {
+    width: 100%;
+  }
+}

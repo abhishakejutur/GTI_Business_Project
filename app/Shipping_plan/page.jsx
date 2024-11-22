@@ -4,9 +4,10 @@ import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.min.css';
 import HyperFormula from 'hyperformula';
 import '../handsontable/page.css';
-import '../globals.css';
+// import '../globals.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
+import './page.css';
 
 function Page({ isDarkMode }) {
   const [data, setData] = useState([['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']]);
@@ -25,10 +26,13 @@ function Page({ isDarkMode }) {
   ];
 
   const setWeekHeaders = (startingWeek) => {
-    const weekHeaders = Array.from({ length: 6 }, (_, i) => ({
-        label: `WK${startingWeek + i}`,
-        colspan: 4
-    }));
+    const weekHeaders = Array.from({ length: 6 }, (_, i) => {
+      const weekNumber = (startingWeek + i - 1) % 52 + 1;
+      return {
+          label: `WK${weekNumber}`,
+          colspan: 4
+      };
+  });
 
     const subHeaders = [
         'Week No.','DATE','QTY.', 'BOX', 
@@ -41,7 +45,7 @@ function Page({ isDarkMode }) {
 
     return [
         [...staticHeaders, ...weekHeaders],
-        ['Project', 'Part#', 'P.Name', 'Customer', 'Location', 'Box Qty', 'Sale', ...subHeaders]
+        ['Project', 'Part#', 'P.Name', 'Customer', 'Location', 'B/Qty', 'Sale', ...subHeaders]
     ];
   };
   
@@ -330,8 +334,6 @@ function Page({ isDarkMode }) {
     }
   };
   
-  
-  
   const formatDateForBackend = (dateStr) => {
     if (!dateStr || dateStr === '') return null; 
   
@@ -340,7 +342,6 @@ function Page({ isDarkMode }) {
     
     return `${year}-${month}-${day}`;
   };
-  
 
   const formatDateForDisplay = (dateStr) => {
     if (!dateStr) return '';
@@ -365,22 +366,25 @@ function Page({ isDarkMode }) {
     const invalidColumns = [9, 13, 17, 21, 25, 29];
     if (invalidColumns.includes(col) && (value === '' || isNaN(value) || parseInt(value) != value)) {
       td.style.backgroundColor = 'red';
-      td.title = 'Invalid data: Only integers allowed';
+      td.title = 'Only integers are only allowed here';
     } else {
       td.style.backgroundColor = '';
       td.title = '';
     }
-
+    if (col === 0) {
+      td.title = value || '';
+    }
     if (isDarkMode) {
       td.style.backgroundColor = '#333';
       td.style.color = '#f0f0f0';
-      td.style.border = '1px solid #555';
+      // td.style.border = '1px solid #555';
       td.style.fontSize = '10px';
     } else {
       td.style.backgroundColor = '#fff';
       td.style.color = '#333';
-      td.style.border = '1px solid #ddd';
+      // td.style.border = '1px solid #ddd';
       td.style.fontSize = '11px';
+      td.style.cursor = 'cell';
     }
   };
   
@@ -396,6 +400,8 @@ function Page({ isDarkMode }) {
       colWidths: 120,
       autoWrapRow: true,
       autoWrapCol: true,
+      manualColumnResize: true,
+      wordWrap: false,
       licenseKey: 'non-commercial-and-evaluation',
       stretchH: 'all',
       headerTooltips: true,
@@ -412,7 +418,7 @@ function Page({ isDarkMode }) {
       allowInsertColumn: false,
       allowRemoveColumn: false,
       fixedColumnsStart: 7,
-      contextMenu: true,
+      contextMenu: false,
       formulas: {
         engine: HyperFormula,
       },
@@ -420,14 +426,14 @@ function Page({ isDarkMode }) {
         indicators: false,
         columns:[2, 3, 7, 11, 15, 19, 23, 27]
       },
-      contextMenu: {
-        items: {
-          'undo': { name: 'Undo' },
-          'redo': { name: 'Redo' },
-          'copy': { name: 'Copy' },
-          'cut': { name: 'Cut' }
-        }
-      },
+      // contextMenu: {
+      //   items: {
+      //     'undo': { name: 'Undo' },
+      //     'redo': { name: 'Redo' },
+      //     'copy': { name: 'Copy' },
+      //     'cut': { name: 'Cut' }
+      //   }
+      // },
       dropdownMenu: {
         items: {
           filter_by_condition: {
@@ -451,9 +457,18 @@ function Page({ isDarkMode }) {
         },
       },
       afterGetColHeader: function (col, TH) {
+        if (col > 1) {
+          const button = TH.querySelector('.changeType');
+    
+          if (!button) {
+            return;
+          }
+    
+          button.parentElement.removeChild(button);
+        }
         TH.style.background = '#eee';
         TH.style.color = '#68616E';
-        TH.style.borderBottom = '1px solid #ccc';
+        // TH.style.borderBottom = '1px solid #ccc';
         TH.style.fontWeight = 'bold';
         TH.style.textAlign = 'center';
         TH.style.verticalAlign = 'middle';
@@ -479,7 +494,7 @@ function Page({ isDarkMode }) {
         }
       },
       columns: [
-        { className: 'htLeft htMiddle' ,width: "250%", readOnly: true, dropdownMenu: false }, 
+        { className: 'htLeft htMiddle' ,width: "175%", readOnly: true, dropdownMenu: false }, 
         { width: "100%", readOnly: true, className: 'htCenter htMiddle' }, 
         { width: "3%", readOnly: true, className: 'htCenter htMiddle' },
         { className: 'htCenter htMiddle', width: "100%", readOnly: true},
@@ -490,11 +505,11 @@ function Page({ isDarkMode }) {
           width: "95%", 
           className: 'htCenter htMiddle',
         },
-        { width: "30%", className: 'htRight htMiddle' }, 
+        { width: "3%", className: 'htRight htMiddle' }, 
         { width: "4%", readOnly: true, className: 'htCenter htMiddle' },
         { width: "4%", readOnly: true, className: 'htCenter htMiddle' }, 
         { width: "80%", type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true, className: 'htCenter htMiddle' }, 
-        { width: "3%", className: 'htRight htMiddle', renderer: cellRenderer, type: 'numeric' }, 
+        { width: "1%", className: 'htRight htMiddle', renderer: cellRenderer, type: 'numeric' }, 
         { readOnly: true, width: "3%", className: 'htRight htMiddle' },
         { width: "4%", readOnly: true, className: 'htCenter htMiddle' }, 
         { width: "80%", type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true, className: 'htCenter htMiddle' },
@@ -528,10 +543,135 @@ function Page({ isDarkMode }) {
         
 
         return cellProperties;
-    },
+      },
+      
       afterChange: (changes, source) => {
         if (source === 'loadData' || !changes) return;
         changes.forEach(([row, prop, oldValue, newValue]) => {
+          const date1Index = 8;
+          const date2Index = 12;
+          const date3Index = 16;
+          const date4Index = 20;
+          const date5Index = 24;
+          const date6Index = 28;
+          try {
+            if (row < 0 || row >= data.length) {
+                console.warn('Row index out of bounds:', row);
+                return;
+            }
+            if (prop === date1Index) {
+                const dateValue = newValue || ''; 
+                const date1 = new Date(dateValue.split('/').reverse().join('-')); 
+                if (isNaN(date1.getTime())) {
+                } else {
+                    if (!instance.getDataAtCell(row, date2Index)) {
+                        const date2 = new Date(date1);
+                        date2.setDate(date1.getDate() + 7);
+                        instance.setDataAtCell(row, date2Index, formatDateForDisplay(date2), 'edit');
+                    }
+                    if (!instance.getDataAtCell(row, date3Index)) {
+                        const date3 = new Date(date1);
+                        date3.setDate(date1.getDate() + 14);
+                        instance.setDataAtCell(row, date3Index, formatDateForDisplay(date3), 'edit');
+                    }
+                    if (!instance.getDataAtCell(row, date4Index)) {
+                        const date4 = new Date(date1);
+                        date4.setDate(date1.getDate() + 21);
+                        instance.setDataAtCell(row, date4Index, formatDateForDisplay(date4), 'edit');
+                    }
+                    if (!instance.getDataAtCell(row, date5Index)) {
+                        const date5 = new Date(date1);
+                        date5.setDate(date1.getDate() + 28);
+                        instance.setDataAtCell(row, date5Index, formatDateForDisplay(date5), 'edit');
+                    }
+                    if (!instance.getDataAtCell(row, date6Index)) {
+                        const date6 = new Date(date1);
+                        date6.setDate(date1.getDate() + 35);
+                        instance.setDataAtCell(row, date6Index, formatDateForDisplay(date6), 'edit');
+                    }
+                }
+            }
+            if (prop === date2Index) {
+              const dateValue = newValue || ''; 
+              const date2 = new Date(dateValue.split('/').reverse().join('-')); 
+              if (isNaN(date2.getTime())) {
+              } else {
+                  if (!instance.getDataAtCell(row, date3Index)) {
+                      const date3 = new Date(date2);
+                      date3.setDate(date2.getDate() + 7);
+                      instance.setDataAtCell(row, date3Index, formatDateForDisplay(date3), 'edit');
+                  }
+                  if (!instance.getDataAtCell(row, date4Index)) {
+                      const date4 = new Date(date2);
+                      date4.setDate(date2.getDate() + 14);
+                      instance.setDataAtCell(row, date4Index, formatDateForDisplay(date4), 'edit');
+                  }
+                  if (!instance.getDataAtCell(row, date5Index)) {
+                      const date5 = new Date(date2);
+                      date5.setDate(date2.getDate() + 21);
+                      instance.setDataAtCell(row, date5Index, formatDateForDisplay(date5), 'edit');
+                  }
+                  if (!instance.getDataAtCell(row, date6Index)) {
+                      const date6 = new Date(date2);
+                      date6.setDate(date2.getDate() + 28);
+                      instance.setDataAtCell(row, date6Index, formatDateForDisplay(date6), 'edit');
+                  }
+              }
+            }
+            if (prop === date3Index) {
+              const dateValue = newValue || ''; 
+              const date3 = new Date(dateValue.split('/').reverse().join('-')); 
+              if (isNaN(date3.getTime())) {
+              } else {
+                  if (!instance.getDataAtCell(row, date4Index)) {
+                      const date4 = new Date(date3);
+                      date4.setDate(date3.getDate() + 7);
+                      instance.setDataAtCell(row, date4Index, formatDateForDisplay(date4), 'edit');
+                  }
+                  if (!instance.getDataAtCell(row, date5Index)) {
+                      const date5 = new Date(date3);
+                      date5.setDate(date3.getDate() + 14);
+                      instance.setDataAtCell(row, date5Index, formatDateForDisplay(date5), 'edit');
+                  }
+                  if (!instance.getDataAtCell(row, date6Index)) {
+                      const date6 = new Date(date3);
+                      date6.setDate(date3.getDate() + 21);
+                      instance.setDataAtCell(row, date6Index, formatDateForDisplay(date6), 'edit');
+                  }
+              }
+            }
+            if (prop === date4Index) {
+              const dateValue = newValue || ''; 
+              const date4 = new Date(dateValue.split('/').reverse().join('-')); 
+              if (isNaN(date4.getTime())) {
+              } else {
+                  if (!instance.getDataAtCell(row, date5Index)) {
+                      const date5 = new Date(date4);
+                      date5.setDate(date4.getDate() + 7);
+                      instance.setDataAtCell(row, date5Index, formatDateForDisplay(date5), 'edit');
+                  }
+                  if (!instance.getDataAtCell(row, date6Index)) {
+                      const date6 = new Date(date4);
+                      date6.setDate(date4.getDate() + 14);
+                      instance.setDataAtCell(row, date6Index, formatDateForDisplay(date6), 'edit');
+                  }
+              }
+            }
+            if (prop === date5Index) {
+              const dateValue = newValue || ''; 
+              const date5 = new Date(dateValue.split('/').reverse().join('-')); 
+              if (isNaN(date5.getTime())) {
+              } else {
+                  if (!instance.getDataAtCell(row, date6Index)) {
+                      const date6 = new Date(date5);
+                      date6.setDate(date5.getDate() + 7);
+                      instance.setDataAtCell(row, date6Index, formatDateForDisplay(date6), 'edit');
+                  }
+              }
+            }
+          } catch (error) {
+              console.error('Error in afterChange:', error);
+          }
           if ([9, 13, 17, 21, 25, 29].includes(prop)) {
             const boxCol = prop + 1;
             const boxqty = parseFloat(instance.getDataAtCell(row, 5)) || 0;
@@ -551,7 +691,7 @@ function Page({ isDarkMode }) {
     setHotInstance(instance);
 
     return () => instance.destroy();
-  }, [data]); // <- , locationOptions
+  }, [data]);
 
   return (
     <div className='card'>
@@ -564,7 +704,7 @@ function Page({ isDarkMode }) {
                 style={{ cursor: 'pointer', fontSize: '20px', color: '#4CAF50', fontWeight:'bold' }}
               />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }} className="controls-container">
           <div style={{ display: 'inline-block' }}>
             <select
               id="week-select"
@@ -632,3 +772,5 @@ function Page({ isDarkMode }) {
 }
 
 export default Page;
+
+

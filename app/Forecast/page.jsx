@@ -6,7 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import HyperFormula from 'hyperformula';
 import '../handsontable/page.css';
-import '../globals.css';
+// import '../globals.css';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "./page.css";
@@ -93,8 +93,6 @@ function Page({ isDarkMode }) {
 
   const fetchData = async (month, year) => {
     try {
-      
-
       const response = await fetch(`http://10.40.20.93:300/customerForecast?Month_No=${month}&Year_No=${year}`, {
         method: 'POST',
         headers: {
@@ -115,7 +113,7 @@ function Page({ isDarkMode }) {
           item.cast_PartNo,
           item.mach_PartNo,
           item.assy_PartNo,
-          item.ship_PartNo,
+          `${item.ship_PartNo} | ${item.projectDesc}`,
           item.saletype,
           item.idm,
           item.cast_wt,
@@ -209,7 +207,7 @@ function Page({ isDarkMode }) {
         cast_PartNo,
         mach_PartNo,
         assy_PartNo,
-        ship_PartNo,
+        ship_PartNo ,
         saletype,
         idm,
         cast_wt,
@@ -337,7 +335,9 @@ function Page({ isDarkMode }) {
         td.title = '';
       }
     }
-
+    if (col === 1) {
+      td.title = value || '';
+    }
     if (isDarkMode) {
       td.style.backgroundColor = '#333';
       td.style.color = '#f0f0f0';
@@ -346,8 +346,9 @@ function Page({ isDarkMode }) {
     } else {
       td.style.backgroundColor = '#fff';
       td.style.color = '#333';
-      td.style.border = '1px solid #ddd';
+      // td.style.border = '1px solid #ddd';
       td.style.fontSize = '11px';
+      td.style.cursor = 'cell';
     }
   };
 
@@ -362,6 +363,8 @@ function Page({ isDarkMode }) {
       width: "100%",
       rowHeights: 30,
       colWidths: 120,
+      manualColumnResize: true,
+      wordWrap: false,
       licenseKey: 'non-commercial-and-evaluation',
       stretchH: 'all',
       headerTooltips: true,
@@ -372,7 +375,7 @@ function Page({ isDarkMode }) {
       allowInsertRow: true,
       allowInsertColumn: false,
       allowRemoveColumn: false,
-      fixedColumnsStart: 7,
+      fixedColumnsStart: 8,
       contextMenu: false,
       clipboard: true,
       // contextMenu: {
@@ -384,22 +387,22 @@ function Page({ isDarkMode }) {
       // },
       formulas: { engine: HyperFormula },
       manualRowPaste: true,
-      hiddenColumns: { indicators: false, columns: [0, 4, 5, 6, 9, 10, 11, 12] },
+      hiddenColumns: { indicators: false, columns: [0, 3, 4, 5, 6, 9, 10, 11, 12] },
       columns: [
         { width: "5%", readOnly: true, className: 'htLeft htMiddle'},
-        { width: "250%", readOnly: true, className: 'htLeft htMiddle' },
-        { width: "98%", readOnly: true, className: 'htLeft htMiddle' },
+        { width: "150%", readOnly: true, className: 'htLeft htMiddle' },
+        { width: "98%", readOnly: true, className: 'htCenter htMiddle' },
         { width: "5%", readOnly: true, className: 'htCenter htMiddle' },
         { width: "70%", readOnly: true, className: 'htCenter htMiddle' },
         { width: "70%", readOnly: true, className: 'htCenter htMiddle' },
         { width: "70%", readOnly: true, className: 'htCenter htMiddle' },
-        { width: "70%", readOnly: true, className: 'htCenter htMiddle' },
-        { width: "70%", readOnly: true, className: 'htCenter htMiddle' },
+        { width: "100%", readOnly: true, className: 'htCenter htMiddle' },
+        { width: "1%", readOnly: true, className: 'htCenter htMiddle' },
         { width: "5%", readOnly: true, className: 'htCenter htMiddle' },
         { width: "5%", readOnly: true, className: 'htCenter htMiddle' },
         { width: "10%", readOnly: true, className: 'htCenter htMiddle' },
         { width: "10%", readOnly: true, className: 'htCenter htMiddle' },
-        { width: "10%", className: 'htRight htMiddle', type: 'numeric', numericFormat: { pattern: '###,00' } },
+        { width: "1%", className: 'htRight htMiddle', type: 'numeric', numericFormat: { pattern: '###,00' } },
         { width: "10%", className: 'htRight htMiddle', type: 'numeric', numericFormat: { pattern: '###,00' } },
         { width: "10%", className: 'htRight htMiddle', type: 'numeric', numericFormat: { pattern: '###,00' } },
         { width: "10%", className: 'htRight htMiddle', type: 'numeric', numericFormat: { pattern: '###,00' } },
@@ -448,9 +451,18 @@ function Page({ isDarkMode }) {
         }
       },
       afterGetColHeader: function (col, TH) {
+        if (col > 2 && col != 7) {
+          const button = TH.querySelector('.changeType');
+    
+          if (!button) {
+            return;
+          }
+    
+          button.parentElement.removeChild(button);
+        }
         TH.style.background = '#eee';
         TH.style.color = '#68616E';
-        TH.style.borderBottom = '1px solid #ccc';
+        // TH.style.borderBottom = '1px solid #ccc';
         TH.style.fontWeight = 'bold';
         TH.style.textAlign = 'center';
         TH.style.verticalAlign = 'middle';
@@ -471,9 +483,7 @@ function Page({ isDarkMode }) {
         }
       },
     });
-
     hotInstanceRef.current = instance;
-
     return () => instance.destroy();
   }, [data]);
   
