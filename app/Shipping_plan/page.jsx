@@ -328,6 +328,7 @@ function Page({ isDarkMode }) {
         alert('Data refreshed successfully');
         console.log('Data refreshed successfully');
         console.log('Post request parameters:', 'Week : ', weekNumber, 'Year : ', year);
+        window.location.reload();
         fetchWeekData(selectedWeek); 
       } else {
         console.error('Failed to refresh data:', response.status, response.statusText);
@@ -720,11 +721,13 @@ function Page({ isDarkMode }) {
       <div className='card-header' style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <h2 className='hanson-title'>Shipping Schedule</h2>
-          <FontAwesomeIcon
-                icon={faSync}
-                onClick={handleRefresh}
-                style={{ cursor: 'pointer', fontSize: '20px', color: '#4CAF50', fontWeight:'bold' }}
-              />
+          {SaveBtnEnabled && (
+            <FontAwesomeIcon
+              icon={faSync}
+              onClick={handleRefresh}
+              style={{ cursor: 'pointer', fontSize: '20px', color: '#4CAF50', fontWeight: 'bold' }}
+            />
+          )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }} className="controls-container">
           <div style={{ display: 'inline-block' }}>

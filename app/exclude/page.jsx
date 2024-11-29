@@ -18,12 +18,10 @@ import {
 } from "@/components/ui/popover";
 import './page.css';
 
-const getMonths = () => {
+const getMonths = (startMonth, startYear) => {
   const months = [];
-  const current = new Date();
-  current.setDate(current.getDate() + 20);
   for (let i = 0; i < 12; i++) {
-    const month = new Date(current.getFullYear(), current.getMonth() + i, 0);
+    const month = new Date(startYear, startMonth + i - 1, 1);
     months.push({
       value: month.toISOString(),
       label: `${month.toLocaleString("default", { month: "short" })}'${month
@@ -43,8 +41,7 @@ export default function NMC() {
   const [tableData, setTableData] = React.useState([]);
   const [openCastPartNos, setOpenCastPartNos] = React.useState(false);
   const [openMonth, setOpenMonth] = React.useState(false);
-
-  const months = getMonths();
+  const [months, setMonths] = React.useState([]);
 
   React.useEffect(() => {
     const employeeId = localStorage.getItem("username");
@@ -53,6 +50,7 @@ export default function NMC() {
       return;
     }
     fetchPartNos();
+    fetchCurrentMonthAndYear();
     if (activeTab === "Casting Supplied by NWS") {
       fetchTableDataNWS();
     } else {
@@ -75,19 +73,39 @@ export default function NMC() {
     try {
       const response = await fetch("http://10.40.20.93:300/api/getExclude");
       const data = await response.json();
-      setTableData(data.data);
+      setTableData(data.data); 
     } catch (error) {
       console.error("Error fetching table data:", error);
     }
   };
-
+  
   const fetchTableDataNPI = async () => {
     try {
       const response = await fetch("http://10.40.20.93:300/api/getExcludeNPI");
+      if (!response.ok) {
+        console.error("Failed to fetch table data NPI:", response.statusText);
+        return;
+      }
       const data = await response.json();
-      setTableData(data.data);
+      console.log("Fetched NPI Table Data:", data); // Debug log
+      setTableData(data.data || []); // Ensure the state is updated
     } catch (error) {
-      console.error("Error fetching table data:", error);
+      console.error("Error fetching table data NPI:", error);
+    }
+  };
+  
+  
+  const fetchCurrentMonthAndYear = async () => {
+    try {
+      const response = await fetch(
+        "http://10.40.20.93:300/customerForecast/getLatestMonthAndYear"
+      );
+      const data = await response.json();
+      const { month_No, year_No } = data;
+
+      setMonths(getMonths(month_No, year_No));
+    } catch (error) {
+      console.error("Error fetching current month and year:", error);
     }
   };
 
@@ -133,11 +151,11 @@ export default function NMC() {
   };
 
   const handleSave = async () => {
-    if (!selectedCastPartNo || selectedMonths.length === 0) {
+    if (!selectedCastPartNo || (activeTab === "Casting Supplied by NWS" && selectedMonths.length === 0)) {
       alert("Please select a part number and at least one month.");
       return;
     }
-
+  
     const createdBy = localStorage.getItem("username");
     const formattedMonths = selectedMonths
       .map((month) =>
@@ -150,7 +168,7 @@ export default function NMC() {
       createdBy,
       value: 1,
     };
-
+  
     try {
       const response = await fetch(
         activeTab === "Casting Supplied by NWS"
@@ -162,12 +180,18 @@ export default function NMC() {
           body: JSON.stringify(payload),
         }
       );
-
+  
       if (response.ok) {
-        activeTab === "Casting Supplied by NWS" ? fetchTableDataNWS() : fetchTableDataNPI();
-        fetchPartNos();
-        resetSelections();
+        console.log("Save successful. Fetching updated table data...");
+        if (activeTab === "Casting Supplied by NWS") {
+          await fetchTableDataNWS();
+        } else {
+          await fetchTableDataNPI(); 
+        }
+        fetchPartNos(); 
+        resetSelections(); 
       } else {
+        activeTab === "Casting Supplied by NWS" ? fetchTableDataNWS() : fetchTableDataNPI();
         const errorData = await response.json();
         console.error("Error saving row:", errorData);
       }
@@ -175,7 +199,8 @@ export default function NMC() {
       console.error("Error saving row:", error);
     }
   };
-
+  
+  
   const resetSelections = () => {
     setSelectedCastPartNo("");
     setSelectedMonths([]);
@@ -235,6 +260,7 @@ export default function NMC() {
           handleSave={handleSave}
           tableData={tableData}
           handleRemoveRow={handleRemoveRow}
+          isCastingNWS={activeTab === "Casting Supplied by NWS"}
         />
       </div>
     </div>
@@ -256,6 +282,7 @@ function ScreenSection({
   handleSave,
   tableData,
   handleRemoveRow,
+  isCastingNWS,
 }) {
   return (
     <div className="flex flex-col w-full space-y-4" style={{ margin: 'auto', fontSize: '12px' }}>
@@ -303,45 +330,47 @@ function ScreenSection({
             </PopoverContent>
           </Popover>
 
-          <Popover open={openMonth} onOpenChange={setOpenMonth}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={openMonth}
-                className="w-full lg:w-[190px] justify-between border border-[black] bg-transparent"
-                style={{ fontFamily: 'Poppins, sans-serif', fontSize: '12px', width: '100%' }}
-              >
-                {selectedMonths.length > 0
-                  ? `${selectedMonths.length} month(s) selected`
-                  : "Select months..."}
-                <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-full lg:w-[153px] p-0 border border-[black] bg-transparent">
-              <Command>
-                <CommandInput style={{fontSize:"12px", fontFamily: 'Poppins, sans-serif' }} placeholder="Search month..." className="h-7" />
-                <CommandList>
-                  <CommandEmpty>No month found.</CommandEmpty>
-                  <CommandGroup>
-                    {months.map((month) => (
-                      <CommandItem
-                        key={month.value}
-                        value={month.value}
-                        onSelect={() => toggleMonthSelection(month.value)}
-                        style={{fontSize:"12px", fontFamily: 'Poppins, sans-serif' }}
-                      >
-                        {month.label}
-                        <CheckIcon
-                          className={selectedMonths.includes(month.value) ? "opacity-100" : "opacity-0"}
-                        />
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+          {isCastingNWS && (
+            <Popover open={openMonth} onOpenChange={setOpenMonth}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={openMonth}
+                  className="w-full lg:w-[190px] justify-between border border-[black] bg-transparent"
+                  style={{ fontFamily: 'Poppins, sans-serif', fontSize: '12px', width: '100%' }}
+                >
+                  {selectedMonths.length > 0
+                    ? `${selectedMonths.length} month(s) selected`
+                    : "Select months..."}
+                  <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full lg:w-[153px] p-0 border border-[black] bg-transparent">
+                <Command>
+                  <CommandInput style={{fontSize:"12px", fontFamily: 'Poppins, sans-serif' }} placeholder="Search month..." className="h-7" />
+                  <CommandList>
+                    <CommandEmpty>No month found.</CommandEmpty>
+                    <CommandGroup>
+                      {months.map((month) => (
+                        <CommandItem
+                          key={month.value}
+                          value={month.value}
+                          onSelect={() => toggleMonthSelection(month.value)}
+                          style={{fontSize:"12px", fontFamily: 'Poppins, sans-serif' }}
+                        >
+                          {month.label}
+                          <CheckIcon
+                            className={selectedMonths.includes(month.value) ? "opacity-100" : "opacity-0"}
+                          />
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          )}
 
           <Button
             onClick={handleSave}
@@ -370,7 +399,7 @@ function ScreenSection({
           <thead className="bg-gray-200 sticky top-0">
             <tr>
               <th className="border px-1 py-1">Part No</th>
-              <th className="border px-1 py-1">Excluded Months</th>
+              {isCastingNWS && <th className="border px-1 py-1">Excluded Months</th>}
               <th className="border px-1 py-1">Created By</th>
               <th className="border px-1 py-1">Created On</th>
               <th className="border px-1 py-1">Remove</th>
@@ -381,7 +410,9 @@ function ScreenSection({
               tableData.map((row, index) => (
                 <tr key={index} className="hover:bg-gray-50">
                   <td className="border px-1 py-1">{row.partNo}</td>
-                  <td className="border px-1 py-1">{row.excludedMonths || "N/A"}</td>
+                  {isCastingNWS && (
+                    <td className="border px-1 py-1">{row.excludedMonths || "N/A"}</td>
+                  )}
                   <td className="border px-1 py-1">{row.createdBy || "N/A"}</td>
                   <td className="border px-1 py-1">{row.createdOn ? new Date(row.createdOn).toLocaleDateString() : "N/A"}</td>
                   <td className="border px-1 py-1" style={{ color: "red", textAlign: "center", fontWeight: "bold" }}>
@@ -391,7 +422,7 @@ function ScreenSection({
               ))
             ) : (
               <tr>
-                <td colSpan="5" className="border px-1 py-1 text-center">No Data Available</td>
+                <td colSpan={isCastingNWS ? "5" : "4"} className="border px-1 py-1 text-center">No Data Available</td>
               </tr>
             )}
           </tbody>

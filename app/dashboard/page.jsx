@@ -16,6 +16,11 @@ export default function Dashboard() {
   const [selectedWeek, setSelectedWeek] = useState("");
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedTonsForRow, setSelectedTonsForRow] = useState({});
+  const [month, setMonth] = React.useState([]);
+  const [newMonth, setNewMonth] = useState();
+  const [newYear, setNewYear] = useState();
+  const [defaultMonth, setDefaultMonth] = useState(null);
+  const [defaultYear, setDefaultYear] = useState(null);
   
   useEffect(() => {
     const employeeId = localStorage.getItem("username");
@@ -23,6 +28,7 @@ export default function Dashboard() {
       window.location.href = "/";
       return;
     }
+    fetchCurrentMonthAndYear();
   }, []);
 
   useEffect(() => {
@@ -35,6 +41,31 @@ export default function Dashboard() {
   useEffect(() => {
     fetchWeekOptions();
   }, []);
+
+  const fetchCurrentMonthAndYear = async () => {
+    try {
+      const response = await fetch(
+        "http://10.40.20.93:300/customerForecast/getLatestMonthAndYear"
+      );
+      const data = await response.json();
+      const { month_No, year_No } = data;
+      const adjustedMonth = month_No - 1; 
+      setDefaultMonth(adjustedMonth);
+      setDefaultYear(year_No);
+      setNewMonth(month_No);
+      setNewYear(year_No);
+
+      const defaultDate = new Date(year_No, adjustedMonth, 1);
+      setSelectedDate(defaultDate);
+      setColumnHeaders(generateMonthYearHeaders(adjustedMonth, year_No));
+      fetchData(month_No, year_No);
+      fetchSaveButtonStatus(month_No, year_No);
+
+      setMonth(month_No, year_No);
+    } catch (error) {
+      console.error("Error fetching current month and year:", error);
+    }
+  };
 
   const fetchWeekOptions = async () => {
     try {

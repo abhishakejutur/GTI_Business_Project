@@ -41,7 +41,7 @@ function Page({ isDarkMode }) {
   };
 
   useEffect(() => {
-    fetch('http://localhost:5227/Product/all')
+    fetch('http://10.40.20.93:300/Product/all')
       .then(response => response.json())
       .then(data => {
         const tableData = data.map(item => [

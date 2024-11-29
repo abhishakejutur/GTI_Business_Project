@@ -21,8 +21,34 @@ function Page({ isDarkMode }) {
   const hotInstanceRef = useRef(null);
   const containerRef = useRef(null);
   const [columnHeaders, setColumnHeaders] = useState([]);
+  const [month, setMonth] = useState([]);
+  const [defaultMonth, setDefaultMonth] = useState(null);
+  const [defaultYear, setDefaultYear] = useState(null);
 
- 
+  const fetchCurrentMonthAndYear = async () => {
+    try {
+      const response = await fetch(
+        "http://10.40.20.93:300/customerForecast/getLatestMonthAndYear"
+      );
+      const data = await response.json();
+      const { month_No, year_No } = data;
+      const adjustedMonth = month_No - 1; 
+      setDefaultMonth(adjustedMonth);
+      setDefaultYear(year_No);
+      setNewMonth(month_No);
+      setNewYear(year_No);
+
+      const defaultDate = new Date(year_No, adjustedMonth, 1);
+      setSelectedDate(defaultDate);
+      setColumnHeaders(generateMonthYearHeaders(adjustedMonth, year_No));
+      fetchData(month_No, year_No);
+      fetchSaveButtonStatus(month_No, year_No);
+
+      setMonth(month_No, year_No);
+    } catch (error) {
+      console.error("Error fetching current month and year:", error);
+    }
+  };
 
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const currentDate = new Date();
@@ -85,7 +111,9 @@ function Page({ isDarkMode }) {
     setIsLoggedIn(true);
     // fetchData();
     setColumnHeaders(generateMonthYearHeaders(currentMonth, currentYear));
-    fetchData(currentMonth + 1, currentYear);
+    // fetchData(currentMonth + 1, currentYear);
+    fetchCurrentMonthAndYear();
+    // fetchData(month[0], month[1]);
     fetchSaveButtonStatus(newMonth, newYear);
     // handleRefresh(currentMonth + 1, currentYear);
 
@@ -150,16 +178,17 @@ function Page({ isDarkMode }) {
   const handleDateChange = (date) => {
     
     const adjustedDate = new Date(date);
-    adjustedDate.setDate(adjustedDate.getDate());
+    // adjustedDate.setDate(adjustedDate.getDate());
     console.log("Adjusted Date:", adjustedDate);
 
     const month = adjustedDate.getMonth()+1;
     const year = adjustedDate.getFullYear();
+    console.log("Month:", month, "Year:", year);
     setSelectedDate(adjustedDate);
-    setColumnHeaders(generateMonthYearHeaders(month-1, year));
     setNewMonth(month);
     setNewYear(year);
     fetchData(month, year);
+    setColumnHeaders(generateMonthYearHeaders(month-1, year));
     fetchSaveButtonStatus(month, year);
   };
   const handleFinalSave = async () => {
@@ -190,8 +219,9 @@ function Page({ isDarkMode }) {
         alert("Failed to finalize the save. Please try again.");
       }
     } catch (error) {
+      window.location.reload();
       console.error('Error during final save:', error);
-      alert("An error occurred while saving.");
+      // alert("An error occurred while saving.");
     }
   };
   const handleSaveChanges = async () => {
@@ -299,6 +329,8 @@ function Page({ isDarkMode }) {
         alert('Data refreshed successfully');
         console.log('Data refreshed successfully');
         console.log('Post request parameters:', 'Month : ', currentMonth+1, 'Year : ', currentYear);
+        // window.location.reload();
+        
         fetchData(newMonth, newYear);
       } else {
         console.error('Failed to refresh data:', response.status, response.statusText);
@@ -491,11 +523,13 @@ function Page({ isDarkMode }) {
       <div className='card-header' style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <h2 className='hanson-title'>Customer Forecast</h2>
-          <FontAwesomeIcon
+          {SaveBtnEnabled && (
+            <FontAwesomeIcon
               icon={faSync}
               onClick={handleRefresh}
-              style={{ cursor: 'pointer', fontSize: '20px', color: '#4CAF50', fontWeight:'bold' }}
+              style={{ cursor: 'pointer', fontSize: '20px', color: '#4CAF50', fontWeight: 'bold' }}
             />
+          )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
         <div className="datepicker-container">
