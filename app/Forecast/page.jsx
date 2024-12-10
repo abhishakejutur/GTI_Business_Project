@@ -24,7 +24,41 @@ function Page({ isDarkMode }) {
   const [month, setMonth] = useState([]);
   const [defaultMonth, setDefaultMonth] = useState(null);
   const [defaultYear, setDefaultYear] = useState(null);
+  const [finalize, setFinalize] = useState(false);
+  const [Save, setSave] = useState(false);
+  const [accessData, setAccessData] = useState([]);
+  const [access, setAccess] = useState();
+  const [userEdit, setUserEdit] = useState(false);
+  const [tableData, setTableData] = useState([]);
 
+  useEffect(() => {
+    if (accessData.length > 0) {
+      const accessLevel = getAccessForPage("Forecast");
+      setAccess(accessLevel);
+      // setDashboardAccess(access===3)
+      setUserEdit(access===3)
+      console.log("access number : ", access, "access Level : ", accessLevel);
+      console.log("access type : ",typeof(access))
+      console.log("admin : ", access === 3);
+      if (accessLevel === 0) {
+        window.location.href = "/dashboard";
+      }
+    }
+  }, [accessData]);
+  const fetchEmployeeAccess = async (employeeId) => {
+    try {
+      const response = await fetch(`http://10.40.20.93:300/getAccess?empId=${employeeId}`);
+      const data = await response.json();
+      setAccessData(data);
+    } catch (error) {
+      console.error("Error fetching employee access:", error);
+    }
+  };
+  
+  const getAccessForPage = (pageName) => {
+    const accessItem = accessData.find((item) => item.page === pageName);
+    return accessItem ? accessItem.access : 0;
+  };
   const fetchCurrentMonthAndYear = async () => {
     try {
       const response = await fetch(
@@ -104,6 +138,8 @@ function Page({ isDarkMode }) {
   
   useEffect(() => {
     const employeeId = localStorage.getItem("username");
+    const empid = localStorage.getItem("employeeId");
+    fetchEmployeeAccess(empid);
     if (!employeeId) {
       window.location.href = "/";
       return;
@@ -228,7 +264,7 @@ function Page({ isDarkMode }) {
     if (!isSaveEnabled || !SaveBtnEnabled) return;
     if (!hotInstanceRef.current) return;
   
-    const tableData = hotInstanceRef.current.getData().map((row) => {
+    const tableData = hotInstanceRef.current.getData().slice(0, -1).map((row) => {
       const [
         product_Id,
         customer,
@@ -306,11 +342,15 @@ function Page({ isDarkMode }) {
         // alert(result.message);
         setIsSaveEnabled(false);
         setSaveBtn(true);
+        fetchData(newMonth, newYear);
       } else {
         console.error('Error saving changes:', response.status, response.statusText);
         const errorText = await response.text();
+        setIsSaveEnabled(false);
+        setSaveBtn(true);
+        fetchData(newMonth, newYear);
         console.error('Response error:', errorText);
-        alert('Failed to save changes. Please try again.');
+        console.error('Failed to save changes. Please try again.');
       }
     } catch (error) {
       console.error('Error:', error);
@@ -374,22 +414,71 @@ function Page({ isDarkMode }) {
       td.style.color = '#f0f0f0';
       td.style.border = '1px solid #555';
       td.style.fontSize = '10px';
+      td.style.paddingLeft='10px';
     } else {
       td.style.backgroundColor = '#fff';
       td.style.color = '#333';
       // td.style.border = '1px solid #ddd';
       td.style.fontSize = '11px';
       td.style.cursor = 'cell';
+      td.style.paddingLeft='10px';
     }
   };
-
+  const calculateTotalsRow = (data) => {
+    const totalsRow = new Array(25).fill(null);
+    
+    totalsRow[1] = "Total"; 
+    
+    for (let col = 13; col <= 24; col++) {
+      const columnSum = data.reduce((sum, row) => {
+        const value = parseFloat(row[col]);
+        return !isNaN(value) ? sum + value : sum; 
+      }, 0);
+      totalsRow[col] = columnSum; 
+    }
+  
+    return totalsRow;
+  };
   useEffect(() => {
+    const calculateTotalsRow = (data) => {
+      const totalsRow = new Array(25).fill(null); 
+      // totalsRow[1] = "Total";
+  
+      for (let col = 13; col <= 24; col++) {
+        const columnSum = data.reduce((sum, row) => {
+          const value = parseFloat(row[col]);
+          return !isNaN(value) ? sum + value : sum;
+        }, 0);
+        totalsRow[col] = columnSum; 
+      }
+  
+      return totalsRow;
+    };
+  
+    const updateTableWithTotals = (tableData) => {
+      const totalsRow = calculateTotalsRow(tableData);
+      return [...tableData, totalsRow];
+    };
+  
+    const handleAfterChange = (changes, source) => {
+      if (source === "edit" && changes) {
+        const updatedData = hotInstanceRef.current.getData(); 
+        const totalsRow = calculateTotalsRow(updatedData); 
+        const enhancedData = [...updatedData.slice(0, -1), totalsRow];
+        setData(enhancedData);
+        hotInstanceRef.current.loadData(enhancedData); 
+      }
+    };
+
+    const totalsRow = calculateTotalsRow(data);
+    const enhancedData = updateTableWithTotals(data);
     if (!containerRef.current) return;
 
     const instance = new Handsontable(containerRef.current, {
-      data,
-      rowHeaders: true,
+      data: enhancedData,
+      rowHeaders: false,
       nestedHeaders: [columnHeaders],
+      readOnly:access!==3,
       height: "100%",
       width: "100%",
       rowHeights: 30,
@@ -397,6 +486,120 @@ function Page({ isDarkMode }) {
       manualColumnResize: true,
       wordWrap: false,
       licenseKey: 'non-commercial-and-evaluation',
+      manualRowMove: true,
+      // manualColumnMove: true,
+      fixedRowsBottom: 1,
+      // columnSummary: [
+      //   {
+      //     sourceColumn: 13, 
+      //     type: 'sum',
+      //     destinationRow: data.length, 
+      //     destinationColumn: 13, 
+      //     forceNumeric: true,
+      //   },
+      //   {
+      //     sourceColumn: 14, 
+      //     type: 'sum',
+      //     destinationRow: data.length,
+      //     destinationColumn: 14,
+      //     forceNumeric: true,
+      //   },
+      //   {
+      //     sourceColumn: 15, 
+      //     type: 'sum',
+      //     destinationRow: data.length,
+      //     destinationColumn: 15,
+      //     forceNumeric: true,
+      //   },
+      //   {
+      //     sourceColumn: 16, 
+      //     type: 'sum',
+      //     destinationRow: data.length,
+      //     destinationColumn: 16,
+      //     forceNumeric: true,
+      //   },
+      //   {
+      //     sourceColumn: 17, 
+      //     type: 'sum',
+      //     destinationRow: data.length,
+      //     destinationColumn: 17,
+      //     forceNumeric: true,
+      //   },
+      //   {
+      //     sourceColumn: 18,
+      //     type: 'sum',
+      //     destinationRow: data.length,
+      //     destinationColumn: 18,
+      //     forceNumeric: true,
+      //   },
+      //   {
+      //     sourceColumn: 19, 
+      //     type: 'sum',
+      //     destinationRow: data.length,
+      //     destinationColumn: 19,
+      //     forceNumeric: true,
+      //   },
+      //   {
+      //     sourceColumn: 20,
+      //     type: 'sum',
+      //     destinationRow: data.length,
+      //     destinationColumn: 20,
+      //     forceNumeric: true,
+      //   },
+      //   {
+      //     sourceColumn: 21, 
+      //     type: 'sum',
+      //     destinationRow: data.length,
+      //     destinationColumn: 21,
+      //     forceNumeric: true,
+      //   },
+      //   {
+      //     sourceColumn: 22,
+      //     type: 'sum',
+      //     destinationRow: data.length,
+      //     destinationColumn: 22,
+      //     forceNumeric: true,
+      //   },
+      //   {
+      //     sourceColumn: 23,
+      //     type: 'sum',
+      //     destinationRow: data.length,
+      //     destinationColumn: 23,
+      //     forceNumeric: true,
+      //   },
+      //   {
+      //     sourceColumn: 24,
+      //     type: 'sum',
+      //     destinationRow: data.length,
+      //     destinationColumn: 24,
+      //     forceNumeric: true,
+      //   },
+      // ],
+      afterChange: handleAfterChange,
+      afterRenderer: (td, row, col, prop, value, cellProperties) => {
+        if (row === enhancedData.length - 1) {
+          td.style.backgroundColor = "#eee";
+          td.style.textAlign = "right";
+          td.style.fontWeight = "bold";
+          td.style.readOnly = true;
+          // td.style.borderRight = "none";
+          if (col === 2) {
+            td.innerText = "Total";
+          }
+          if (col < 8) {
+            td.style.borderRight = "1px solid #eee";
+          }
+        }
+      },
+      beforeChange: (changes, source) => {
+        if (source === 'UndoRedo.undo' || source === 'UndoRedo.redo') {
+          changes.forEach(([row, col], index) => {
+            if (row === data.length) {
+              changes[index] = null; 
+            }
+          });
+        }
+      },
       stretchH: 'all',
       headerTooltips: true,
       columnSorting: true,
@@ -512,6 +715,10 @@ function Page({ isDarkMode }) {
           TD.style.color = '#333';
           TD.style.fontWeight = '';
         }
+        if (coords.row === data.length) {
+          TD.classList.add('fixed-total-row'); 
+          TD.style.backgroundColor = '#eee';
+        }
       },
     });
     hotInstanceRef.current = instance;
@@ -543,6 +750,7 @@ function Page({ isDarkMode }) {
           />
         </div>
           <button
+            hidden = {access !==3}
             className='save-button'
             onClick={handleSaveChanges}
             disabled={!isSaveEnabled || !SaveBtnEnabled}
@@ -559,6 +767,7 @@ function Page({ isDarkMode }) {
             Save
           </button>
           <button
+            hidden = {access!==3}
             className='save-button'
             onClick={handleFinalSave}
             disabled={!SaveBtnEnabled && !SaveBtn}

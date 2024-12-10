@@ -13,7 +13,9 @@ import {
   faAngleRight,
   faAngleUp,
   faClipboardList,
-  faMinusCircle 
+  faMinusCircle,
+  faCoins,
+  faUniversalAccess,
 } from "@fortawesome/free-solid-svg-icons";
 import './UI.css';
 
@@ -23,11 +25,20 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const [isTablesOpen, setIsTablesOpen] = useState(false);
   const sidebarRef = useRef(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [dashboardAccess, setDashboardAccess] = useState(false);
+  const [dashboardCostAccess, setDashboardCostAccess] = useState(false);
+  const [shippingScheduleAccess, setShippingScheduleAccess] = useState(false);
+  const [ForecastAccess, setForecastAccess] = useState(false);
+  const [excludeAccess, setExcludeAccess] = useState(false);
+  const [partCosts, setPartCosts] = useState(false);
+  const [pageAccess, setPageAccess] = useState([]);
+  const [accessData, setAccessData] = useState([]);
 
   useEffect(() => {
     const currentPath = window.location.pathname;
+    const empid = localStorage.getItem("employeeId");
     setActiveLink(currentPath);
-    
+    fetchEmployeeAccess(empid);
     const employeeId = localStorage.getItem("employeeId");
     setIsLoggedIn(!!employeeId);
   }, []);
@@ -44,6 +55,18 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     setIsCollapsed(true); 
 
     window.location.href = path;
+  };
+
+  const fetchEmployeeAccess = async (employeeId) => {
+    try {
+      const response = await fetch(`http://10.40.20.93:300/getAccess?empId=${employeeId}`);
+      const data = await response.json();
+      console.log("Access data:", data);
+      setAccessData(data);
+      setPageAccess(data);
+    } catch (error) {
+      console.error("Error fetching employee access:", error);
+    }
   };
 
   const handleTablesClick = (event) => {
@@ -77,6 +100,11 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
   const sidebarClass = isCollapsed ? "collapsed" : "expanded";
   const isSubmenuActive = ["/table", "/handsontable"].includes(activeLink);
+
+  const getAccessForPage = (pageName) => {
+    const accessItem = accessData.find((item) => item.page === pageName);
+    return accessItem ? accessItem.access : 0;
+  };
 
   return (
     <section id="sidebar" className={sidebarClass} ref={sidebarRef}>
@@ -121,16 +149,16 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         )}
       </a>
       <ul className="side-menu top">
-        <li className={activeLink === "/dashboard" ? "active" : ""}>
-          <a href="/dashboard" onClick={(e) => handleLinkClick("/dashboard", e)}>
-            <FontAwesomeIcon icon={faTachometerAlt} />
-            {!isCollapsed && (
-              <span style={{ marginLeft: "5px", marginTop:"-1.5px" }} className="text">
-                <p style={{fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Dashboard</p>
-              </span>
-            )}
-          </a>
-        </li>
+        <li hidden={getAccessForPage("Dashboard") === 0} className={activeLink === "/dashboard" ? "active" : ""}>
+        <a href="/dashboard" onClick={(e) => handleLinkClick("/dashboard", e)}>
+          <FontAwesomeIcon icon={faTachometerAlt} />
+          {!isCollapsed && (
+            <span style={{ marginLeft: "5px", marginTop:"-1.5px" }} className="text">
+              <p style={{fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Dashboard</p>
+            </span>
+          )}
+        </a>
+      </li>
         <li className={activeLink === "/Forecast" || isSubmenuActive || isTablesOpen ? "active" : ""} hidden>
           <a href="#" onClick={handleTablesClick} style={{ display: "flex", alignItems: "center" }}>
             <FontAwesomeIcon icon={faTable} />
@@ -168,7 +196,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             </a>
           </li>
         </ul>
-        <li className={activeLink === "/Shipping_plan" ? "active" : ""}>
+        <li hidden={getAccessForPage("ShippingSchedule") === 0} className={activeLink === "/Shipping_plan" ? "active" : ""}>
           <a href="/Shipping_plan" onClick={(e) => handleLinkClick("/Shipping_plan", e)}>
             <FontAwesomeIcon icon={faShippingFast} /> 
             {!isCollapsed && (
@@ -178,7 +206,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             )}
           </a>
         </li>
-        <li className={activeLink === "/Forecast" ? "active" : ""}>
+        <li hidden={getAccessForPage("Forecast") === 0} className={activeLink === "/Forecast" ? "active" : ""}>
           <a href="/Forecast" onClick={(e) => handleLinkClick("/Forecast", e)}>
             <FontAwesomeIcon icon={faClipboardList} style={{ marginLeft: "4px"}} /> 
             {!isCollapsed && (
@@ -188,7 +216,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             )}
           </a>
         </li>
-        <li className={activeLink === "/exclude" ? "active" : ""}>
+        <li hidden={getAccessForPage("Exclude") === 0} className={activeLink === "/exclude" ? "active" : ""}>
           <a href="/exclude" onClick={(e) => handleLinkClick("/exclude", e)}>
             <FontAwesomeIcon icon={faMinusCircle} style={{ marginLeft: "3px"}} /> 
             {!isCollapsed && (
@@ -198,14 +226,24 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             )}
           </a>
         </li>
+        <li hidden={getAccessForPage("PartCosts") === 0} className={activeLink === "/partcosts" ? "active" : ""}>
+          <a href="/partcosts" onClick={(e) => handleLinkClick("/partcosts", e)}>
+            <FontAwesomeIcon icon={faCoins} style={{ marginLeft: "3px"}} /> 
+            {!isCollapsed && (
+              <span style={{ marginLeft: "3px" }} className="text">
+                <p style={{fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>part costs</p>
+              </span>
+            )}
+          </a>
+        </li>
       </ul>
       <ul className="side-menu down">
-        <li className={activeLink === "/settings" ? "active" : ""} hidden>
-          <a href="/settings" onClick={(e) => handleLinkClick("/settings", e)}>
+        <li hidden={getAccessForPage("AccessManagement") === 0} className={activeLink === "/access" ? "active" : ""} >
+          <a href="/access" onClick={(e) => handleLinkClick("/access", e)}>
             <FontAwesomeIcon icon={faCog} style={{ marginLeft: "2px" }} />
             {!isCollapsed && (
               <span style={{ marginLeft: "5px" }} className="text">
-                <p style={{fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Settings</p>
+                <p style={{fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Access</p>
               </span>
             )}
           </a>

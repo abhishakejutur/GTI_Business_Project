@@ -22,6 +22,10 @@ app.prepare().then(() => {
       app.render(req, res, '/Shipping_plan', query);
     } else if (pathname === '/exclude') {
       app.render(req, res, '/exclude', query);
+    } else if (pathname === '/partcosts') {
+      app.render(req, res, '/partcosts', query);
+    } else if (pathname === '/access') {
+      app.render(req, res, '/access', query);
     } else {
       handle(req, res, parsedUrl);
     }

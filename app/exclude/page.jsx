@@ -42,9 +42,14 @@ export default function NMC() {
   const [openCastPartNos, setOpenCastPartNos] = React.useState(false);
   const [openMonth, setOpenMonth] = React.useState(false);
   const [months, setMonths] = React.useState([]);
+  const [accessData, setAccessData] = React.useState([]);
+  const [access, setAccess] = React.useState();
+  const [userEdit, setUserEdit] = React.useState(false);
 
   React.useEffect(() => {
     const employeeId = localStorage.getItem("username");
+    const empid = localStorage.getItem("employeeId");
+    fetchEmployeeAccess(empid);
     if (!employeeId) {
       window.location.href = "/";
       return;
@@ -58,6 +63,34 @@ export default function NMC() {
     }
     resetSelections();
   }, [activeTab]);
+  
+  const fetchEmployeeAccess = async (employeeId) => {
+    try {
+      const response = await fetch(`http://10.40.20.93:300/getAccess?empId=${employeeId}`);
+      const data = await response.json();
+      setAccessData(data);
+  
+      const accessLevel = data.find((item) => item.page === "Exclude")?.access || 0;
+      setAccess(accessLevel);
+      setUserEdit(accessLevel === 3);
+  
+      console.log("Exclude access number:", accessLevel);
+      console.log("Exclude admin:", accessLevel === 3);
+      console.log("Exclude User Edit:", userEdit);
+  
+      if (accessLevel === 0) {
+        window.location.href = "/dashboard";
+      }
+    } catch (error) {
+      console.error("Error fetching employee access:", error);
+    }
+  };
+  
+  
+  const getAccessForPage = (pageName) => {
+    const accessItem = accessData.find((item) => item.page === pageName);
+    return accessItem ? accessItem.access : 0;
+  };
 
   const fetchPartNos = async () => {
     try {
@@ -261,6 +294,7 @@ export default function NMC() {
           tableData={tableData}
           handleRemoveRow={handleRemoveRow}
           isCastingNWS={activeTab === "Casting Supplied by NWS"}
+          userEdit={userEdit}
         />
       </div>
     </div>
@@ -283,13 +317,15 @@ function ScreenSection({
   tableData,
   handleRemoveRow,
   isCastingNWS,
+  userEdit
 }) {
   return (
     <div className="flex flex-col w-full space-y-4" style={{ margin: 'auto', fontSize: '12px' }}>
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-2 lg:space-y-0">
         <h2 className="font-bold text-sm" style={{ fontSize: '16px', textAlign: 'left' }}>{title}</h2>
         <div className="flex flex-col lg:flex-row lg:space-x-4 space-y-2 lg:space-y-0">
-          <Popover open={openCastPartNos} onOpenChange={setOpenCastPartNos}>
+          {userEdit && (
+            <Popover open={openCastPartNos} onOpenChange={setOpenCastPartNos}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
@@ -329,8 +365,9 @@ function ScreenSection({
               </Command>
             </PopoverContent>
           </Popover>
+          )}
 
-          {isCastingNWS && (
+          {isCastingNWS && userEdit && (
             <Popover open={openMonth} onOpenChange={setOpenMonth}>
               <PopoverTrigger asChild>
                 <Button
@@ -371,8 +408,8 @@ function ScreenSection({
               </PopoverContent>
             </Popover>
           )}
-
-          <Button
+          {userEdit && (
+            <Button
             onClick={handleSave}
             variant="solid"
             className="w-full lg:w-auto mt-2 lg:mt-0"
@@ -391,9 +428,9 @@ function ScreenSection({
           >
             Save
           </Button>
+          )}
         </div>
       </div>
-
       <div className="overflow-auto border border-gray-300 rounded-md" style={{ maxHeight: '300px', fontSize: '14px', overflowX: 'auto' }}>
         <table className="min-w-full table-auto border-collapse">
           <thead className="bg-gray-200 sticky top-0">
@@ -402,7 +439,7 @@ function ScreenSection({
               {isCastingNWS && <th className="border px-1 py-1">Excluded Months</th>}
               <th className="border px-1 py-1">Created By</th>
               <th className="border px-1 py-1">Created On</th>
-              <th className="border px-1 py-1">Remove</th>
+              {userEdit && <th className="border px-1 py-1">Remove</th>}
             </tr>
           </thead>
           <tbody className="bg-white">
@@ -415,9 +452,9 @@ function ScreenSection({
                   )}
                   <td className="border px-1 py-1">{row.createdBy || "N/A"}</td>
                   <td className="border px-1 py-1">{row.createdOn ? new Date(row.createdOn).toLocaleDateString() : "N/A"}</td>
-                  <td className="border px-1 py-1" style={{ color: "red", textAlign: "center", fontWeight: "bold" }}>
+                  {userEdit && <td className="border px-1 py-1" style={{ color: "red", textAlign: "center", fontWeight: "bold" }}>
                     <button onClick={() => handleRemoveRow(row.partNo, row.excludedMonths)}>X</button>
-                  </td>
+                  </td>}
                 </tr>
               ))
             ) : (

@@ -19,12 +19,49 @@ function Page({ isDarkMode }) {
   const [SaveBtn, setSaveBtn] = useState(false);
   // const [locationOptions, setLocationOptions] = useState([]);
   const [hotInstance, setHotInstance] = useState(null);
+  const [finalize, setFinalize] = useState(false);
+  const [Save, setSave] = useState(false);
+  const [accessData, setAccessData] = useState([]);
+  const [access, setAccess] = useState();
+  const [userEdit, setUserEdit] = useState(false);
+  const [isRefresh , setIsRefresh] = useState(false);
+  
   let nextId = data.length + 1;
 
   useEffect(() => {
     const content = document.querySelector("#content main");
+    const empid = localStorage.getItem("employeeId");
     // content.style.overflowY.width="hidden";
+    fetchEmployeeAccess(empid);
   }, []);
+  useEffect(() => {
+    if (accessData.length > 0) {
+      const accessLevel = getAccessForPage("ShippingSchedule");
+      setAccess(accessLevel);
+      // setDashboardAccess(access===3)
+      setUserEdit(access===3)
+      console.log("access number : ", access, "access Level : ", accessLevel);
+      console.log("access type : ",typeof(access))
+      console.log("admin : ", access === 3);
+      if (accessLevel === 0) {
+        window.location.href = "/dashboard";
+      }
+    }
+  }, [accessData]);
+  const fetchEmployeeAccess = async (employeeId) => {
+    try {
+      const response = await fetch(`http://10.40.20.93:300/getAccess?empId=${employeeId}`);
+      const data = await response.json();
+      setAccessData(data);
+    } catch (error) {
+      console.error("Error fetching employee access:", error);
+    }
+  };
+  
+  const getAccessForPage = (pageName) => {
+    const accessItem = accessData.find((item) => item.page === pageName);
+    return accessItem ? accessItem.access : 0;
+  };
 
   const staticHeaders = [
     { label: 'Project Details', colspan: 8 }
@@ -253,8 +290,8 @@ function Page({ isDarkMode }) {
     }
   };
   
-  const handleSaveChanges = async () => {
-    if (!isSaveEnabled || !SaveBtnEnabled) return;
+  const handleSaveChanges = async (isRefresh) => {
+    if (!isSaveEnabled || !SaveBtnEnabled || !isRefresh) return;
     if (!selectedWeek) {
       alert('Please select a week before saving changes.');
       return;
@@ -296,27 +333,99 @@ function Page({ isDarkMode }) {
         setIsSaveEnabled(false);
         setSaveBtn(true);
         console.log('Data saved successfully and button enabled', isSaveEnabled);
+        return true;
       } else {
         const errorText = await response.text();
         console.error('Failed to save changes:', errorText);
         alert('Failed to save changes: ' + errorText);
+        return true;
       }
     } catch (error) {
       console.error('Error saving changes:', error);
       alert('Error saving changes. Check console for details.');
+      return false;
     }
   };
-  const handleRefresh = async () => {
+  const handleSave = async () => {
+    // if (!isSaveEnabled || !SaveBtnEnabled || !isRefresh) return;
     if (!selectedWeek) {
-      alert("Please select a week before finalizing the save.");
+      alert('Please select a week before saving changes.');
       return;
     }
-  
+    
     let [weekNumber, year] = selectedWeek.split('-');
     weekNumber = parseInt(weekNumber);
     year = parseInt(year);
   
     try {
+      const displayedData = hotInstance.getData();
+      const formattedData = displayedData.map(row => {
+        const rowData = {};
+        columnKeys.forEach((key, index) => {
+          if (key.includes('week')) {
+            rowData[key] = row[index] || null;
+          } else if (key.includes('date')) {
+            rowData[key] = row[index] === '' ? null : formatDateForBackend(row[index]);
+          } else if (key.includes('qty')) {
+            rowData[key] = row[index] === '' ? null : parseFloat(row[index]) || 0.0;
+          } else if (key.includes('box')) {
+            const boxValue = parseFloat(row[index]);
+            rowData[key] = isNaN(boxValue) ? null : Math.round(boxValue);
+          } else if (key === 'partNo') {
+            rowData[key] = row[index].split(' | ')[0];
+          } else {
+            rowData[key] = row[index];
+          }
+        });
+        return rowData;
+      });
+  
+      const response = await fetch(`http://10.40.20.93:300/BTrail/save`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ tableData: formattedData, weekNumber, year }),
+      });
+  
+      if (response.ok) {
+        setIsSaveEnabled(false);
+        setSaveBtn(true);
+        console.log('Data saved successfully and button enabled', isSaveEnabled);
+        return true;
+      } else {
+        const errorText = await response.text();
+        console.error('Failed to save changes:', errorText);
+        alert('Failed to save changes: ' + errorText);
+        return true;
+      }
+    } catch (error) {
+      console.error('Error saving changes:', error);
+      alert('Error saving changes. Check console for details.');
+      return false;
+    }
+  };
+  const handleRefresh = async () => {
+   
+    if (!selectedWeek) {
+      alert("Please select a week before finalizing the save.");
+      return;
+    }
+    
+    let [weekNumber, year] = selectedWeek.split('-');
+    weekNumber = parseInt(weekNumber);
+    year = parseInt(year);
+    try {
+      const saveResult = await handleSaveChanges();
+
+    // if (saveResult !== true) {
+    //   console.error('Save operation failed or incomplete.');
+    //   alert("Please fix save errors before refreshing.");
+    //   return;
+    // }
+
+    // // Refresh week data
+    // await fetchWeekData(selectedWeek);
       const response = await fetch(`http://10.40.20.93:300/BTrail/shippingSchedule/refresh?PlanWeek=${weekNumber}&Year_No=${year}`, {
         method: 'POST',
         headers: {
@@ -368,7 +477,13 @@ function Page({ isDarkMode }) {
     if (typeof textRenderer === "function") {
       textRenderer.call(this, instance, td, row, col, prop, value, cellProperties);
     }
-
+    const boxColumns = [10, 14, 18, 22, 26, 30];
+  if (boxColumns.includes(col)) {
+    const numericValue = parseFloat(value);
+    if (!isNaN(numericValue)) {
+      td.innerText = numericValue.toFixed(1); // Display with one decimal
+    }
+  }
     const invalidColumns = [9, 13, 17, 21, 25, 29];
     if (invalidColumns.includes(col) && (value === '' || isNaN(value) || parseInt(value) != value)) {
       td.style.backgroundColor = 'red';
@@ -377,6 +492,7 @@ function Page({ isDarkMode }) {
       td.style.backgroundColor = '';
       td.title = '';
     }
+    
     const tooltip = document.createElement('div');
     
     if (col === 0) {
@@ -403,11 +519,13 @@ function Page({ isDarkMode }) {
       td.style.backgroundColor = '#333';
       td.style.color = '#f0f0f0';
       td.style.fontSize = '10px';
+      td.style.paddingLeft='10px';
     } else {
       td.style.backgroundColor = '#fff';
       td.style.color = '#333';
       td.style.fontSize = '11px';
       td.style.cursor = 'cell';
+      td.style.paddingLeft='10px';
     }
   };
   
@@ -415,16 +533,19 @@ function Page({ isDarkMode }) {
     const container = document.querySelector('#example');
     const instance = new Handsontable(container, {
       data,
-      rowHeaders: true,
+      rowHeaders: false,
       nestedHeaders: setWeekHeaders(parseInt(selectedWeek.split('-')[0]) || 0),
       height: "100%",
       width: "100%",
       rowHeights: 30,
+      readOnly:access!==3,
       colWidths: 120,
       autoWrapRow: true,
       autoWrapCol: true,
       manualColumnResize: true,
       wordWrap: false,
+      manualRowMove: true,
+      // manualColumnMove: true,
       licenseKey: 'non-commercial-and-evaluation',
       stretchH: 'all',
       headerTooltips: true,
@@ -448,6 +569,12 @@ function Page({ isDarkMode }) {
       hiddenColumns: {
         indicators: false,
         columns:[2, 3, 7, 11, 15, 19, 23, 27]
+      },
+      cells: function (row, col) {
+        const cellProperties = {};
+        cellProperties.readOnly = access !== 3;
+        cellProperties.renderer = cellRenderer;
+        return cellProperties;
       },
       // contextMenu: {
       //   items: {
@@ -695,12 +822,25 @@ function Page({ isDarkMode }) {
           } catch (error) {
               console.error('Error in afterChange:', error);
           }
-          if ([9, 13, 17, 21, 25, 29].includes(prop)) {
-            const boxCol = prop + 1;
-            const boxqty = parseFloat(instance.getDataAtCell(row, 5)) || 0;
-            const qty = parseFloat(newValue) || 0;
-            const boxValue = boxqty === 0 || qty === 0 ? '' : (qty / boxqty).toFixed(2);
-            instance.setDataAtCell(row, boxCol, boxValue, 'formula');
+          const qtyColumns = [9, 13, 17, 21, 25, 29];
+          const boxColumns = [10, 14, 18, 22, 26, 30];
+
+          if (qtyColumns.includes(prop)) {
+              const boxColIndex = boxColumns[qtyColumns.indexOf(prop)];
+              const boxQty = Math.round(parseFloat(instance.getDataAtCell(row, 5)) || 0); 
+              const qty = parseFloat(newValue) || 0;
+              const boxValue = boxQty === 0 || qty === 0 ? '' : (qty / boxQty).toFixed(2);
+              instance.setDataAtCell(row, boxColIndex, boxValue, 'edit');
+          }
+
+          if (prop === 5) { 
+              const boxQty = Math.round(parseFloat(instance.getDataAtCell(row, 5)) || 0); 
+              qtyColumns.forEach((qtyCol, index) => {
+                  const qty = parseFloat(instance.getDataAtCell(row, qtyCol)) || 0;
+                  const boxColIndex = boxColumns[index];
+                  const boxValue = boxQty === 0 || qty === 0 ? '' : (qty / boxQty).toFixed(2);
+                  instance.setDataAtCell(row, boxColIndex, boxValue, 'edit');
+              });
           }
         });
         if (source === 'edit' && SaveBtnEnabled) {
@@ -714,7 +854,7 @@ function Page({ isDarkMode }) {
     setHotInstance(instance);
 
     return () => instance.destroy();
-  }, [data]);
+  }, [data, access]);
 
   return (
     <div className='card'>
@@ -724,7 +864,25 @@ function Page({ isDarkMode }) {
           {SaveBtnEnabled && (
             <FontAwesomeIcon
               icon={faSync}
-              onClick={handleRefresh}
+              onClick={async () => {
+                try {
+                  setIsRefresh(true);
+                  console.log('Initiating Save...');
+                  const saveResult = await handleSave(); 
+                  console.log('Save Result:', saveResult);
+                  setIsRefresh(false);
+                  if (saveResult) {
+                    console.log('Save Successful. Proceeding to Refresh...');
+                    await handleRefresh(); 
+                  } else {
+                    console.warn('Save Failed. Refresh Aborted.');
+                    alert('Save failed. Please resolve issues before refreshing.');
+                  }
+                } catch (error) {
+                  console.error('Error during Save or Refresh:', error);
+                  alert('An error occurred during the Save or Refresh process.');
+                }
+              }}
               style={{ cursor: 'pointer', fontSize: '20px', color: '#4CAF50', fontWeight: 'bold' }}
             />
           )}
@@ -755,6 +913,7 @@ function Page({ isDarkMode }) {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <button
+            hidden = {access !== 3}
             className='save-button'
             onClick={handleSaveChanges}
             disabled={!isSaveEnabled || !SaveBtnEnabled}
@@ -771,6 +930,7 @@ function Page({ isDarkMode }) {
             Save
           </button>
           <button
+            hidden = {access !== 3}
             className='save-button'
             onClick={handleFinalSave}
             disabled={!SaveBtnEnabled && !SaveBtn}

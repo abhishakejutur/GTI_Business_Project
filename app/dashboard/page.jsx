@@ -21,16 +21,51 @@ export default function Dashboard() {
   const [newYear, setNewYear] = useState();
   const [defaultMonth, setDefaultMonth] = useState(null);
   const [defaultYear, setDefaultYear] = useState(null);
+  const [dashboardAccess, setDashboardAccess] = useState(false);
+  const [dashboardCostAccess, setDashboardCostAccess] = useState(false);
+  const [saveButtonAccess, setSaveButtonAccess] = useState(false);
+  const [accessData, setAccessData] = useState([]);
+  const [access, setAccess] = useState();
   
   useEffect(() => {
     const employeeId = localStorage.getItem("username");
+    const empid = localStorage.getItem("employeeId");
+    fetchEmployeeAccess(empid);
     if (!employeeId) {
       window.location.href = "/";
       return;
     }
     fetchCurrentMonthAndYear();
+    fetchEmployeeAccess(empid);
   }, []);
-
+  useEffect(() => {
+    if (accessData.length > 0) {
+      const accessLevel = getAccessForPage("Dashboard");
+      setAccess(accessLevel);
+      // setDashboardAccess(access===3)
+      setDashboardCostAccess( access === 3 || access === 2 );
+      console.log("access number : ", access, "access Level : ", accessLevel);
+      console.log("access type : ",typeof(access))
+      console.log("admin : ", access === 3);
+      if (accessLevel === 0) {
+        window.location.href = "/";
+      }
+    }
+  }, [accessData]);
+  const fetchEmployeeAccess = async (employeeId) => {
+    try {
+      const response = await fetch(`http://10.40.20.93:300/getAccess?empId=${employeeId}`);
+      const data = await response.json();
+      setAccessData(data);
+    } catch (error) {
+      console.error("Error fetching employee access:", error);
+    }
+  };
+  
+  const getAccessForPage = (pageName) => {
+    const accessItem = accessData.find((item) => item.page === pageName);
+    return accessItem ? accessItem.access : 0;
+  };
   useEffect(() => {
     if (activeTab === "Estimated Business") {
       fetchData();
@@ -177,32 +212,70 @@ export default function Dashboard() {
     setSelectedYear(currentYear);
     fetchShippingScheduleData(currentWeek, currentYear);
   };
+  // const handleTabChange = (tab) => {
+  //   setActiveTab(tab);
+  //   if (tab === "Estimate Shipping Schedule") {
+  //     initializeShippingScheduleData();
+  //     setColumns([]);
+  //   } else {
+  //     generateDynamicColumns(selectedDate);
+  //   }
+  // };
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     if (tab === "Estimate Shipping Schedule") {
       initializeShippingScheduleData();
       setColumns([]);
-    } else {
+    } else if (tab === "Estimated Business") {
       generateDynamicColumns(selectedDate);
+    } else if (tab === "Part Costs") {
+      fetchPartCostsData();
     }
   };
+  
   const formatNumber = (num) => {
     const parsedNum = parseFloat(num);
-    console.log("Formatting number:", num, "=>", parsedNum); 
+    // console.log("Formatting number:", num, "=>", parsedNum); 
     if (!isNaN(parsedNum)) {
       return parsedNum.toLocaleString('en-US');
     }
     return "0";
   };
   const getRowBackgroundColor = (index) => {
-    if ((index + 1) % 3 === 0) {
-      return { backgroundColor: '#dfdfdf', borderBottom: '2px solid white' };
-    } else if (index % 3 === 0) {
-      return { backgroundColor: '#b1bed5' };
-    } else if ((index - 1) % 3 === 0) {
-      return { backgroundColor: '#bfd8d5' };
+    if (tableData.length === 19) {
+      if ((index + 1) % 3 === 0) {
+        return { backgroundColor: '#FFE7C7' };
+      } else if (index % 3 === 0) {
+        return { backgroundColor: '#CAF1DE' };
+      } else if ((index - 1) % 3 === 0) {
+        return { backgroundColor: '#E1F8DC' };
+      }
+  
+    } else {
+      if ((index + 1) % 4 === 0) {
+        return { backgroundColor: '#FFE7C7' };
+      } else if (index % 4 === 0) {
+        return { backgroundColor: '#CAF1DE' };
+      } else if ((index - 1) % 4 === 0) {
+        return { backgroundColor: '#E1F8DC' };
+      } else {
+        return { backgroundColor: '#FEF8DD' };
+      }
     }
   };
+
+  // const getRowBackgroundColor = (index) => {
+  //   if ((index + 1) % 4 === 0) {
+  //     return { backgroundColor: '#D3D3D3', borderBottom: '2px solid white' };
+  //   } else if (index % 4 === 0) {
+  //     return { backgroundColor: '#b1bed5' };
+  //   } else if ((index - 1) % 4 === 0) {
+  //     return { backgroundColor: '#bfd8d5' };
+  //   } else {
+  //     return { backgroundColor: '#cce5ff' };
+  //   }
+  // };
+  
   const getRowBackgroundColorTab3 = (index) => {
     const baseStyle = index % 12 < 6 
       ? { backgroundColor: '#CCFFCC', borderBottom: '1px solid white' } 
@@ -243,6 +316,17 @@ export default function Dashboard() {
     }
     return 0.0;
   };
+  const fetchPartCostsData = async () => {
+    try {
+      const response = await fetch('http://10.40.20.93:300/partCosts');
+      const result = await response.json();
+      console.log("Fetched Part Costs data:", result);
+      setTableData(result);
+    } catch (error) {
+      console.error("Error fetching Part Costs data:", error);
+    }
+  };
+  
   return (
     <div className="container" style={{ maxWidth: '100%', padding: '20px', overflow: 'hidden' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -274,6 +358,7 @@ export default function Dashboard() {
           Shipping Schedule
         </button>
       </div>
+
       <div className="header-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1 style={{ fontSize: '20px', fontWeight: 'bold' }}></h1>
         {activeTab === "Estimate Shipping Schedule" ? (
@@ -291,6 +376,7 @@ export default function Dashboard() {
             </select>
             <button
               onClick={() => handleSaveShippingSchedule()}
+              hidden = {access!==3}
               style={{
                 padding: '8px 16px',
                 marginRight: '10px',
@@ -325,7 +411,7 @@ export default function Dashboard() {
       </div>
       <div className="content-container" style={{ padding: '10px', background: '#fff', borderRadius: '8px', borderTopLeftRadius: '0px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', marginTop: '-1px', maxHeight: '100vh', overflowX: 'hidden', overflowY: 'hidden' }}>
         <div className="table-container" style={{ overflowY: 'auto', maxHeight: '70vh', borderRadius: '8px', borderTopLeftRadius: '8px' }}>
-          {activeTab === "Estimated Business" ? (
+          {activeTab === "Estimated Business" && (
             <table className="min-w-full table-auto border-collapse" style={{ tableLayout: 'fixed', width: '100%', borderRadius: '8px', wordWrap:"break-word" }}>
               <thead className="sticky top-0 bg-gray-300" style={{ position: 'sticky', top: '0', zIndex: '1' }}>
                 <tr className="sticky top-0 bg-gray-300" style={{ fontSize: '13px', zIndex: 1, padding: '8px' }}>
@@ -338,15 +424,39 @@ export default function Dashboard() {
               </thead>
               <tbody>
                 {tableData.length > 0 ? (
-                  tableData.map((row, index) => {
+                  tableData
+                  .filter((row, index) => {
+                    if (row.required_Weights === "Cost" && !dashboardCostAccess) {
+                      return false;
+                    }
+                    return true;
+                  }).map((row, index) => {
+                    const isFourthRow = (index + 1) % 4 === 0 && index !== tableData.length - 1;
                     const monthValues = columns.map((col, i) => row[String.fromCharCode(97 + i)] || 0);
                     const average = Math.round(monthValues.reduce((sum, val) => sum + val, 0) / monthValues.length);
                     const isLastRow = index === tableData.length - 1;
+                    const isThirdVisibleRow1 = (index + 1) % 3 === 0;
+                    const isThirdVisibleRow = !dashboardCostAccess && row.required_Weights !== "Cost" && (index + 1) % 3 === 0;
+                    const isFinalGTIPlan = row.material === "Final GTI Plan";
+                    const isCostRow = row.required_Weights === "Cost";
+                    const isqtyrow = row.required_Weights === "Qty.";
+                    const isWeightRow = row.required_Weights === "Kgs.";
+                    const isTonsRow = row.required_Weights === "Tons";
+                    if (isLastRow || isFinalGTIPlan) {
+                      return null;
+                    }
                     const rowStyle = {
                       ...getRowBackgroundColor(index),
                       fontFamily: "calibri",
                       fontSize: '13px',
-                      ...(isLastRow ? { backgroundColor: '#a6f1a6', color: 'black' } : {})
+                      ...(isThirdVisibleRow ? { borderBottom: "2px solid white" } : {}),
+                      // ...(isLastRow || isFinalGTIPlan ? { backgroundColor: "#a6f1a6", color: "black" } : {}),
+                      ...(isCostRow ? { borderBottom: "2px solid white", backgroundColor: "#FFE7C7", color: "black" } : {}),
+                      ...(isqtyrow && tableData.length!==25 ? { borderBottom: "2px solid white"} : {}),
+                      ...(isqtyrow && !isFinalGTIPlan ? { backgroundColor: "#FEF8DD", color: "black" } : {}),
+                      ...(isWeightRow && !isFinalGTIPlan ? { backgroundColor: "#E1F8DC", color: "black" } : {}),
+                      ...(isTonsRow && !isFinalGTIPlan ? { backgroundColor: "#CAF1DE", color: "black" } : {}),
+                      
                     };
                     return (
                       <tr key={index} style={rowStyle}>
@@ -371,10 +481,12 @@ export default function Dashboard() {
                   <tr>
                     <td colSpan={columns.length + 1} className="border px-4 py-2 text-center">No Data Available</td>
                   </tr>
-                )}
+              )}
               </tbody>
             </table>
-          ) : (
+          )}    
+          
+          {activeTab === "Estimate Shipping Schedule" && (
             <table className="min-w-full table-auto border-collapse">
               <thead className="sticky top-0 bg-gray-300" style={{ position: 'sticky', top: '0', zIndex: '1' }}>
                 <tr className="sticky top-0 bg-gray-300" style={{ fontSize: '13px', zIndex: 1, padding: '10px' }}>
@@ -393,6 +505,13 @@ export default function Dashboard() {
               <tbody>
               {tableData.length > 0 ? (
                 tableData.map((row, index) => {
+                  const containerWeight = selectedTonsForRow[index]
+                    ? parseFloat(selectedTonsForRow[index])
+                    : row.containerWeight || (row.saletype === "EXP" ? 17 : 13);
+
+                  const estimatedTrucks = containerWeight
+                    ? (row.ship_gross_weight / (containerWeight * 1000)).toFixed(1)
+                    : "N/A";
                   return (
                     <tr key={index} style={{
                       ...getRowBackgroundColorTab2(index),
@@ -409,7 +528,8 @@ export default function Dashboard() {
                       <td className="border px-1 py-1" style={{ textAlign: 'right', border: '1px solid white' }}>{formatNumber(row.cast_gross_weight)}</td>
                       <td className="border px-1 py-1" style={{ textAlign: 'right', border: '1px solid white' }}>{formatNumber(row.ship_gross_weight)}</td>
                       <td className="border px-1 py-1" style={{ textAlign: 'center', border: '1px solid white' }}>
-                        <input
+                        {access===3 ? (
+                          <input
                           type="number"
                           value={selectedTonsForRow[index] !== undefined ? selectedTonsForRow[index] : (row.containerWeight || (row.saletype === "EXP" ? 17 : 13))}
                           onChange={(e) => {
@@ -427,13 +547,15 @@ export default function Dashboard() {
                             padding: '2px',
                           }}
                         />
+                        ) : row.containerWeight && row.containerWeight > 0
+                        ? row.containerWeight
+                        : row.saletype === "EXP"
+                        ? 17
+                        : 13
+                        }
                       </td>
                       <td className="border px-1 py-1" style={{ textAlign: 'right', border: '1px solid white' }}>
-                      {calculateEstimatedTrucks(
-                        row.ship_gross_weight,
-                        selectedTonsForRow[index] ? parseFloat(selectedTonsForRow[index]) : (row.saletype === "EXP" ? 17 : 13),
-                        row.saletype
-                      )}
+                      {estimatedTrucks}
                       </td>
                     </tr>
                   );
@@ -446,6 +568,7 @@ export default function Dashboard() {
               </tbody>
             </table>
           )}
+          
         </div>
       </div>
     </div>

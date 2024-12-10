@@ -20,6 +20,7 @@ export default function Home() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [accessData, setAccessData] = useState([]);
 
   useEffect(() => {
     const sidebar = document.querySelector("#sidebar"); 
@@ -49,13 +50,13 @@ export default function Home() {
   const handleLogin = async () => {
     setError("");
     setIsLoading(true);
-
+  
     if (!employeeId || !password) {
       setError("Both Employee ID and Password are required.");
       setIsLoading(false);
       return;
     }
-
+  
     try {
       const response = await fetch("http://10.40.20.93:300/api/Login/authenticate", {
         method: "POST",
@@ -64,12 +65,13 @@ export default function Home() {
         },
         body: JSON.stringify({ employeeId, password }),
       });
-
+  
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem("employeeId", data.employeeId);
         localStorage.setItem("username", data.username);
-        window.location.href = "/dashboard";
+        const emp_id = localStorage.getItem("employeeId");
+        await fetchEmployeeAccess(emp_id);
       } else {
         const errorData = await response.json();
         setError(errorData.error || "Login failed. Please try again.");
@@ -80,7 +82,70 @@ export default function Home() {
       setIsLoading(false);
     }
   };
-
+  
+  const fetchEmployeeAccess1 = async (employeeId) => {
+    try {
+      const response = await fetch(`http://10.40.20.93:300/pageAccess?empId=${employeeId}`);
+      console.log("API Response:", response);
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+      console.log("Parsed Data:", data);
+  
+      if (data[0]) {
+        console.log("Access data:", data);
+  
+        localStorage.setItem("dashboardAccess", data[0].dashboard_Access);
+        localStorage.setItem("dashboardCostAccess", data[0].dashboard_Cost_Access);
+  
+        if (!data[0].dashboard_Access) {
+          alert("Access denied!");
+          window.location.href = "/";
+          return;
+        }
+        window.location.href = "/dashboard";
+      } else {
+        alert("Access data not found. Please contact the administrator.");
+        window.location.href = "/";
+      }
+    } catch (error) {
+      console.error("Error fetching employee access:", error);
+      alert("An error occurred while checking access. Please try again later.");
+      window.location.href = "/";
+    }
+  };
+  
+  const fetchEmployeeAccess = async (employeeId) => {
+    try {
+      const response = await fetch(`http://10.40.20.93:300/getAccess?empId=${employeeId}`);
+      const data = await response.json();
+      console.log("Access data fetched:", data);
+      setAccessData(data);
+  
+      if (data.some((item) => item.page === "Dashboard" && item.access > 0)) {
+        console.log("Dashboard access granted.");
+        window.location.href = "/dashboard";
+      } else {
+        console.log("Dashboard access denied.");
+        alert("Access denied!");
+        // window.location.href = "/";
+      }
+    } catch (error) {
+      console.error("Error fetching employee access:", error);
+      alert("An error occurred while checking access. Please try again later.");
+      window.location.href = "/";
+    }
+  };
+  
+  const getAccessForPage = (pageName) => {
+    const accessItem = accessData.find((item) => item.page === pageName);
+    console.log(`Access for ${pageName}:`, accessItem ? accessItem.access : 0); 
+    return accessItem ? accessItem.access : 0;
+  };
+  
   return (
     <div
       className="flex items-center justify-center min-h-screen sm:p-20 font-[family-name:var(--font-geist-sans)] login-container"
