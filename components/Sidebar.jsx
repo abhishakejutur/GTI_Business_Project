@@ -108,7 +108,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
   return (
     <section id="sidebar" className={sidebarClass} ref={sidebarRef}>
-      <a href="/dashboard" className="brand">
+      <a style={{whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",}}
+      href="/dashboard" className="brand">
         {!isCollapsed ? (
           <span
             style={{

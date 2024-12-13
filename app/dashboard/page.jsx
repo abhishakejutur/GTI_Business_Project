@@ -26,6 +26,15 @@ export default function Dashboard() {
   const [saveButtonAccess, setSaveButtonAccess] = useState(false);
   const [accessData, setAccessData] = useState([]);
   const [access, setAccess] = useState();
+  const [showMiddleTabs, setShowMiddleTabs] = useState(false);
+
+
+  const toggleMiddleTabs = () => {
+    setShowMiddleTabs((prev) => !prev);
+    if (showMiddleTabs) {
+      setActiveTab("Estimated Business");
+    }
+  };
   
   useEffect(() => {
     const employeeId = localStorage.getItem("username");
@@ -71,7 +80,20 @@ export default function Dashboard() {
       fetchData();
       generateDynamicColumns(selectedDate);
     }
+    if (activeTab === "Est. Busi. (Product)") {
+      fetchDataByPartDesc();
+      generateDynamicColumns(selectedDate);
+    }
+    if (activeTab === "Est. Busi. (Sale Type)") {
+      fetchDataBySaleType();
+      generateDynamicColumns(selectedDate);
+    }
+    if (activeTab === "Est. Busi. (Customer)") {
+      fetchDataByCustomer();
+      generateDynamicColumns(selectedDate);
+    }
   }, [activeTab, selectedDate]);
+  
 
   useEffect(() => {
     fetchWeekOptions();
@@ -120,6 +142,63 @@ export default function Dashboard() {
     if (activeTab === "Estimated Business") {
       try {
         const response = await fetch(`http://10.40.20.93:300/dashboard?Month=${selectedDate.getMonth() + 1}&Year=${selectedDate.getFullYear()}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        const result = await response.json();
+        console.log("Fetched data:", result);
+        setTableData(result);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    } else {
+      setTableData([]);
+    }
+  };
+  const fetchDataByPartDesc = async () => {
+    if (activeTab === "Est. Busi. (Product)") {
+      try {
+        const response = await fetch(`http://10.40.20.93:300/dashboardEstProduct?Month=${selectedDate.getMonth() + 1}&Year=${selectedDate.getFullYear()}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        const result = await response.json();
+        console.log("Fetched data:", result);
+        setTableData(result);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    } else {
+      setTableData([]);
+    }
+  };
+  const fetchDataBySaleType = async () => {
+    if (activeTab === "Est. Busi. (Sale Type)") {
+      try {
+        const response = await fetch(`http://10.40.20.93:300/dashboardEstSaleType?Month=${selectedDate.getMonth() + 1}&Year=${selectedDate.getFullYear()}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        const result = await response.json();
+        console.log("Fetched data:", result);
+        setTableData(result);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    } else {
+      setTableData([]);
+    }
+  };
+  const fetchDataByCustomer = async () => {
+    if (activeTab === "Est. Busi. (Customer)") {
+      try {
+        const response = await fetch(`http://10.40.20.93:300/dashboardEstCustomer?Month=${selectedDate.getMonth() + 1}&Year=${selectedDate.getFullYear()}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -223,15 +302,25 @@ export default function Dashboard() {
   // };
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    if (tab === "Estimate Shipping Schedule") {
+  
+    if (tab === "Estimated Business") {
+      generateDynamicColumns(selectedDate);
+      fetchData();
+    } else if (tab === "Est. Busi. (Product)") {
+      generateDynamicColumns(selectedDate);
+      fetchDataByPartDesc();
+    } else if (tab === "Est. Busi. (Sale Type)") {
+      generateDynamicColumns(selectedDate);
+      fetchDataBySaleType();
+    } else if (tab === "Est. Busi. (Customer)") {
+      generateDynamicColumns(selectedDate);
+      fetchDataByCustomer();
+    } else if (tab === "Estimate Shipping Schedule") {
       initializeShippingScheduleData();
       setColumns([]);
-    } else if (tab === "Estimated Business") {
-      generateDynamicColumns(selectedDate);
-    } else if (tab === "Part Costs") {
-      fetchPartCostsData();
     }
   };
+  
   
   const formatNumber = (num) => {
     const parsedNum = parseFloat(num);
@@ -316,49 +405,170 @@ export default function Dashboard() {
     }
     return 0.0;
   };
-  const fetchPartCostsData = async () => {
-    try {
-      const response = await fetch('http://10.40.20.93:300/partCosts');
-      const result = await response.json();
-      console.log("Fetched Part Costs data:", result);
-      setTableData(result);
-    } catch (error) {
-      console.error("Error fetching Part Costs data:", error);
-    }
-  };
   
   return (
     <div className="container" style={{ maxWidth: '100%', padding: '20px', overflow: 'hidden' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <div className="tab-container" style={{ display: 'flex', borderBottom: '1px solid #ddd', marginTop: '10px', marginBottom: '1px' }}>
+      <div
+        className="tab-container"
+        style={{
+          display: 'flex',
+          borderBottom: '1px solid #ddd',
+          marginTop: '10px',
+          marginBottom: '1px',
+          position: 'relative',
+        }}
+      >
+        {/* First Tab */}
         <button
           className={`tab-button ${activeTab === "Estimated Business" ? "active" : ""}`}
           onClick={() => handleTabChange("Estimated Business")}
           style={{
-            padding: '10px 20px',
-            fontWeight: 'bold',
-            backgroundColor: activeTab === "Estimated Business" ? '#007bff' : 'white',
-            color: activeTab === "Estimated Business" ? '#fff' : '#000',
-            borderTopLeftRadius: '8px',
+            fontSize: "12px",
+            padding: "10px 10px",
+            fontWeight: "bold",
+            backgroundColor: activeTab === "Estimated Business" ? "#007bff" : "white",
+            color: activeTab === "Estimated Business" ? "#fff" : "#000",
+            borderTopLeftRadius: "8px",
           }}
         >
-          Estimated Business
+          <span style={{ marginLeft:"10px"}}>Estimated Business</span>
         </button>
+        
+        {/* Toggle Button */}
+        <button
+          className="toggle-button"
+          onClick={toggleMiddleTabs}
+          style={{
+            fontSize: "12px",
+            padding: "10px -10px",
+            fontWeight: "bold",
+            backgroundColor: "#fff",
+            // borderLeft: "0.5px solid #ddd",
+            color:"white",
+            backgroundColor: activeTab === "Estimated Business" ? "#007bff" : "white",
+            cursor: "pointer",
+            transition: "transform 0.3s",
+            // transform: showMiddleTabs ? "rotate(180deg)" : "rotate(0deg)",
+          }}
+        >
+          <span
+          style={{
+            fontSize: "12px",
+            padding: "2px 8px",
+            fontWeight: "bold",
+            backgroundColor: "#fff",
+            // borderLeft: "0.5px solid #ddd",
+            color: activeTab === "Estimated Business" || activeTab === "Est. Busi. (Product)" ? "white" : "#007bff",
+            backgroundColor: activeTab === "Estimated Business" || activeTab === "Est. Busi. (Product)" ? "#007bff" : "white",
+            borderRadius:"80%",
+            border:activeTab === "Estimated Business" || activeTab === "Est. Busi. (Product)" ? "1px solid #ddd" : "1px solid #ddd",
+            cursor: "pointer",
+            transition: "transform 0.3s",
+            display: "inline-block",
+            transition: "transform 0.3s ease",
+            transform: showMiddleTabs ? "rotate(180deg)" : "rotate(0deg)", 
+          }}
+        >
+          &gt;
+        </span>
+        </button>
+        
+        {/* Middle Tabs */}
+        <div
+          className={`middle-tabs`}
+          style={{
+            display: "flex",
+            overflow: "hidden",
+            // transition: "max-width 0.6s ease, opacity 0.6s ease",
+            maxWidth: showMiddleTabs ? "400px" : "0px",
+            opacity: showMiddleTabs ? "1" : "0",
+            whiteSpace: "nowrap",
+            marginLeft: "-12px",
+          }}
+        >
+          <button
+            hidden={!showMiddleTabs}
+            onClick={() => handleTabChange("Est. Busi. (Product)")}
+            style={{
+              fontSize: "12px",
+              padding: "10px 10px",
+              fontWeight: "bold",
+              backgroundColor: activeTab === "Est. Busi. (Product)" ? "#007bff" : "white",
+              color: activeTab === "Est. Busi. (Product)" ? "#fff" : "#000",
+              borderLeft: "1px solid #ddd",
+              // borderRight: "1px solid #ddd",
+              whiteSpace: "nowrap", 
+              overflow: "hidden", 
+              textOverflow: "ellipsis",
+              // transition: "opacity 0.6s ease",
+            }}
+          >
+            <span style={{paddingLeft:"5px"}}>Est. Busi. (Product)</span>
+          </button>
+          <button
+            hidden={!showMiddleTabs}
+            onClick={() => handleTabChange("Est. Busi. (Sale Type)")}
+            style={{
+              fontSize: "12px",
+              padding: "10px 10px",
+              fontWeight: "bold",
+              backgroundColor: activeTab === "Est. Busi. (Sale Type)" ? "#007bff" : "white",
+              color: activeTab === "Est. Busi. (Sale Type)" ? "#fff" : "#000",
+              borderLeft: "1px solid #ddd",
+              borderRight: "0px solid #ddd",
+              transition: "opacity 0.3s ease",
+              transition: "max-width 0.6s ease, opacity 0.6s ease",
+              whiteSpace: "nowrap", 
+              overflow: "hidden",   
+              textOverflow: "ellipsis",
+              transition: "opacity 0.6s ease",
+            }}
+          >
+            Est. Busi. (Sale Type)
+          </button>
+          <button
+            hidden={!showMiddleTabs}
+            onClick={() => handleTabChange("Est. Busi. (Customer)")}
+            style={{
+              fontSize: "12px",
+              padding: "10px 10px",
+              fontWeight: "bold",
+              backgroundColor: activeTab === "Est. Busi. (Customer)" ? "#007bff" : "white",
+              color: activeTab === "Est. Busi. (Customer)" ? "#fff" : "#000",
+              borderLeft: "1px solid #ddd",
+              borderRight: "0px solid #ddd",
+              transition: "opacity 0.3s ease",
+              transition: "max-width 0.6s ease, opacity 0.6s ease",
+              whiteSpace: "nowrap", 
+              overflow: "hidden",   
+              textOverflow: "ellipsis",
+              transition: "opacity 0.6s ease",
+            }}
+          >
+            Est. Busi. (Customer)
+          </button>
+        </div>
+          
+        {/* Last Tab */}
         <button
           className={`tab-button ${activeTab === "Estimate Shipping Schedule" ? "active" : ""}`}
           onClick={() => handleTabChange("Estimate Shipping Schedule")}
           style={{
-            padding: '10px 20px',
-            fontWeight: 'bold',
-            backgroundColor: activeTab === "Estimate Shipping Schedule" ? '#007bff' : 'white',
-            color: activeTab === "Estimate Shipping Schedule" ? '#fff' : '#000',
-            borderTopRightRadius: '8px',
+            fontSize: "12px",
+            padding: "10px 10px",
+            fontWeight: "bold",
+            backgroundColor: activeTab === "Estimate Shipping Schedule" ? "#007bff" : "white",
+            color: activeTab === "Estimate Shipping Schedule" ? "#fff" : "#000",
+            borderTopRightRadius: "8px",
+            borderLeft: "1px solid #ddd",
+            marginLeft: showMiddleTabs ? "0" : "0px",
+            transition: "margin-left 0.6s ease",
           }}
         >
-          Shipping Schedule
+          <span style={{paddingLeft:"5px", paddingRight:"5px"}}>Shipping Schedule</span>
         </button>
       </div>
-
       <div className="header-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1 style={{ fontSize: '20px', fontWeight: 'bold' }}></h1>
         {activeTab === "Estimate Shipping Schedule" ? (
@@ -485,7 +695,222 @@ export default function Dashboard() {
               </tbody>
             </table>
           )}    
-          
+          {activeTab === "Est. Busi. (Product)" && (
+            <table className="min-w-full table-auto border-collapse" style={{ tableLayout: 'fixed', width: '100%', borderRadius: '8px', wordWrap:"break-word" }}>
+              <thead className="sticky top-0 bg-gray-300" style={{ position: 'sticky', top: '0', zIndex: '1' }}>
+                <tr className="sticky top-0 bg-gray-300" style={{ fontSize: '13px', zIndex: 1, padding: '8px' }}>
+                  <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', width: '170px' }}>Estimated Business</th>
+                  {columns.map((col, index) => (
+                    <th key={index} className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', minWidth: '80px', textAlign: 'center', padding: '8px' }}>{col}</th>
+                  ))}
+                  <th hidden className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', width: '100px', fontSize:"13px", padding: '8px' }}>Average</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tableData.length > 0 ? (
+                  tableData
+                  .filter((row, index) => {
+                    if (row.required_Weights === "Cost" && !dashboardCostAccess) {
+                      return false;
+                    }
+                    return true;
+                  }).map((row, index) => {
+                    const isFourthRow = (index + 1) % 4 === 0 && index !== tableData.length - 1;
+                    const monthValues = columns.map((col, i) => row[String.fromCharCode(97 + i)] || 0);
+                    const average = Math.round(monthValues.reduce((sum, val) => sum + val, 0) / monthValues.length);
+                    const isLastRow = index === tableData.length - 1;
+                    const isThirdVisibleRow1 = (index + 1) % 3 === 0;
+                    const isThirdVisibleRow = !dashboardCostAccess && row.required_Weights !== "Cost" && (index + 1) % 3 === 0;
+                    const isFinalGTIPlan = row.material === "Final GTI Plan";
+                    const isCostRow = row.required_Weights === "Cost";
+                    const isqtyrow = row.required_Weights === "Qty.";
+                    const isWeightRow = row.required_Weights === "Kgs.";
+                    const isTonsRow = row.required_Weights === "Tons";
+                    
+                    const rowStyle = {
+                      ...getRowBackgroundColor(index),
+                      fontFamily: "calibri",
+                      fontSize: '13px',
+                      ...(isThirdVisibleRow ? { borderBottom: "2px solid white" } : {}),
+                      // ...(isLastRow || isFinalGTIPlan ? { backgroundColor: "#a6f1a6", color: "black" } : {}),
+                      ...(isCostRow ? { borderBottom: "2px solid white", backgroundColor: "#FFE7C7", color: "black" } : {}),
+                      ...(isqtyrow && tableData.length!==25 ? { borderBottom: "2px solid white"} : {}),
+                      ...(isqtyrow && !isFinalGTIPlan ? { backgroundColor: "#FEF8DD", color: "black" } : {}),
+                      ...(isWeightRow && !isFinalGTIPlan ? { backgroundColor: "#E1F8DC", color: "black" } : {}),
+                      ...(isTonsRow && !isFinalGTIPlan ? { backgroundColor: "#CAF1DE", color: "black" } : {}),
+                      
+                    };
+                    return (
+                      <tr key={index} style={rowStyle}>
+                        <td className="border px-4 py-1" style={{ textAlign: 'left' }}>
+                          {row.material} <span style={{ float: 'right', fontWeight: 'normal' }}>{row.required_Weights}</span>
+                        </td>
+                        {columns.map((col, i) => {
+                          const key = String.fromCharCode(97 + i);
+                          return (
+                            <td key={i} className="border px-2 py-1" style={{ textAlign: 'right', fontSize: '12px' }}>
+                              {row[key] ? formatNumber(row[key]) : ""}
+                            </td>
+                          );
+                        })}
+                        <td hidden className="border px-4 py-1" style={{ width: '100px', textAlign: 'right', fontSize: '12px' }}>
+                          {formatNumber(average)}
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={columns.length + 1} className="border px-4 py-2 text-center">No Data Available</td>
+                  </tr>
+              )}
+              </tbody>
+            </table>
+          )}    
+          {activeTab === "Est. Busi. (Sale Type)" && (
+            <table className="min-w-full table-auto border-collapse" style={{ tableLayout: 'fixed', width: '100%', borderRadius: '8px', wordWrap:"break-word" }}>
+              <thead className="sticky top-0 bg-gray-300" style={{ position: 'sticky', top: '0', zIndex: '1' }}>
+                <tr className="sticky top-0 bg-gray-300" style={{ fontSize: '13px', zIndex: 1, padding: '8px' }}>
+                  <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', width: '200px' }}>Estimated Business</th>
+                  {columns.map((col, index) => (
+                    <th key={index} className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', minWidth: '80px', textAlign: 'center', padding: '8px' }}>{col}</th>
+                  ))}
+                  <th hidden className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', width: '100px', fontSize:"13px", padding: '8px' }}>Average</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tableData.length > 0 ? (
+                  tableData
+                  .filter((row, index) => {
+                    if (row.required_Weights === "Cost" && !dashboardCostAccess) {
+                      return false;
+                    }
+                    return true;
+                  }).map((row, index) => {
+                    const isFourthRow = (index + 1) % 4 === 0 && index !== tableData.length - 1;
+                    const monthValues = columns.map((col, i) => row[String.fromCharCode(97 + i)] || 0);
+                    const average = Math.round(monthValues.reduce((sum, val) => sum + val, 0) / monthValues.length);
+                    const isLastRow = index === tableData.length - 1;
+                    const isThirdVisibleRow1 = (index + 1) % 3 === 0;
+                    const isThirdVisibleRow = !dashboardCostAccess && row.required_Weights !== "Cost" && (index + 1) % 3 === 0;
+                    const isFinalGTIPlan = row.material === "Final GTI Plan";
+                    const isCostRow = row.required_Weights === "Cost";
+                    const isqtyrow = row.required_Weights === "Qty.";
+                    const isWeightRow = row.required_Weights === "Kgs.";
+                    const isTonsRow = row.required_Weights === "Tons";
+                    
+                    const rowStyle = {
+                      ...getRowBackgroundColor(index),
+                      fontFamily: "calibri",
+                      fontSize: '13px',
+                      ...(isThirdVisibleRow ? { borderBottom: "2px solid white" } : {}),
+                      // ...(isLastRow || isFinalGTIPlan ? { backgroundColor: "#a6f1a6", color: "black" } : {}),
+                      ...(isCostRow ? { borderBottom: "2px solid white", backgroundColor: "#FFE7C7", color: "black" } : {}),
+                      ...(isqtyrow && tableData.length!==25 ? { borderBottom: "2px solid white"} : {}),
+                      ...(isqtyrow && !isFinalGTIPlan ? { backgroundColor: "#FEF8DD", color: "black" } : {}),
+                      ...(isWeightRow && !isFinalGTIPlan ? { backgroundColor: "#E1F8DC", color: "black" } : {}),
+                      ...(isTonsRow && !isFinalGTIPlan ? { backgroundColor: "#CAF1DE", color: "black" } : {}),
+                      
+                    };
+                    return (
+                      <tr key={index} style={rowStyle}>
+                        <td className="border px-4 py-1" style={{ textAlign: 'left' }}>
+                          {row.material} <span style={{ float: 'right', fontWeight: 'normal' }}>{row.required_Weights}</span>
+                        </td>
+                        {columns.map((col, i) => {
+                          const key = String.fromCharCode(97 + i);
+                          return (
+                            <td key={i} className="border px-2 py-1" style={{ textAlign: 'right', fontSize: '12px' }}>
+                              {row[key] ? formatNumber(row[key]) : ""}
+                            </td>
+                          );
+                        })}
+                        <td hidden className="border px-4 py-1" style={{ width: '100px', textAlign: 'right', fontSize: '12px' }}>
+                          {formatNumber(average)}
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={columns.length + 1} className="border px-4 py-2 text-center">No Data Available</td>
+                  </tr>
+              )}
+              </tbody>
+            </table>
+          )}    
+          {activeTab === "Est. Busi. (Customer)" && (
+            <table className="min-w-full table-auto border-collapse" style={{ tableLayout: 'fixed', width: '100%', borderRadius: '8px', wordWrap:"break-word" }}>
+              <thead className="sticky top-0 bg-gray-300" style={{ position: 'sticky', top: '0', zIndex: '1' }}>
+                <tr className="sticky top-0 bg-gray-300" style={{ fontSize: '13px', zIndex: 1, padding: '8px' }}>
+                  <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', width: '200px' }}>Estimated Business</th>
+                  {columns.map((col, index) => (
+                    <th key={index} className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', minWidth: '80px', textAlign: 'center', padding: '8px' }}>{col}</th>
+                  ))}
+                  <th hidden className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', width: '100px', fontSize:"13px", padding: '8px' }}>Average</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tableData.length > 0 ? (
+                  tableData
+                  .filter((row, index) => {
+                    if (row.required_Weights === "Cost" && !dashboardCostAccess) {
+                      return false;
+                    }
+                    return true;
+                  }).map((row, index) => {
+                    const isFourthRow = (index + 1) % 4 === 0 && index !== tableData.length - 1;
+                    const monthValues = columns.map((col, i) => row[String.fromCharCode(97 + i)] || 0);
+                    const average = Math.round(monthValues.reduce((sum, val) => sum + val, 0) / monthValues.length);
+                    const isLastRow = index === tableData.length - 1;
+                    const isThirdVisibleRow1 = (index + 1) % 3 === 0;
+                    const isThirdVisibleRow = !dashboardCostAccess && row.required_Weights !== "Cost" && (index + 1) % 3 === 0;
+                    const isFinalGTIPlan = row.material === "Final GTI Plan";
+                    const isCostRow = row.required_Weights === "Cost";
+                    const isqtyrow = row.required_Weights === "Qty.";
+                    const isWeightRow = row.required_Weights === "Kgs.";
+                    const isTonsRow = row.required_Weights === "Tons";
+                    
+                    const rowStyle = {
+                      ...getRowBackgroundColor(index),
+                      fontFamily: "calibri",
+                      fontSize: '13px',
+                      ...(isThirdVisibleRow ? { borderBottom: "2px solid white" } : {}),
+                      // ...(isLastRow || isFinalGTIPlan ? { backgroundColor: "#a6f1a6", color: "black" } : {}),
+                      ...(isCostRow ? { borderBottom: "2px solid white", backgroundColor: "#FFE7C7", color: "black" } : {}),
+                      ...(isqtyrow && tableData.length!==25 ? { borderBottom: "2px solid white"} : {}),
+                      ...(isqtyrow && !isFinalGTIPlan ? { backgroundColor: "#FEF8DD", color: "black" } : {}),
+                      ...(isWeightRow && !isFinalGTIPlan ? { backgroundColor: "#E1F8DC", color: "black" } : {}),
+                      ...(isTonsRow && !isFinalGTIPlan ? { backgroundColor: "#CAF1DE", color: "black" } : {}),
+                      
+                    };
+                    return (
+                      <tr key={index} style={rowStyle}>
+                        <td className="border px-4 py-1" style={{ textAlign: 'left' }}>
+                          {row.material} <span style={{ float: 'right', fontWeight: 'normal' }}>{row.required_Weights}</span>
+                        </td>
+                        {columns.map((col, i) => {
+                          const key = String.fromCharCode(97 + i);
+                          return (
+                            <td key={i} className="border px-2 py-1" style={{ textAlign: 'right', fontSize: '12px' }}>
+                              {row[key] ? formatNumber(row[key]) : ""}
+                            </td>
+                          );
+                        })}
+                        <td hidden className="border px-4 py-1" style={{ width: '100px', textAlign: 'right', fontSize: '12px' }}>
+                          {formatNumber(average)}
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={columns.length + 1} className="border px-4 py-2 text-center">No Data Available</td>
+                  </tr>
+              )}
+              </tbody>
+            </table>
+          )}    
           {activeTab === "Estimate Shipping Schedule" && (
             <table className="min-w-full table-auto border-collapse"> 
               <thead className="sticky top-0 bg-gray-300" style={{ position: 'sticky', top: '0', zIndex: '1' }}>

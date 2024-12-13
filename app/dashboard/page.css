@@ -420,10 +420,19 @@ th, td {
 .datepicker-container {
   z-index: 1050; 
   height: auto;
+  margin-left: -1000px;
 }
 .week-grid {
   grid-gap: 10px;
   margin-top: 10px;
+}
+.styled-datepicker {
+  font-size: 12px;
+  padding: 5px 30px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  text-align: center;
+  width: auto;
 }
 
 .week-grid button {
@@ -434,7 +443,7 @@ th, td {
   cursor: pointer;
 }
 .react-datepicker-popper{
-  position: absolute;
+    position: absolute;
     left: 0px;
     top: 0px;
     transform: translate(-42.18182px, -17.5455px);
@@ -449,4 +458,7 @@ th, td {
   table {
     width: 100%;
   }
+}
+.calendar-input styled-datepicker{
+  font-size: 2px;
 }
