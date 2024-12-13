@@ -302,7 +302,7 @@ function Page({ isDarkMode }) {
     year = parseInt(year);
   
     try {
-      const displayedData = hotInstance.getData();
+      const displayedData = hotInstance.getData().slice(0, -1);
       const formattedData = displayedData.map(row => {
         const rowData = {};
         columnKeys.forEach((key, index) => {
@@ -333,10 +333,12 @@ function Page({ isDarkMode }) {
         setIsSaveEnabled(false);
         setSaveBtn(true);
         console.log('Data saved successfully and button enabled', isSaveEnabled);
+        fetchWeekData(selectedWeek); 
         return true;
       } else {
         const errorText = await response.text();
         console.error('Failed to save changes:', errorText);
+        fetchWeekData(selectedWeek); 
         alert('Failed to save changes: ' + errorText);
         return true;
       }
@@ -358,7 +360,7 @@ function Page({ isDarkMode }) {
     year = parseInt(year);
   
     try {
-      const displayedData = hotInstance.getData();
+      const displayedData = hotInstance.getData().slice(0, -1);
       const formattedData = displayedData.map(row => {
         const rowData = {};
         columnKeys.forEach((key, index) => {
@@ -481,7 +483,7 @@ function Page({ isDarkMode }) {
   if (boxColumns.includes(col)) {
     const numericValue = parseFloat(value);
     if (!isNaN(numericValue)) {
-      td.innerText = numericValue.toFixed(1); // Display with one decimal
+      td.innerText = numericValue.toFixed(1);
     }
   }
     const invalidColumns = [9, 13, 17, 21, 25, 29];
@@ -528,17 +530,76 @@ function Page({ isDarkMode }) {
       td.style.paddingLeft='10px';
     }
   };
+
+  const calculateTotalsRow = (data, qtyColumns, boxColumns) => {
+    const totalsRow = new Array(data[0]?.length || 0).fill(null);
+    qtyColumns.forEach((colIndex) => {
+      const totalQty = data.reduce((sum, row) => {
+        const value = parseFloat(row[colIndex]);
+        return !isNaN(value) ? sum + value : sum;
+      }, 0);
+      totalsRow[colIndex] = totalQty;
+    });
+  
+    boxColumns.forEach((colIndex) => {
+      const totalBox = data.reduce((sum, row) => {
+        const value = parseFloat(row[colIndex]);
+        return !isNaN(value) ? sum + value : sum;
+      }, 0);
+      totalsRow[colIndex] = totalBox;
+    });
+  
+    return totalsRow;
+  };
   
   useEffect(() => {
+    const qtyColumns = [9, 13, 17, 21, 25, 29]; 
+    const boxColumns = [10, 14, 18, 22, 26, 30]; 
+
+    const addTotalsRow = (data) => {
+      const totalsRow = calculateTotalsRow(data, qtyColumns, boxColumns);
+      return [...data, totalsRow]; 
+    };
+
+    const enhancedData = addTotalsRow(data); 
+
     const container = document.querySelector('#example');
+    if (!container) return;
+
     const instance = new Handsontable(container, {
-      data,
+    data: enhancedData, 
       rowHeaders: false,
       nestedHeaders: setWeekHeaders(parseInt(selectedWeek.split('-')[0]) || 0),
       height: "100%",
       width: "100%",
       rowHeights: 30,
       readOnly:access!==3,
+      fixedRowsBottom: 1, 
+      afterRenderer: (td, row, col, prop, value, cellProperties) => {
+        if (row === enhancedData.length - 1) {
+          td.style.backgroundColor = "#eee";
+          td.style.textAlign = "right";
+          td.style.fontWeight = "bold";
+          td.style.readOnly = true;
+          // td.style.borderRight = "none";
+          if (col === 1) {
+            td.innerText = "Total";
+            td.style.textAlign = "left";
+          }
+          if (col < 6) {
+            td.style.borderRight = "1px solid #eee";
+          }
+        }
+      },
+      beforeChange: (changes, source) => {
+        if (source === 'UndoRedo.undo' || source === 'UndoRedo.redo') {
+          changes.forEach(([row, col], index) => {
+            if (row === data.length) {
+              changes[index] = null; 
+            }
+          });
+        }
+      },
       colWidths: 120,
       autoWrapRow: true,
       autoWrapCol: true,
@@ -547,12 +608,15 @@ function Page({ isDarkMode }) {
       manualRowMove: true,
       // manualColumnMove: true,
       licenseKey: 'non-commercial-and-evaluation',
+      afterColumnSort() {
+        let howManyRows = this.countRows() -1;
+        this.rowIndexMapper.moveIndexes([this.toVisualRow(howManyRows)]);
+      },
       stretchH: 'all',
       headerTooltips: true,
       columnSorting: true,
       dropdownMenu: ['filter_by_condition', 'filter_by_value', 'filter_action_bar'],
       datePickerConfig: {
-        // First day of the week (0: Sunday, 1: Monday, etc)
         firstDay: 1,
         showWeekNumber: true,
       },
@@ -634,6 +698,10 @@ function Page({ isDarkMode }) {
         if (coords.row >= 0) {
           TD.style.background = '';
           TD.style.color = '#333';
+        }
+        if (coords.row === data.length) {
+          TD.classList.add('fixed-total-row'); 
+          TD.style.backgroundColor = '#eee';
         }
       },
       afterCreateRow: (index, amount) => {
@@ -949,7 +1017,7 @@ function Page({ isDarkMode }) {
         </div>
         </div>
       </div>
-      <div className="handsontable-wrapper">
+      <div  className="handsontable-wrapper">
         <div id="example" className="custom-table"></div>
       </div>
     </div>

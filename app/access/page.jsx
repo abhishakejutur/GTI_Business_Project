@@ -13,6 +13,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import '../dashboard/page.css';
 
 export default function Permissions() {
   const [employeeIds, setEmployeeIds] = useState([]);
@@ -26,10 +27,18 @@ export default function Permissions() {
   const [accessData, setAccessData] = useState([]);
   const [access, setAccess] = useState();
   const [newAccess, setNewAccess] = useState({ empId: "", pageId: "", access: 0, pageName: "" });
+  const [user, setUser] = useState("");
+  const [username, setUsername] = useState("");
+  const [originalTableData, setOriginalTableData] = useState([]);
+  const [isFullData, setIsFullData] = useState(true);
+
 
   useEffect(() => {
     const empid = localStorage.getItem("employeeId");
+    const user = localStorage.getItem("username");
+    setUser(user);
     fetchEmployeeAccess(empid);
+    fetchTableData();
   }, []);
   useEffect(() => {
     if (accessData.length > 0) {
@@ -52,14 +61,23 @@ export default function Permissions() {
       console.error("Error fetching employee access:", error);
     }
   };
-  
+  const fetchTableData = async () => {
+    try {
+      const response = await fetch("http://10.40.20.93:300/getAllAccess");
+      const data = await response.json();
+      setTableData(data);
+      setOriginalTableData(data); 
+    } catch (error) {
+      console.error("Error fetching table data:", error);
+    }
+  };
   const getAccessForPage = (pageName) => {
     const accessItem = accessData.find((item) => item.page === pageName);
     return accessItem ? accessItem.access : 0;
   };
   const fetchEmployeeIds = async () => {
     try {
-      const response = await fetch("http://10.40.20.93:300/Product/empIds");
+      const response = await fetch("http://10.40.20.93:300/api/EmployeeInfo/empIdsFrom93");
       const data = await response.json();
       const processedData = data.map((item) => {
         const [id, name] = item.split(",");
@@ -71,7 +89,21 @@ export default function Permissions() {
       console.error("Error fetching employee IDs:", error);
     }
   };
-
+  const handleEmpIdChange = (id) => {
+    const selectedEmployee = employeeIds.find((emp) => emp.id === id);
+    setSelectedEmpId(selectedEmployee?.id || "");
+    setUsername(selectedEmployee?.name || "");
+    console.log("Selected EmpId:", selectedEmployee?.id);
+    console.log("Selected Username:", selectedEmployee?.name);
+    if (id) {
+      const filteredData = originalTableData.filter((row) => row.empId === id);
+      setTableData(filteredData);
+    } else {
+      setTableData(originalTableData);
+    }
+  };
+  
+  
   const fetchAccessData = async (empId) => {
     try {
       const response = await fetch(`http://10.40.20.93:300/getAccess?empId=${empId}`);
@@ -98,7 +130,8 @@ export default function Permissions() {
   };
 
   const updateAccess = async (empId, pageId, access) => {
-    const payload = { empId, page_id: pageId, access };
+    const payload = { empId, username, modifiedBy:user ,page_id: pageId, access };
+    console.log("Payload to API:", payload);
     try {
       await fetch("http://10.40.20.93:300/Access/giveAccess", {
         method: "POST",
@@ -114,7 +147,14 @@ export default function Permissions() {
 
   const insertAccess = async () => {
     try {
-      const payload = { empId: newAccess.empId, page_id: newAccess.pageId, access: newAccess.access };
+      const payload = {
+        empId: newAccess.empId,
+        username,
+        modifiedBy: user,
+        page_id: newAccess.pageId,
+        access: newAccess.access,
+      };
+      console.log("Insert Access Payload:", payload);
       const response = await fetch("http://10.40.20.93:300/Access/giveAccess", {
         method: "POST",
         headers: {
@@ -126,7 +166,7 @@ export default function Permissions() {
 
       if (result.message.includes("success")) {
         fetchAccessData(newAccess.empId);
-        setInsertPopupOpen(false);
+        // setInsertPopupOpen(false);
       }
     } catch (error) {
       console.error("Error inserting access:", error);
@@ -142,7 +182,7 @@ export default function Permissions() {
     }));
   };
 
-  const handleAccessChange = (empId, pageId, access) => {
+  const handleAccessChange = async (empId, pageId, access) => {
     setTableData((prev) =>
       prev.map((row) =>
         row.page_id === pageId
@@ -154,13 +194,40 @@ export default function Permissions() {
       )
     );
     updateAccess(empId, pageId, access);
+    try {
+      await updateAccess(empId, pageId, access);
+      if(isFullData){
+        await fetchTableData(); 
+      }else{
+        await fetchAccessData(empId);
+      }
+      // await fetchAccessData(empId);
+      // await fetchTableData(); 
+    } catch (error) {
+      console.error("Error updating access or fetching table data:", error);
+    }
   };
 
   useEffect(() => {
     fetchEmployeeIds();
     fetchAccessOptions();
   }, []);
-
+  const groupedTableData = tableData.reduce((acc, row) => {
+    const lastGroup = acc[acc.length - 1];
+    if (lastGroup && lastGroup[0]?.empId === row.empId) {
+      lastGroup.push(row);
+    } else {
+      acc.push([row]);
+    }
+    return acc;
+  }, []);
+  
+  const getGroupBackgroundColor = (groupIndex) => {
+    const lightGreen = "#E0FBFC";
+    const darkGreen = "#BAF9FB";
+    return groupIndex % 2 === 0 ? lightGreen : darkGreen;
+  };
+  
   return (
     <div className="container" style={{ maxWidth: "100%", padding: "20px", overflow: "hidden" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -201,7 +268,7 @@ export default function Permissions() {
                 <ChevronsUpDown className="opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-full p-0 popover">
+            <PopoverContent style={{width: "250px"}} className="w-full p-0 popover">
               <Command>
                 <CommandInput placeholder="Search employee ID..." />
                 <CommandList>
@@ -211,8 +278,10 @@ export default function Permissions() {
                       <CommandItem
                         key={employee.id}
                         onSelect={() => {
+                          handleEmpIdChange(employee.id);
                           setSelectedEmpId(employee.id);
                           fetchAccessData(employee.id);
+                          setIsFullData(false);
                           setOpen(false);
                         }}
                         style={{
@@ -240,7 +309,7 @@ export default function Permissions() {
                   padding: "8px 16px",
                   borderRadius: "5px",
                 }}
-                onClick={() => setInsertPopupOpen(true)}
+                onClick={() => setInsertPopupOpen(prev => !prev)}
               >
                 New Page Access +
               </Button>
@@ -252,69 +321,120 @@ export default function Permissions() {
           <table className="min-w-full table-auto" style={{ overflowY: "auto", maxHeight: "70vh", borderRadius: "8px", borderTopLeftRadius: "8px" }}>
             <thead className="sticky top-0 bg-gray-300">
               <tr style={{ borderRadius: "8px" }}>
-                <th style={{ textAlign: "center", padding: "10px", backgroundColor: "grey", color: "white" }}>
+                <th style={{ textAlign: "center", padding: "10px", backgroundColor: "grey", color: "white", borderRight: "1px solid white" }}>
                   Employee ID
                 </th>
-                <th style={{ textAlign: "center", padding: "10px", backgroundColor: "grey", color: "white" }}>
+                <th style={{ textAlign: "center", padding: "10px", backgroundColor: "grey", color: "white", borderRight: "1px solid white" }}>
+                  Employee Name
+                </th>
+                <th style={{ textAlign: "center", padding: "10px", backgroundColor: "grey", color: "white", borderRight: "1px solid white" }}>
                   Page ID
                 </th>
-                <th style={{ textAlign: "center", padding: "10px", backgroundColor: "grey", color: "white" }}>
+                <th style={{ textAlign: "center", padding: "10px", backgroundColor: "grey", color: "white", borderRight: "1px solid white" }}>
                   Page Name
                 </th>
-                <th style={{ textAlign: "center", padding: "10px", backgroundColor: "grey", color: "white" }}>
+                <th style={{ textAlign: "center", padding: "10px", backgroundColor: "grey", color: "white", borderRight: "1px solid white" }}>
                   Access
                 </th>
               </tr>
             </thead>
             <tbody style={{ padding: "8px" }}>
-              {tableData.length > 0 ? (
-                tableData.map((row, index) => (
-                  <tr
-                    key={row.id}
-                    style={{
-                      backgroundColor: index % 2 === 0 ? "#f9f9f9" : "#ffffff",
-                      textAlign: "center",
-                      fontSize: '13px',
-                      padding: "2px",
-                    }}
-                  >
-                    <td style={{ padding: "2px" }}>{row.empId}</td>
-                    <td style={{ padding: "2px" }}>{row.page_id}</td>
-                    <td style={{ padding: "2px" }}>{row.page}</td>
-                    <td style={{ padding: "2px" }}>
-                    {access === 3 ? (
-                      <select
-                        value={row.access || 0}
-                        onChange={(e) => handleAccessChange(row.empId, row.page_id, parseInt(e.target.value))}
+              {groupedTableData.map((group, groupIndex) =>
+                group.map((row, rowIndex) => {
+                  const isLastRowInGroup = rowIndex === group.length - 1;
+                
+                  return (
+                    <tr
+                      key={`${groupIndex}-${rowIndex}`}
+                      style={{
+                        backgroundColor: getGroupBackgroundColor(groupIndex),
+                        textAlign: "center",
+                        fontSize: "13px",
+                        borderBottom: isLastRowInGroup ? "3px solid white" : "1px solid white",
+                      }}
+                    >
+                      <td
                         style={{
-                          padding: "5px",
-                          borderRadius: "5px",
-                          border: "1px solid #ccc",
-                          width: "100%",
-                          textAlign: "center",
-                          cursor: "pointer",
+                          padding: "2px",
+                          borderRight: "1px solid white",
                         }}
                       >
-                        {accessOptions[row.page_id]?.map((option, idx) => (
-                          <option key={idx} value={idx}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <span style={{ display: "block", textAlign: "center", padding: "5px" }}>
-                        {accessOptions[row.page_id]?.[row.access] || "No Access"}
-                      </span>
-                    )}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="4" style={{ padding: "10px", textAlign: "center" }}>
-                    No Access Available
-                  </td>
-                </tr>
+                        {row.empId}
+                      </td>
+                      <td
+                        style={{
+                          padding: "2px",
+                          textAlign: "left",
+                          borderRight: "1px solid white",
+                          paddingLeft: "10px",
+                        }}
+                      >
+                        {row.username}
+                      </td>
+                      <td
+                        style={{
+                          padding: "2px",
+                          borderRight: "1px solid white",
+                        }}
+                      >
+                        {row.page_id}
+                      </td>
+                      <td
+                        style={{
+                          padding: "2px",
+                          textAlign: "left",
+                          borderRight: "1px solid white",
+                          paddingLeft: "10px",
+                        }}
+                      >
+                        {row.page}
+                      </td>
+                      <td
+                        style={{
+                          padding: "2px",
+                          borderRight: "1px solid white",
+                        }}
+                      >
+                        {access === 3 ? (
+                          <select
+                            value={row.access || 0}
+                            onChange={async (e) => {
+                              const newAccess = parseInt(e.target.value);
+                              await handleAccessChange(row.empId, row.page_id, newAccess);
+                            }}
+                            style={{
+                              padding: "5px",
+                              borderRadius: "5px",
+                              border: "1px solid white",
+                              width: "100%",
+                              textAlign: "center",
+                              cursor: "pointer",
+                              backgroundColor: getGroupBackgroundColor(groupIndex),
+                              width: "50%",
+                              border: "0px solid white",
+                            }}
+                          >
+                            {accessOptions[row.page_id]?.map((option, idx) => (
+                              <option key={idx} value={idx}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <span
+                            style={{
+                              display: "block",
+                              textAlign: "center",
+                              padding: "5px",
+                            }}
+                          >
+                            {accessOptions[row.page_id]?.[row.access] || "No Access"}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -356,7 +476,7 @@ export default function Permissions() {
                   <ChevronsUpDown className="opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-full p-0 popover" style={{ zIndex: 1001 }}>
+              <PopoverContent className="w-full p-0 popover" style={{ zIndex: 1001, width: "350px" }}>
                 <Command>
                   <CommandInput placeholder="Search employee ID..." />
                   <CommandList>
@@ -366,9 +486,11 @@ export default function Permissions() {
                         <CommandItem
                           key={employee.id}
                           onSelect={() => {
+                            handleEmpIdChange(employee.id);
                             setNewAccess((prev) => ({ ...prev, empId: employee.id }));
                             setSelectedEmpId(employee.id);
                             fetchAccessData(employee.id); 
+                            setIsFullData(false);
                             setPopupOpen(false);
                           }}
                           style={{

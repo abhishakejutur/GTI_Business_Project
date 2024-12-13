@@ -471,7 +471,7 @@ export default function Dashboard() {
                             </td>
                           );
                         })}
-                        <td className="border px-4 py-1" style={{ width: '100px', textAlign: 'right' }}>
+                        <td className="border px-4 py-1" style={{ width: '100px', textAlign: 'right', fontSize: '12px' }}>
                           {formatNumber(average)}
                         </td>
                       </tr>
@@ -487,7 +487,7 @@ export default function Dashboard() {
           )}    
           
           {activeTab === "Estimate Shipping Schedule" && (
-            <table className="min-w-full table-auto border-collapse">
+            <table className="min-w-full table-auto border-collapse"> 
               <thead className="sticky top-0 bg-gray-300" style={{ position: 'sticky', top: '0', zIndex: '1' }}>
                 <tr className="sticky top-0 bg-gray-300" style={{ fontSize: '13px', zIndex: 1, padding: '10px' }}>
                   <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }}>Customer</th>
@@ -502,7 +502,7 @@ export default function Dashboard() {
                   <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }}>Est. Truck(s)</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody style={{ padding: "8px" }}>
               {tableData.length > 0 ? (
                 tableData.map((row, index) => {
                   const containerWeight = selectedTonsForRow[index]
@@ -522,11 +522,11 @@ export default function Dashboard() {
                       <td className="border px-1 py-1" style={{ textAlign: 'center', border: '1px solid white' }}>{row.customer}</td>
                       <td className="border px-1 py-1" style={{ textAlign: 'center', border: '1px solid white' }}>{row.custLocation}</td>
                       <td className="border px-1 py-1" style={{ textAlign: 'center', border: '1px solid white' }}>{row.week_no}</td>
-                      <td className="border px-1 py-1" style={{ textAlign: 'right', border: '1px solid white' }}>{formatNumber(row.parts_count)}</td>
-                      <td className="border px-1 py-1" style={{ textAlign: 'right', border: '1px solid white' }}>{formatNumber(row.box_count)}</td>
-                      <td className="border px-1 py-1" style={{ textAlign: 'right', border: '1px solid white' }}>{formatNumber(row.shipment_net_weight)}</td>
-                      <td className="border px-1 py-1" style={{ textAlign: 'right', border: '1px solid white' }}>{formatNumber(row.cast_gross_weight)}</td>
-                      <td className="border px-1 py-1" style={{ textAlign: 'right', border: '1px solid white' }}>{formatNumber(row.ship_gross_weight)}</td>
+                      <td className="border px-1 py-1" style={{ textAlign: 'right', paddingRight: "10px", border: '1px solid white' }}>{formatNumber(row.parts_count)}</td>
+                      <td className="border px-1 py-1" style={{ textAlign: 'right', paddingRight: "10px", border: '1px solid white' }}>{formatNumber(row.box_count)}</td>
+                      <td className="border px-1 py-1" style={{ textAlign: 'right', paddingRight: "10px", border: '1px solid white' }}>{formatNumber(row.shipment_net_weight)}</td>
+                      <td className="border px-1 py-1" style={{ textAlign: 'right', paddingRight: "10px", border: '1px solid white' }}>{formatNumber(row.cast_gross_weight)}</td>
+                      <td className="border px-1 py-1" style={{ textAlign: 'right', paddingRight: "10px", border: '1px solid white' }}>{formatNumber(row.ship_gross_weight)}</td>
                       <td className="border px-1 py-1" style={{ textAlign: 'center', border: '1px solid white' }}>
                         {access===3 ? (
                           <input
@@ -554,7 +554,7 @@ export default function Dashboard() {
                         : 13
                         }
                       </td>
-                      <td className="border px-1 py-1" style={{ textAlign: 'right', border: '1px solid white' }}>
+                      <td className="border px-1 py-1" style={{ textAlign: 'right', paddingRight: "10px", border: '1px solid white' }}>
                       {estimatedTrucks}
                       </td>
                     </tr>
@@ -568,7 +568,6 @@ export default function Dashboard() {
               </tbody>
             </table>
           )}
-          
         </div>
       </div>
     </div>

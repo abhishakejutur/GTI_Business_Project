@@ -21,6 +21,7 @@ export default function Home() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [accessData, setAccessData] = useState([]);
+  const [dashboard, setDashboard] = useState("");
 
   useEffect(() => {
     const sidebar = document.querySelector("#sidebar"); 
@@ -117,26 +118,59 @@ export default function Home() {
       window.location.href = "/";
     }
   };
-  
+
   const fetchEmployeeAccess = async (employeeId) => {
     try {
       const response = await fetch(`http://10.40.20.93:300/getAccess?empId=${employeeId}`);
       const data = await response.json();
       console.log("Access data fetched:", data);
       setAccessData(data);
-  
-      if (data.some((item) => item.page === "Dashboard" && item.access > 0)) {
-        console.log("Dashboard access granted.");
-        window.location.href = "/dashboard";
-      } else {
-        console.log("Dashboard access denied.");
-        alert("Access denied!");
-        // window.location.href = "/";
+      const pages = data.map((item) => ({ page: item.page, access: item.access }));
+      let nextPage = null;
+
+      for (const page of pages) {
+        if (page.access > 0) {
+          nextPage = page.page;
+          break;
+        }
       }
+      console.log("First page:", nextPage);
+      switch (nextPage) {
+        case "Dashboard":
+          window.location.href = "/dashboard";
+          break;
+        case "ShippingSchedule":
+          window.location.href = "/Shipping_plan";
+          break;
+        case "Forecast":
+          window.location.href = "/Forecast";
+          break;
+        case "Exclude":
+          window.location.href = "/exclude";
+          break;
+        case "PartCosts":
+          window.location.href = "/partcosts";
+          break;
+        case "AccessManagement":
+          window.location.href = "/access";
+          break;
+        default:
+          alert("Access denied!");
+          window.location.href = "/";
+          break;
+      }
+      // if (data.some((item) => item.page === "Dashboard" && item.access > 0)) {
+      //   console.log("Dashboard access granted.");
+      //   window.location.href = "/"+"dashboard";
+      // } else {
+      //   console.log("Dashboard access denied.");
+      //   alert("Access denied!");
+      //   // window.location.href = "/";
+      // }
     } catch (error) {
       console.error("Error fetching employee access:", error);
       alert("An error occurred while checking access. Please try again later.");
-      window.location.href = "/";
+      // window.location.href = "/";
     }
   };
   

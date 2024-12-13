@@ -48,8 +48,10 @@ export default function Dashboard() {
   const [formData, setFormData] = useState({
     shippingPn: selectedPart || "",
     currUnit: "",
+    castUSD:0.00,
     rateUSD: 0.00,
     forex: 0.00,
+    castINR:0.00,
     rateINR: 0.00,
   });
   const [accessData, setAccessData] = useState([]);
@@ -196,8 +198,10 @@ export default function Dashboard() {
           shippingPn: partNo,
           project: "",
           currUnit: "",
+          castUSD:0.00,
           rateUSD: 0.00,
           forex: 0.00,
+          castINR:0.00,
           rateINR: 0.00,
         });
         return;
@@ -207,8 +211,10 @@ export default function Dashboard() {
         shippingPn: partNo,
         project: data.project || "",
         currUnit: data.curr_unit || "",
+        castUSD: data.cast_USD || 0.00,
         rateUSD: data.rate_USD || 0.00,
         forex: data.forex || 0.00,
+        castINR: data.cast_INR || 0.00,
         rateINR: data.rate_INR || 0.00,
       });
   
@@ -219,8 +225,10 @@ export default function Dashboard() {
         shippingPn: partNo,
         project: "",
         currUnit: "",
+        castUSD: 0.00,
         rateUSD: 0.00,
         forex: 0.00,
+        castINR: 0.00,
         rateINR: 0.00,
       });
     }
@@ -229,17 +237,17 @@ export default function Dashboard() {
   const handleInputChange = (field, value) => {
     setFormData((prev) => {
       const updatedData = { ...prev, [field]: value };
-      if (field === "currUnit") {
-        if (value === "INR") {
-          updatedData.rateUSD = 0;
-          updatedData.forex = 0;
-          updatedData.rateINR = 0;
-        } else if (value === "USD") {
-          updatedData.rateUSD = 0;
-          updatedData.forex = 0;
-          updatedData.rateINR = 0;
-        }
-      }
+      // if (field === "currUnit") {
+      //   if (value === "INR") {
+      //     updatedData.rateUSD = 0;
+      //     updatedData.forex = 0;
+      //     updatedData.rateINR = 0;
+      //   } else if (value === "USD") {
+      //     updatedData.rateUSD = 0;
+      //     updatedData.forex = 0;
+      //     updatedData.rateINR = 0;
+      //   }
+      // }
       if (field === "rateUSD" || field === "forex") {
         const rateUSD = parseFloat(updatedData.rateUSD || 0);
         const forex = parseFloat(updatedData.forex || 0);
@@ -247,6 +255,14 @@ export default function Dashboard() {
           updatedData.rateINR = (rateUSD * forex).toFixed(2);
         }
       }
+      if (field === "castUSD" || field === "forex") {
+        const castUSD = parseFloat(updatedData.castUSD || 0);
+        const forex = parseFloat(updatedData.forex || 0);
+        if (!isNaN(castUSD) && !isNaN(forex)) {
+          updatedData.castINR = (castUSD * forex).toFixed(2);
+        }
+      }
+
       return updatedData;
     });
   };
@@ -279,8 +295,10 @@ export default function Dashboard() {
         setFormData({
           shippingPn: "",
           currUnit: "",
+          castUSD: "",
           rateUSD: "",
           forex: "",
+          castINR: "",
           rateINR: "",
         });
   };
@@ -293,8 +311,10 @@ export default function Dashboard() {
         setFormData({
           shippingPn: "",
           currUnit: "",
+          castUSD: "",
           rateUSD: "",
           forex: "",
+          castINR: "",
           rateINR: "",
         });
   };
@@ -307,8 +327,10 @@ export default function Dashboard() {
         setFormData({
           shippingPn: "",
           currUnit: "",
+          castUSD: "",
           rateUSD: "",
           forex: "",
+          castINR: "",
           rateINR: "",
         });
   };
@@ -647,7 +669,7 @@ export default function Dashboard() {
                   padding: "20px",
                   borderRadius: "10px",
                   boxShadow: "0 10px 20px rgba(0, 0, 0, 0.2)",
-                  width: "500px",
+                  width: "600px",
                   zIndex: 1000,
                 }}
               >
@@ -761,12 +783,28 @@ export default function Dashboard() {
                         <option value="INR">INR</option>
                       </select>
                     </div>
-                  {/* Rate USD */}
+                  {/* Cast USD */}
                   <div style={{ flex: 3 }}>
-                    <label style={{ display: "block", fontWeight: "bold" }}>Unit Price:</label>
+                    <label style={{ display: "block", fontWeight: "bold" }}>Cast Price (USD):</label>
                     <input
                       type="number"
-                      readOnly={formData.currUnit === "INR"}
+                      // readOnly={formData.currUnit === "INR"}
+                      value={formData.castUSD || 0.00}
+                      onChange={(e) => handleInputChange("castUSD", e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        borderRadius: "5px",
+                        border: "1px solid #CCC",
+                      }}
+                    />
+                  </div>
+                  {/* Rate USD */}
+                  <div style={{ flex: 3 }}>
+                    <label style={{ display: "block", fontWeight: "bold" }}>Finish Price (USD):</label>
+                    <input
+                      type="number"
+                      // readOnly={formData.currUnit === "INR"}
                       value={formData.rateUSD || 0.00}
                       onChange={(e) => handleInputChange("rateUSD", e.target.value)}
                       style={{
@@ -777,12 +815,16 @@ export default function Dashboard() {
                       }}
                     />
                   </div>
+                  
+                </div>
+                    
+                <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
                   {/* Forex */}
-                  <div style={{ flex: 3 }}>
+                  <div style={{ flex: 2 }}>
                     <label style={{ display: "block", fontWeight: "bold" }}>Forex:</label>
                     <input
                       type="number"
-                      readOnly={formData.currUnit === "INR"}
+                      // readOnly={formData.currUnit === "INR"}
                       value={formData.forex || 0.00}
                       onChange={(e) => handleInputChange("forex", e.target.value)}
                       style={{
@@ -793,18 +835,31 @@ export default function Dashboard() {
                       }}
                     />
                   </div>
-                </div>
-                    
-                <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
-                    
+                  {/* Cast INR */}
+                  <div style={{ flex: 2 }}>
+                    <label style={{ display: "block", fontWeight: "bold" }}>Cast Price (INR):</label>
+                    <input
+                      type="number"
+                      value={formData.castINR || 0.00}
+                      onChange={(e) => handleInputChange("castINR", e.target.value)}
+                      // readOnly={formData.currUnit === "USD"}
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        borderRadius: "5px",
+                        border: "1px solid #CCC",
+                        backgroundColor: "#f9f9f9", 
+                      }}
+                    />
+                  </div>
                   {/* Rate INR */}
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: "block", fontWeight: "bold" }}>Final Price INR:</label>
+                  <div style={{ flex: 2 }}>
+                    <label style={{ display: "block", fontWeight: "bold" }}>Finish Price (INR):</label>
                     <input
                       type="number"
                       value={formData.rateINR || 0.00}
                       onChange={(e) => handleInputChange("rateINR", e.target.value)}
-                      readOnly={formData.currUnit === "USD"}
+                      // readOnly={formData.currUnit === "USD"}
                       style={{
                         width: "100%",
                         padding: "10px",
@@ -880,7 +935,7 @@ export default function Dashboard() {
                     padding: "20px",
                     borderRadius: "10px",
                     boxShadow: "0 10px 20px rgba(0, 0, 0, 0.2)",
-                    width: "500px",
+                    width: "600px",
                     zIndex: 1000,
                   }}
                 >
@@ -953,7 +1008,7 @@ export default function Dashboard() {
                       </PopoverContent>
                     </Popover>
                   </div>
-              
+                
                 <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
                   {/* Currency (currUnit) */}
                   <div style={{ flex: 3 }}>
@@ -974,10 +1029,25 @@ export default function Dashboard() {
                         <option value="INR">INR</option>
                       </select>
                     </div>
-                    
+                  {/* Cast USD */}
+                  <div style={{ flex: 3 }}>
+                    <label style={{ display: "block", fontWeight: "bold" }}>Cast Price (USD):</label>
+                    <input
+                      type="number"
+                      // readOnly={formData.currUnit === "INR"}
+                      value={formData.castUSD || 0.00}
+                      onChange={(e) => handleInputChange("castUSD", e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        borderRadius: "5px",
+                        border: "1px solid #CCC",
+                      }}
+                    />
+                  </div>
                   {/* Rate USD */}
                   <div style={{ flex: 3 }}>
-                    <label style={{ display: "block", fontWeight: "bold" }}>Unit Price:</label>
+                    <label style={{ display: "block", fontWeight: "bold" }}>Finish Price (USD):</label>
                     <input
                       type="number"
                       value={formData.rateUSD || 0.00}
@@ -991,12 +1061,15 @@ export default function Dashboard() {
                       }}
                     />
                   </div>
+                </div>
+                    
+                <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
                   {/* Forex */}
-                  <div style={{ flex: 3 }}>
+                  <div style={{ flex: 2 }}>
                     <label style={{ display: "block", fontWeight: "bold" }}>Forex:</label>
                     <input
                       type="number"
-                      readOnly={formData.currUnit === "INR"}
+                      // readOnly={formData.currUnit === "INR"}
                       value={formData.forex || 0.00}
                       onChange={(e) => handleInputChange("forex", e.target.value)}
                       style={{
@@ -1007,13 +1080,26 @@ export default function Dashboard() {
                       }}
                     />
                   </div>
-                </div>
-                    
-                <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
-                    
+                  {/* Cast INR */}
+                  <div style={{ flex: 2 }}>
+                    <label style={{ display: "block", fontWeight: "bold" }}>Cast Price (INR):</label>
+                    <input
+                      type="number"
+                      value={formData.castINR || 0.00}
+                      onChange={(e) => handleInputChange("castINR", e.target.value)}
+                      // readOnly={formData.currUnit === "USD"}
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        borderRadius: "5px",
+                        border: "1px solid #CCC",
+                        backgroundColor: "#f9f9f9", 
+                      }}
+                    />
+                  </div>
                   {/* Rate INR */}
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: "block", fontWeight: "bold" }}>Final Price INR:</label>
+                  <div style={{ flex: 2 }}>
+                    <label style={{ display: "block", fontWeight: "bold" }}>Finish Price (INR):</label>
                     <input
                       type="number"
                       value={formData.rateINR || 0.00}
@@ -1094,7 +1180,7 @@ export default function Dashboard() {
                     padding: "20px",
                     borderRadius: "10px",
                     boxShadow: "0 10px 20px rgba(0, 0, 0, 0.2)",
-                    width: "500px",
+                    width: "600px",
                     zIndex: 1000,
                   }}
                 >
@@ -1206,9 +1292,25 @@ export default function Dashboard() {
                       }}
                     />
                   </div>
+                  {/* Cast USD */}
+                  <div style={{ flex: 3 }}>
+                    <label style={{ display: "block", fontWeight: "bold" }}>Cast Price (USD):</label>
+                    <input
+                      type="number"
+                      // readOnly={formData.currUnit === "INR"}
+                      value={formData.castUSD || 0.00}
+                      onChange={(e) => handleInputChange("castUSD", e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        borderRadius: "5px",
+                        border: "1px solid #CCC",
+                      }}
+                    />
+                  </div>
                   {/* Rate USD */}
                   <div style={{ flex: 3 }}>
-                    <label style={{ display: "block", fontWeight: "bold" }}>Unit Price:</label>
+                    <label style={{ display: "block", fontWeight: "bold" }}>Finish Price (USD):</label>
                     <input
                       type="number"
                       readOnly
@@ -1222,12 +1324,15 @@ export default function Dashboard() {
                       }}
                     />
                   </div>
+                </div>
+                    
+                <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
                   {/* Forex */}
-                  <div style={{ flex: 3 }}>
+                  <div style={{ flex: 2 }}>
                     <label style={{ display: "block", fontWeight: "bold" }}>Forex:</label>
                     <input
-                      readOnly
                       type="number"
+                      // readOnly={formData.currUnit === "INR"}
                       value={formData.forex || 0.00}
                       onChange={(e) => handleInputChange("forex", e.target.value)}
                       style={{
@@ -1238,13 +1343,26 @@ export default function Dashboard() {
                       }}
                     />
                   </div>
-                </div>
-                    
-                <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
-                    
+                  {/* Cast INR */}
+                  <div style={{ flex: 2 }}>
+                    <label style={{ display: "block", fontWeight: "bold" }}>Cast Price (INR):</label>
+                    <input
+                      type="number"
+                      value={formData.castINR || 0.00}
+                      onChange={(e) => handleInputChange("castINR", e.target.value)}
+                      // readOnly={formData.currUnit === "USD"}
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        borderRadius: "5px",
+                        border: "1px solid #CCC",
+                        backgroundColor: "#f9f9f9", 
+                      }}
+                    />
+                  </div>
                   {/* Rate INR */}
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: "block", fontWeight: "bold" }}>Final Price INR:</label>
+                  <div style={{ flex: 2 }}>
+                    <label style={{ display: "block", fontWeight: "bold" }}>Finish Price (INR):</label>
                     <input
                       type="number"
                       value={formData.rateINR || 0.00}
@@ -1308,9 +1426,11 @@ export default function Dashboard() {
                       <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }} className="border px-4 py-2">Project</th>
                       <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }} className="border px-4 py-2">Ship p/n</th>
                       <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }} className="border px-4 py-2">Currency</th>
-                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }} className="border px-4 py-2">Unit Price</th>
+                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }} className="border px-4 py-2">Cast Price (USD)</th>
+                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }} className="border px-4 py-2">Finish Price (USD)</th>
                       <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }} className="border px-4 py-2">Forex</th>
-                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }} className="border px-4 py-2">Final Price (INR)</th>
+                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }} className="border px-4 py-2">Cast Price (INR)</th>
+                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }} className="border px-4 py-2">Finish Price (INR)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1324,12 +1444,14 @@ export default function Dashboard() {
                         padding: '4px',
                       }}>
                           <td hidden style={{ padding: '5px' }} className="border px-4 py-2">{row.part_ID}</td>
-                          <td style={{ textAlign: 'left', padding: '5px' }} className="border px-4 py-2">{row.project}</td>
+                          <td style={{ textAlign: 'left', padding: '5px', paddingLeft: "10px" }} className="border px-4 py-2">{row.project}</td>
                           <td style={{ textAlign: 'center', padding: '5px' }} className="border px-4 py-2">{row.shipping_pn}</td>
                           <td style={{ textAlign: 'center', padding: '5px' }} className="border px-4 py-2">{row.curr_unit}</td>
-                          <td style={{ textAlign: 'right', padding: '5px' }} className="border px-4 py-2">{row.rate_USD}</td>
-                          <td style={{ textAlign: 'right', padding: '5px' }} className="border px-4 py-2">{row.forex}</td>
-                          <td style={{ textAlign: 'right', padding: '5px' }} className="border px-4 py-2">{row.rate_INR}</td>
+                          <td style={{ textAlign: 'right', padding: '5px', paddingRight: "10px" }} className="border px-4 py-2">{row.cast_USD}</td>
+                          <td style={{ textAlign: 'right', padding: '5px', paddingRight: "10px" }} className="border px-4 py-2">{row.rate_USD}</td>
+                          <td style={{ textAlign: 'right', padding: '5px', paddingRight: "10px" }} className="border px-4 py-2">{row.forex}</td>
+                          <td style={{ textAlign: 'right', padding: '5px', paddingRight: "10px" }} className="border px-4 py-2">{row.cast_INR}</td>
+                          <td style={{ textAlign: 'right', padding: '5px', paddingRight: "10px" }} className="border px-4 py-2">{row.rate_INR}</td>
                         </tr>
                         )}
                       )

@@ -486,6 +486,10 @@ function Page({ isDarkMode }) {
       manualColumnResize: true,
       wordWrap: false,
       licenseKey: 'non-commercial-and-evaluation',
+      afterColumnSort() {
+        let howManyRows = this.countRows() -1;
+        this.rowIndexMapper.moveIndexes([this.toVisualRow(howManyRows)]);
+      },
       manualRowMove: true,
       // manualColumnMove: true,
       fixedRowsBottom: 1,
@@ -575,6 +579,7 @@ function Page({ isDarkMode }) {
       //     forceNumeric: true,
       //   },
       // ],
+      
       afterChange: handleAfterChange,
       afterRenderer: (td, row, col, prop, value, cellProperties) => {
         if (row === enhancedData.length - 1) {
