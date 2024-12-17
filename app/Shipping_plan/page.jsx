@@ -8,6 +8,8 @@ import '../handsontable/page.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import './page.css';
+import  secureLocalStorage  from  "react-secure-storage";
+import { handleLogin } from "@/lib/auth";
 
 function Page({ isDarkMode }) {
   const [data, setData] = useState([['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']]);
@@ -29,8 +31,31 @@ function Page({ isDarkMode }) {
   let nextId = data.length + 1;
 
   useEffect(() => {
+    const checkLogin = async () => {
+      const employeeId = secureLocalStorage.getItem("nu");
+      const id = secureLocalStorage.getItem("die");
+      const password = secureLocalStorage.getItem("ep");
+  
+      if (!employeeId || !password) {
+        console.log("No credentials found, redirecting to login.");
+        secureLocalStorage.clear();
+        secureLocalStorage.clear();
+        window.location.href = "/";
+        return;
+      }
+      const isAccess = await handleLogin(id, password);
+      if (!isAccess) {
+        console.log("Login failed, redirecting to login.");
+        secureLocalStorage.clear();
+        secureLocalStorage.clear();
+        window.location.href = "/";
+      } else {
+        console.log("Login successful, accessing Dashboard.");
+      }
+    };
+    checkLogin();
     const content = document.querySelector("#content main");
-    const empid = localStorage.getItem("employeeId");
+    const empid = secureLocalStorage.getItem("die");
     // content.style.overflowY.width="hidden";
     fetchEmployeeAccess(empid);
   }, []);
@@ -44,7 +69,7 @@ function Page({ isDarkMode }) {
       console.log("access type : ",typeof(access))
       console.log("admin : ", access === 3);
       if (accessLevel === 0) {
-        window.location.href = "/dashboard";
+        window.location.href = "/";
       }
     }
   }, [accessData]);
@@ -139,7 +164,7 @@ function Page({ isDarkMode }) {
     return weekNumber;
   };
   useEffect(() => {
-    const employeeId = localStorage.getItem("username");
+    const employeeId = secureLocalStorage.getItem("nu");
     if (!employeeId) {
       window.location.href = "/";
       return;

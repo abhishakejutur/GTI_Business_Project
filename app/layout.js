@@ -7,6 +7,8 @@ import Nav from "../components/Nav";
 import 'jspreadsheet-ce/dist/jspreadsheet.css';
 import { useState, useEffect } from "react";
 import 'handsontable/dist/handsontable.full.min.css';
+import  secureLocalStorage  from  "react-secure-storage";
+import { handleLogin } from "@/lib/auth";
 
 const geistSans = localFont({
   src: "./fonts/GeistMonoVF.woff",
@@ -27,7 +29,7 @@ export default function RootLayout({ children }) {
   const [emp, setEmp] = useState(null);
 
   useEffect(() => {
-    const user = localStorage.getItem("username");
+    const user = secureLocalStorage.getItem("nu");
     setEmp(user);
 
     const handleResize = () => {

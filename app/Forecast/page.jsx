@@ -10,6 +10,8 @@ import '../handsontable/page.css';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "./page.css";
+import  secureLocalStorage  from  "react-secure-storage";
+import { handleLogin } from "@/lib/auth";
 
 function Page({ isDarkMode }) {
   const [data, setData] = useState([]);
@@ -41,7 +43,7 @@ function Page({ isDarkMode }) {
       console.log("access type : ",typeof(access))
       console.log("admin : ", access === 3);
       if (accessLevel === 0) {
-        window.location.href = "/dashboard";
+        window.location.href = "/";
       }
     }
   }, [accessData]);
@@ -137,8 +139,31 @@ function Page({ isDarkMode }) {
   };
   
   useEffect(() => {
-    const employeeId = localStorage.getItem("username");
-    const empid = localStorage.getItem("employeeId");
+    const checkLogin = async () => {
+      const employeeId = secureLocalStorage.getItem("nu");
+      const id = secureLocalStorage.getItem("die");
+      const password = secureLocalStorage.getItem("ep");
+  
+      if (!employeeId || !password) {
+        console.log("No credentials found, redirecting to login.");
+        secureLocalStorage.clear();
+        secureLocalStorage.clear();
+        window.location.href = "/";
+        return;
+      }
+      const isAccess = await handleLogin(id, password);
+      if (!isAccess) {
+        console.log("Login failed, redirecting to login.");
+        secureLocalStorage.clear();
+        secureLocalStorage.clear();
+        window.location.href = "/";
+      } else {
+        console.log("Login successful, accessing Dashboard.");
+      }
+    };
+    checkLogin();
+    const employeeId = secureLocalStorage.getItem("nu");
+    const empid = secureLocalStorage.getItem("die");
     fetchEmployeeAccess(empid);
     if (!employeeId) {
       window.location.href = "/";

@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import './globals.css';
 import { constants } from "buffer";
+import  secureLocalStorage  from  "react-secure-storage";
 
 export default function Home() {
   const [employeeId, setEmployeeId] = useState("");
@@ -69,13 +70,15 @@ export default function Home() {
   
       if (response.ok) {
         const data = await response.json();
-        localStorage.setItem("employeeId", data.employeeId);
-        localStorage.setItem("username", data.username);
-        const emp_id = localStorage.getItem("employeeId");
+        secureLocalStorage.setItem("die", data.employeeId);
+        secureLocalStorage.setItem("nu", data.username);
+        secureLocalStorage.setItem("ep", password);
+        const emp_id = secureLocalStorage.getItem("die");
         await fetchEmployeeAccess(emp_id);
       } else {
         const errorData = await response.json();
         setError(errorData.error || "Login failed. Please try again.");
+        window.location.href = "/";
       }
     } catch (err) {
       setError("Incorrect Employee ID or Password.");
@@ -87,17 +90,17 @@ export default function Home() {
   const fetchEmployeeAccess1 = async (employeeId) => {
     try {
       const response = await fetch(`http://10.40.20.93:300/pageAccess?empId=${employeeId}`);
-      console.log("API Response:", response);
+      // console.log("API Response:", response);
   
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
   
       const data = await response.json();
-      console.log("Parsed Data:", data);
+      // console.log("Parsed Data:", data);
   
       if (data[0]) {
-        console.log("Access data:", data);
+        // console.log("Access data:", data);
   
         localStorage.setItem("dashboardAccess", data[0].dashboard_Access);
         localStorage.setItem("dashboardCostAccess", data[0].dashboard_Cost_Access);
@@ -123,7 +126,7 @@ export default function Home() {
     try {
       const response = await fetch(`http://10.40.20.93:300/getAccess?empId=${employeeId}`);
       const data = await response.json();
-      console.log("Access data fetched:", data);
+      // console.log("Access data fetched:", data);
       setAccessData(data);
       const pages = data.map((item) => ({ page: item.page, access: item.access }));
       let nextPage = null;

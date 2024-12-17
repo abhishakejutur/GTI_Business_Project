@@ -17,6 +17,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import './page.css';
+import  secureLocalStorage  from  "react-secure-storage";
+import { handleLogin } from "@/lib/auth";
 
 const getMonths = (startMonth, startYear) => {
   const months = [];
@@ -47,8 +49,31 @@ export default function NMC() {
   const [userEdit, setUserEdit] = React.useState(false);
 
   React.useEffect(() => {
-    const employeeId = localStorage.getItem("username");
-    const empid = localStorage.getItem("employeeId");
+    const checkLogin = async () => {
+      const employeeId = secureLocalStorage.getItem("nu");
+      const id = secureLocalStorage.getItem("die");
+      const password = secureLocalStorage.getItem("ep");
+  
+      if (!employeeId || !password) {
+        console.log("No credentials found, redirecting to login.");
+        secureLocalStorage.clear();
+        secureLocalStorage.clear();
+        window.location.href = "/";
+        return;
+      }
+      const isAccess = await handleLogin(id, password);
+      if (!isAccess) {
+        console.log("Login failed, redirecting to login.");
+        secureLocalStorage.clear();
+        secureLocalStorage.clear();
+        window.location.href = "/";
+      } else {
+        console.log("Login successful, accessing Dashboard.");
+      }
+    };
+    checkLogin();
+    const employeeId = secureLocalStorage.getItem("nu");
+    const empid = secureLocalStorage.getItem("die");
     fetchEmployeeAccess(empid);
     if (!employeeId) {
       window.location.href = "/";
@@ -79,7 +104,7 @@ export default function NMC() {
       console.log("Exclude User Edit:", userEdit);
   
       if (accessLevel === 0) {
-        window.location.href = "/dashboard";
+        window.location.href = "/";
       }
     } catch (error) {
       console.error("Error fetching employee access:", error);
@@ -151,7 +176,7 @@ export default function NMC() {
   };
 
   const handleRemoveRow = async (partNo, excludedMonths) => {
-    const createdBy = localStorage.getItem("username");
+    const createdBy = secureLocalStorage.getItem("nu");
     const payload = {
       partNo,
       excludedMonths,
@@ -189,7 +214,7 @@ export default function NMC() {
       return;
     }
   
-    const createdBy = localStorage.getItem("username");
+    const createdBy = secureLocalStorage.getItem("nu");
     const formattedMonths = selectedMonths
       .map((month) =>
         new Date(month).toLocaleString("default", { month: "short", year: "2-digit" })

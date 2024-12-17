@@ -444,7 +444,7 @@ th, td {
 }
 .react-datepicker-popper{
     position: absolute;
-    left: 0px;
+    left: -25px;
     top: 0px;
     transform: translate(-42.18182px, -17.5455px);
 }

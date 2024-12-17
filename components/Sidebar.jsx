@@ -18,6 +18,7 @@ import {
   faUniversalAccess,
 } from "@fortawesome/free-solid-svg-icons";
 import './UI.css';
+import  secureLocalStorage  from  "react-secure-storage";
 
 
 const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
@@ -33,13 +34,14 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const [partCosts, setPartCosts] = useState(false);
   const [pageAccess, setPageAccess] = useState([]);
   const [accessData, setAccessData] = useState([]);
+  
 
   useEffect(() => {
     const currentPath = window.location.pathname;
-    const empid = localStorage.getItem("employeeId");
+    const empid = secureLocalStorage.getItem("die");
     setActiveLink(currentPath);
     fetchEmployeeAccess(empid);
-    const employeeId = localStorage.getItem("employeeId");
+    const employeeId = secureLocalStorage.getItem("die");
     setIsLoggedIn(!!employeeId);
   }, []);
 
@@ -87,7 +89,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   };
 
   const handleLogout = () => {
-    localStorage.clear();
+    secureLocalStorage.clear();
     window.location.href = "/";
   };
 
@@ -227,7 +229,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             )}
           </a>
         </li>
-        <li hidden={getAccessForPage("PartCosts") === 0} className={activeLink === "/partcosts" ? "active" : ""}>
+        <li hidden={getAccessForPage("PartCosts") === 0 || getAccessForPage("PartCosts") === 1} className={activeLink === "/partcosts" ? "active" : ""}>
           <a href="/partcosts" onClick={(e) => handleLinkClick("/partcosts", e)}>
             <FontAwesomeIcon icon={faCoins} style={{ marginLeft: "3px"}} /> 
             {!isCollapsed && (

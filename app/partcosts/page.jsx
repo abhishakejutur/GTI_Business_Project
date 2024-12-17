@@ -28,6 +28,8 @@ import {
   faPencil,
   faPlus,
 } from "@fortawesome/free-solid-svg-icons";
+import  secureLocalStorage  from  "react-secure-storage";
+import { handleLogin } from "@/lib/auth";
 
 export default function Dashboard() {
   const [open, setOpen] = React.useState(false);
@@ -61,8 +63,31 @@ export default function Dashboard() {
   
 
   useEffect(() => {
-    const employeeId = localStorage.getItem("username");
-    const empid = localStorage.getItem("employeeId");
+    const checkLogin = async () => {
+      const employeeId = secureLocalStorage.getItem("nu");
+      const id = secureLocalStorage.getItem("die");
+      const password = secureLocalStorage.getItem("ep");
+  
+      if (!employeeId || !password) {
+        console.log("No credentials found, redirecting to login.");
+        secureLocalStorage.clear();
+        secureLocalStorage.clear();
+        window.location.href = "/";
+        return;
+      }
+      const isAccess = await handleLogin(id, password);
+      if (!isAccess) {
+        console.log("Login failed, redirecting to login.");
+        secureLocalStorage.clear();
+        secureLocalStorage.clear();
+        window.location.href = "/";
+      } else {
+        console.log("Login successful, accessing Dashboard.");
+      }
+    };
+    checkLogin();
+    const employeeId = secureLocalStorage.getItem("nu");
+    const empid = secureLocalStorage.getItem("die");
     if (!employeeId) {
       window.location.href = "/";
       return;
@@ -80,8 +105,8 @@ export default function Dashboard() {
       console.log("access number : ", access, "access Level : ", accessLevel);
       console.log("access type : ",typeof(access))
       console.log("admin : ", access === 3);
-      if (accessLevel === 0) {
-        window.location.href = "/dashboard";
+      if (accessLevel === 0 || accessLevel === 1) {
+        window.location.href = "/";
       }
     }
   }, [accessData]);

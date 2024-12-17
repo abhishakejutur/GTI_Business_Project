@@ -6,6 +6,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import './page.css';
+import  secureLocalStorage  from  "react-secure-storage";
+import { handleLogin } from "@/lib/auth";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("Estimated Business");
@@ -27,6 +29,7 @@ export default function Dashboard() {
   const [accessData, setAccessData] = useState([]);
   const [access, setAccess] = useState();
   const [showMiddleTabs, setShowMiddleTabs] = useState(false);
+  const [handleAccess, setHandleAccess] = useState(false);
 
 
   const toggleMiddleTabs = () => {
@@ -35,18 +38,55 @@ export default function Dashboard() {
       setActiveTab("Estimated Business");
     }
   };
-  
   useEffect(() => {
-    const employeeId = localStorage.getItem("username");
-    const empid = localStorage.getItem("employeeId");
-    fetchEmployeeAccess(empid);
-    if (!employeeId) {
-      window.location.href = "/";
-      return;
-    }
-    fetchCurrentMonthAndYear();
-    fetchEmployeeAccess(empid);
+    const checkLogin = async () => {
+      const employeeId = secureLocalStorage.getItem("nu");
+      const id = secureLocalStorage.getItem("die");
+      const password = secureLocalStorage.getItem("ep");
+  
+      if (!employeeId || !password) {
+        console.log("No credentials found, redirecting to login.");
+        secureLocalStorage.clear();
+        secureLocalStorage.clear();
+        window.location.href = "/";
+        return;
+      }
+      const isAccess = await handleLogin(id, password);
+      if (!isAccess) {
+        console.log("Login failed, redirecting to login.");
+        secureLocalStorage.clear();
+        secureLocalStorage.clear();
+        window.location.href = "/";
+      } else {
+        console.log("Login successful, accessing Dashboard.");
+        await fetchEmployeeAccess(id);
+        fetchCurrentMonthAndYear();
+      }
+    };
+    checkLogin();
+    const id = secureLocalStorage.getItem("die");
+    fetchEmployeeAccess(id);
+    
   }, []);
+
+  // useEffect(() => {
+  //   const employeeId = localStorage.getItem("username");
+  //   const password = secureLocalStorage.getItem("password_encrypted");
+  //   const empid = localStorage.getItem("employeeId");
+  //   fetchEmployeeAccess(empid);
+  //   if (!employeeId ) {
+  //     window.location.href = "/";
+  //     return;
+  //   }
+  //   handleLogin(employeeId, password);
+  //   if(!handleAccess){
+  //     window.location.href = "/";
+  //   }
+  //   fetchCurrentMonthAndYear();
+  //   fetchEmployeeAccess(empid);
+  // }, []);
+
+  
   useEffect(() => {
     if (accessData.length > 0) {
       const accessLevel = getAccessForPage("Dashboard");
@@ -529,6 +569,7 @@ export default function Dashboard() {
           </button>
           <button
             hidden={!showMiddleTabs}
+            className="button-hover"
             onClick={() => handleTabChange("Est. Busi. (Customer)")}
             style={{
               fontSize: "12px",
@@ -887,7 +928,7 @@ export default function Dashboard() {
                     return (
                       <tr key={index} style={rowStyle}>
                         <td className="border px-4 py-1" style={{ textAlign: 'left' }}>
-                          {row.material} <span style={{ float: 'right', fontWeight: 'normal' }}>{row.required_Weights}</span>
+                          {isTonsRow && row.material} <span style={{ float: 'right', fontWeight: 'normal' }}>{row.required_Weights}</span>
                         </td>
                         {columns.map((col, i) => {
                           const key = String.fromCharCode(97 + i);
