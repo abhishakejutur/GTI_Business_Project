@@ -8,7 +8,7 @@ import 'jspreadsheet-ce/dist/jspreadsheet.css';
 import { useState, useEffect } from "react";
 import 'handsontable/dist/handsontable.full.min.css';
 import  secureLocalStorage  from  "react-secure-storage";
-import { handleLogin } from "@/lib/auth";
+// import { handleLogin } from "@/lib/auth";
 
 const geistSans = localFont({
   src: "./fonts/GeistMonoVF.woff",
@@ -23,7 +23,7 @@ const geistMono = localFont({
 
 export default function RootLayout({ children }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); 
   const [isMobileView, setIsMobileView] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [emp, setEmp] = useState(null);

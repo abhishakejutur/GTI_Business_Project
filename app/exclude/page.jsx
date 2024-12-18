@@ -48,13 +48,14 @@ export default function NMC() {
   const [access, setAccess] = React.useState();
   const [userEdit, setUserEdit] = React.useState(false);
 
+
   React.useEffect(() => {
     const checkLogin = async () => {
       const employeeId = secureLocalStorage.getItem("nu");
       const id = secureLocalStorage.getItem("die");
       const password = secureLocalStorage.getItem("ep");
   
-      if (!employeeId || !password) {
+      if (!employeeId || !password || !id) {
         console.log("No credentials found, redirecting to login.");
         secureLocalStorage.clear();
         secureLocalStorage.clear();

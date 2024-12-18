@@ -44,7 +44,7 @@ export default function Dashboard() {
       const id = secureLocalStorage.getItem("die");
       const password = secureLocalStorage.getItem("ep");
   
-      if (!employeeId || !password) {
+      if (!employeeId || !password || !id) {
         console.log("No credentials found, redirecting to login.");
         secureLocalStorage.clear();
         secureLocalStorage.clear();
