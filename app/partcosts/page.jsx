@@ -77,12 +77,12 @@ export default function Dashboard() {
       }
       const isAccess = await handleLogin(id, password);
       if (!isAccess) {
-        console.log("Login failed, redirecting to login.");
+        console.log("Access failed, redirecting to login.");
         secureLocalStorage.clear();
         secureLocalStorage.clear();
         window.location.href = "/";
       } else {
-        console.log("Login successful, accessing Dashboard.");
+        console.log("accessing partcosts...");
       }
     };
     checkLogin();
@@ -182,7 +182,7 @@ export default function Dashboard() {
         const response = await fetch("http://10.40.20.93:300/partNos?flag=false");
         const data = await response.json();
         setPartOptions(data);
-        console.log("Fetched Part no. data:", data);
+        // console.log("Fetched Part no. data:", data);
       } catch (error) {
         console.error("Error fetching part options:", error);
       }

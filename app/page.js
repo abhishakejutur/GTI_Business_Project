@@ -15,6 +15,8 @@ import { Label } from "@/components/ui/label";
 import './globals.css';
 import { constants } from "buffer";
 import  secureLocalStorage  from  "react-secure-storage";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons'; 
 
 export default function Home() {
   const [employeeId, setEmployeeId] = useState("");
@@ -23,6 +25,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [accessData, setAccessData] = useState([]);
   const [dashboard, setDashboard] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const sidebar = document.querySelector("#sidebar"); 
@@ -231,13 +234,20 @@ export default function Home() {
                 <Label htmlFor="psw">Password</Label>
                 <Input
                   id="psw"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="Enter password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   style={{ backgroundColor: "transparent", border: "1px solid black" }}
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)} 
+                  className="absolute right-2 top-10" 
+                >
+                  <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+                </button>
               </div>
             </div>
           </form>

@@ -27,6 +27,8 @@ function Page({ isDarkMode }) {
   const [access, setAccess] = useState();
   const [userEdit, setUserEdit] = useState(false);
   const [isRefresh , setIsRefresh] = useState(false);
+  const [latestPlanWeek, setLatestPlanWeek] = useState();
+  const [latestPlanYear, setLatestPlanYear] = useState();
   
   let nextId = data.length + 1;
 
@@ -45,12 +47,12 @@ function Page({ isDarkMode }) {
       }
       const isAccess = await handleLogin(id, password);
       if (!isAccess) {
-        console.log("Login failed, redirecting to login.");
+        console.log("Access failed, redirecting to login.");
         secureLocalStorage.clear();
         secureLocalStorage.clear();
         window.location.href = "/";
       } else {
-        console.log("Login successful, accessing Dashboard.");
+        console.log("accessing Shipping Schedule...");
       }
     };
     checkLogin();
@@ -58,6 +60,7 @@ function Page({ isDarkMode }) {
     const empid = secureLocalStorage.getItem("die");
     // content.style.overflowY.width="hidden";
     fetchEmployeeAccess(empid);
+    lastFinalizeWeek();
   }, []);
   useEffect(() => {
     if (accessData.length > 0) {
@@ -163,6 +166,22 @@ function Page({ isDarkMode }) {
     const weekNumber = Math.ceil((days + startDate.getDay() + 1) / 7);
     return weekNumber;
   };
+  const lastFinalizeWeek = async () => {
+    try {
+      const response = await fetch('http://10.40.20.93:300/ShippingSchedule/getLatestPlanWeekAndYear', {
+        method: 'GET'
+        });
+        if (response.ok) {
+          const { month_No, year_No } = await response.json();
+          setLatestPlanWeek(month_No);
+          setLatestPlanYear(year_No);
+        } else {
+          console.error("Failed to fetch latest plan week and year");
+        }
+    } catch (error) {
+          console.error("Error fetching latest plan week and year:", error);
+      }
+  };
   useEffect(() => {
     const employeeId = secureLocalStorage.getItem("nu");
     if (!employeeId) {
@@ -191,24 +210,34 @@ function Page({ isDarkMode }) {
 
   const handleWeekChange = (event) => {
     const selectedWeekValue = event.target.value;
+    setSaveBtnEnabled(false);
+    setIsSaveEnabled(false);
 
     if (selectedWeekValue) {
         setSelectedWeek(selectedWeekValue);
-        let [weekNumber] = selectedWeekValue.split('-');
+        let [weekNumber, year] = selectedWeekValue.split('-');
         weekNumber = parseInt(weekNumber);
+        year = parseInt(year);
 
-        const updatedNestedHeaders = setWeekHeaders(weekNumber);
+        lastFinalizeWeek();
+        if(weekNumber > latestPlanWeek || year > latestPlanYear){
+          alert("please finalize the previous week plan");
+          setSelectedWeek(latestPlanWeek + "-" + latestPlanYear);
+          return
+        } else {
+          const updatedNestedHeaders = setWeekHeaders(weekNumber);
 
-        if (hotInstance) {
+          if (hotInstance) {
             hotInstance.updateSettings({
                 nestedHeaders: updatedNestedHeaders
             });
             hotInstance.render();
+          }
+          fetchSaveButtonStatus();
         }
-
-        fetchSaveButtonStatus();
+        
     }
-};
+  };
 
   useEffect(() => {
     if (selectedWeek) {
@@ -222,7 +251,11 @@ function Page({ isDarkMode }) {
     let [weekNumber, year] = weekValue.split('-');
     weekNumber = parseInt(weekNumber);
     year = parseInt(year);
-
+    lastFinalizeWeek();
+    if(weekNumber > latestPlanWeek || year > latestPlanYear){
+      // alert("please finalize the previous week plan : ", weekNumber, " - ", year);
+      return
+    } 
     try {
       const response = await fetch(`http://10.40.20.93:300/BTrail/weekData?week=${weekNumber}&year=${year}`, {
         method: 'POST',

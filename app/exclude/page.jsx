@@ -64,12 +64,12 @@ export default function NMC() {
       }
       const isAccess = await handleLogin(id, password);
       if (!isAccess) {
-        console.log("Login failed, redirecting to login.");
+        console.log("Access failed, redirecting to login.");
         secureLocalStorage.clear();
         secureLocalStorage.clear();
         window.location.href = "/";
       } else {
-        console.log("Login successful, accessing Dashboard.");
+        console.log("accessing Excluding page...");
       }
     };
     checkLogin();
@@ -146,8 +146,8 @@ export default function NMC() {
         return;
       }
       const data = await response.json();
-      console.log("Fetched NPI Table Data:", data); // Debug log
-      setTableData(data.data || []); // Ensure the state is updated
+      // console.log("Fetched NPI Table Data:", data); 
+      setTableData(data.data || []); 
     } catch (error) {
       console.error("Error fetching table data NPI:", error);
     }

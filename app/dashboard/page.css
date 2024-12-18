@@ -462,3 +462,6 @@ th, td {
 .calendar-input styled-datepicker{
   font-size: 2px;
 }
+.content-container .table-container {
+  width:calc(100%-20px);
+}

@@ -32,6 +32,8 @@ function Page({ isDarkMode }) {
   const [access, setAccess] = useState();
   const [userEdit, setUserEdit] = useState(false);
   const [tableData, setTableData] = useState([]);
+  const [isLastFinalizeMonth, setIsLastFinalizeMonth] = useState();
+  const [isLastFinalizeYear, setIsLastFinalizeYear] = useState();
 
 
   useEffect(() => {
@@ -69,6 +71,8 @@ function Page({ isDarkMode }) {
       );
       const data = await response.json();
       const { month_No, year_No } = data;
+      setIsLastFinalizeYear(year_No);
+      setIsLastFinalizeMonth(month_No);
       const adjustedMonth = month_No - 1; 
       setDefaultMonth(adjustedMonth);
       setDefaultYear(year_No);
@@ -128,6 +132,7 @@ function Page({ isDarkMode }) {
       if (response.ok) {
         const { saveBtn } = await response.json();
         setSaveBtnEnabled(saveBtn !== 1);
+        setIsSaveEnabled(saveBtn !== 1);
         console.log("month, year, saveBtn :",newMonth, newYear, saveBtn);
         console.log("saveBtn :", saveBtn);
         console.log("SaveBtnEnabled :", SaveBtnEnabled);
@@ -154,12 +159,12 @@ function Page({ isDarkMode }) {
       }
       const isAccess = await handleLogin(id, password);
       if (!isAccess) {
-        console.log("Login failed, redirecting to login.");
+        console.log("Access failed, redirecting to login.");
         secureLocalStorage.clear();
         secureLocalStorage.clear();
         window.location.href = "/";
       } else {
-        console.log("Login successful, accessing Dashboard.");
+        console.log("accessing Forecast....");
       }
     };
     checkLogin();
@@ -245,13 +250,19 @@ function Page({ isDarkMode }) {
 
     const month = adjustedDate.getMonth()+1;
     const year = adjustedDate.getFullYear();
-    console.log("Month:", month, "Year:", year);
-    setSelectedDate(adjustedDate);
-    setNewMonth(month);
-    setNewYear(year);
-    fetchData(month, year);
-    setColumnHeaders(generateMonthYearHeaders(month-1, year));
-    fetchSaveButtonStatus(month, year);
+
+    if(month>isLastFinalizeMonth || year>isLastFinalizeYear){
+      console.log("last finalize month and year", isLastFinalizeMonth, isLastFinalizeYear);
+      alert("Please finalize previous month");
+    }else{
+      console.log("Month:", month, "Year:", year);
+      setSelectedDate(adjustedDate);
+      setNewMonth(month);
+      setNewYear(year);
+      fetchData(month, year);
+      setColumnHeaders(generateMonthYearHeaders(month-1, year));
+      fetchSaveButtonStatus(month, year);
+    }
   };
   const handleFinalSave = async () => {
     if (!SaveBtnEnabled || !SaveBtn) return;

@@ -50,12 +50,12 @@ export default function Permissions() {
       }
       const isAccess = await handleLogin(id, password);
       if (!isAccess) {
-        console.log("Login failed, redirecting to login.");
+        console.log("Access failed, redirecting to login.");
         secureLocalStorage.clear();
         secureLocalStorage.clear();
         window.location.href = "/";
       } else {
-        console.log("Login successful, accessing Dashboard.");
+        console.log("Access granted");
       }
     };
     checkLogin();

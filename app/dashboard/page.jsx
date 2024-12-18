@@ -53,12 +53,12 @@ export default function Dashboard() {
       }
       const isAccess = await handleLogin(id, password);
       if (!isAccess) {
-        console.log("Login failed, redirecting to login.");
+        console.log("Access failed, redirecting to login.");
         secureLocalStorage.clear();
         secureLocalStorage.clear();
         window.location.href = "/";
       } else {
-        console.log("Login successful, accessing Dashboard.");
+        console.log("accessing Dashboard...");
         await fetchEmployeeAccess(id);
         fetchCurrentMonthAndYear();
       }
@@ -188,7 +188,7 @@ export default function Dashboard() {
           },
         });
         const result = await response.json();
-        console.log("Fetched data:", result);
+        // console.log("Fetched data:", result);
         setTableData(result);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -207,7 +207,7 @@ export default function Dashboard() {
           },
         });
         const result = await response.json();
-        console.log("Fetched data:", result);
+        // console.log("Fetched data:", result);
         setTableData(result);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -226,7 +226,7 @@ export default function Dashboard() {
           },
         });
         const result = await response.json();
-        console.log("Fetched data:", result);
+        // console.log("Fetched data:", result);
         setTableData(result);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -245,7 +245,7 @@ export default function Dashboard() {
           },
         });
         const result = await response.json();
-        console.log("Fetched data:", result);
+        // console.log("Fetched data:", result);
         setTableData(result);
       } catch (error) {
         console.error("Error fetching data:", error);
