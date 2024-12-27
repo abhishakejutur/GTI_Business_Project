@@ -648,7 +648,13 @@ function ScreenSection({
                     )}
                     <td className="border px-1 py-1">{row.createdBy || "N/A"}</td>
                     <td className="border px-1 py-1">
-                      {row.createdOn ? new Date(row.createdOn).toLocaleDateString() : "N/A"}
+                    {row.createdOn ? (() => {
+                        const date = new Date(row.createdOn);
+                        const day = date.getDate();
+                        const month = date.toLocaleString('default', { month: 'short' }); 
+                        const year = date.getFullYear();
+                        return `${day}-${month}-${year}`; 
+                    })() : "N/A"}
                     </td>
                     {userEdit && (
                       <td className="border px-1 py-1" style={{ color: "red", textAlign: "center", fontWeight: "bold" }}>

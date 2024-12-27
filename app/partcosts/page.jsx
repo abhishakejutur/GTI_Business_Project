@@ -27,6 +27,8 @@ import {
   faTrash,
   faPencil,
   faPlus,
+  faEdit,
+  faSave,
 } from "@fortawesome/free-solid-svg-icons";
 import  secureLocalStorage  from  "react-secure-storage";
 import { handleLogin } from "@/lib/auth";
@@ -60,6 +62,10 @@ export default function Dashboard() {
   const [access, setAccess] = useState();
   const [userEdit, setUserEdit] = useState(false);
   const dropdownRef = useRef(null);
+  const [editForex, setEditForex] = useState(false);
+  const [forexvalue, setForexvalue] = useState(0.00);
+  const [getForexUpdatedAt, setGetForexUpdatedAt] = useState("");
+  
   
 
   useEffect(() => {
@@ -94,6 +100,8 @@ export default function Dashboard() {
     }
     fetchPartCostsData();
     fetchEmployeeAccess(empid);
+    FetchGetForexUpdatedAt();
+    console.log("latest update of forex : ",getForexUpdatedAt);
   }, []);
 
   useEffect(() => {
@@ -110,6 +118,11 @@ export default function Dashboard() {
       }
     }
   }, [accessData]);
+
+  const handleForexEdit = () => {
+    setEditForex(true);
+  };
+
   const fetchEmployeeAccess = async (employeeId) => {
     try {
       const response = await fetch(`http://10.40.20.93:300/getAccess?empId=${employeeId}`);
@@ -388,7 +401,7 @@ export default function Dashboard() {
   };
 
   const handleUsdChange = (event) => {
-    setUsdValue(event.target.value);
+    setUsdValue(event);
   };
 
 
@@ -444,24 +457,39 @@ export default function Dashboard() {
   
   const USDPopup = async () => {
     try {
-      const response = await fetch(`http://10.40.20.93:300/partCosts/update?USD=${usdValue}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      if (!response.ok) {
-        throw new Error("Failed to update PartCosts");
-      }
-      console.log("PartCosts updated successfully");
+        console.log("Updating USD value:", usdValue);
 
-      await fetchPartCostsData();
-      // alert("USD value saved and table updated successfully.");
+        const response = await fetch(`http://10.40.20.93:300/partCosts/updateUSD?USD=${usdValue}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+
+        if (!response.ok) {
+            const errorResponse = await response.json();
+            console.error("Error Response:", errorResponse);
+            throw new Error(errorResponse.message || "Failed to update PartCosts");
+            setEditForex(false);
+        }
+        setEditForex(false);
+        console.log("PartCosts updated successfully");
+        FetchGetForexUpdatedAt();
+        await fetchPartCostsData();
+        // alert("USD value saved and table updated successfully.");
     } catch (error) {
-      console.error("Error updating PartCosts:", error);
-      alert("Failed to update PartCosts.");
+        console.error("Error updating PartCosts:", error.message);
+        alert(`Error: ${error.message}`);
+        setEditForex(false);
+    } finally {
+        setShowPopup(false);
     }
-    setShowPopup(false);
+};
+
+  
+  
+  const handleSaveUSD = () => {
+      USDPopup(); 
   };
   const handleInsert = async () => {
     if (!selectedPart) {
@@ -539,6 +567,20 @@ export default function Dashboard() {
       console.error("Error deleting part cost:", error);
     }
   };
+  const FetchGetForexUpdatedAt = async () => {
+    try {
+      const response = await fetch("http://10.40.20.93:300/getForexUpdatedAt");
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        setGetForexUpdatedAt(data[0]);
+        console.log("Forex updated at:", getForexUpdatedAt);
+      }
+    } catch (error) {
+      console.error("Error fetching Forex data:", error);
+    }
+  };
+  
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -591,12 +633,25 @@ export default function Dashboard() {
             color: activeTab === "Part Costs" ? '#fff' : '#000',
             borderTopRightRadius: '8px',
             borderTopLeftRadius: '8px',
-            width: '200px',
+            width: '300px',
             fontSize: '12px',
           }}
         >
-          Part Costs
+          Part Costs  (Forex updated on <span style={{animation: "blink 1s infinite",}}>{getForexUpdatedAt}</span>)
         </button>
+        <style jsx>{`
+        @keyframes blink {
+          0% {
+            color: orange;
+          }
+          50% {
+            color: white;
+          }
+          100% {
+            color: orange;
+          }
+        }
+      `}</style>
       </div>
       <div className="header-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '-15px' }}>
         <h1 style={{ fontSize: '20px', fontWeight: 'bold' }}></h1>
@@ -863,7 +918,8 @@ export default function Dashboard() {
                     <label style={{ display: "block", fontWeight: "bold" }}>Forex:</label>
                     <input
                       type="number"
-                      // readOnly={formData.currUnit === "INR"}
+                      // readOnly={formData.currUnit === "INR" || formData.currUnit === "USD"} 
+                      // readonly
                       value={formData.forex || 0.00}
                       onChange={(e) => handleInputChange("forex", e.target.value)}
                       style={{
@@ -1458,16 +1514,52 @@ export default function Dashboard() {
         <div className="table-container" style={{ overflowY: 'auto', maxHeight: '70vh', borderRadius: '8px', borderTopLeftRadius: '8px' }}>
           {activeTab === "Part Costs" && (
               <div>
-                <table className="min-w-full table-auto border-collapse" style={{ tableLayout: 'fixed', width: '100%' }}>
+                <table className="min-w-full table-auto border-collapse" style={{  }}>
                   <thead className="sticky top-0 bg-gray-300">
                     <tr>
-                      <th hidden style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }} className="border px-4 py-2">Part ID</th>
+                      <th hidden style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px', width:"150%" }} className="border px-4 py-2">Part ID</th>
                       <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px', fontSize: '12px', }} className="border px-4 py-2">Project</th>
                       <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px', fontSize: '12px', }} className="border px-4 py-2">Ship P/N</th>
-                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px', fontSize: '12px', }} className="border px-4 py-2">Currency</th>
-                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px', fontSize: '12px', }} className="border px-4 py-2">Cast Price (USD)</th>
+                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px', fontSize: '12px', width:"10%" }} className="border px-4 py-2">Currency</th>
+                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px', fontSize: '12px', width:"12%" }} className="border px-4 py-2">Cast Price (USD)</th>
                       <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px', fontSize: '12px', }} className="border px-4 py-2">Finish Price (USD)</th>
-                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px', fontSize: '12px', }} className="border px-4 py-2">Forex</th>
+                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px', fontSize: '12px' }} className="border px-4 py-2"> Forex
+                        {/* <div className="flex items-center justify-center">
+                            {!editForex && <p className="mr-2">Forex</p>}
+                            <button onClick={() => handleForexEdit()} className="flex items-center">
+                                {editForex ? 
+                                    <div className="flex items-center">
+                                        <input 
+                                            type="number"
+                                            value={usdValue}
+                                            onChange={(e) => handleUsdChange(e.target.value)}
+                                            placeholder="Enter USD value"
+                                            className="py-0 px-1 color-black"
+                                            style={{ width: '100%', height: '100%', border: '1px solid #333', color:"black", borderRadius: '5px' }}
+                                        />
+                                        <button 
+                                            style={{paddingTop:"2px", }} 
+                                            onClick={handleSaveUSD} 
+                                            className="text-white px-2 py-0 rounded">
+                                            <FontAwesomeIcon 
+                                            className="py-0 px-1" 
+                                            style={{ fontSize: "5px",  }} 
+                                            icon={faSave} 
+                                        />
+                                        </button>
+                                    </div> 
+                                    : 
+                                    <div className="flex items-center">
+                                        <FontAwesomeIcon 
+                                            className="py-0 px-1" 
+                                            style={{ fontSize: "16px", paddingLeft: "5px", marginTop:"-4px" }} 
+                                            icon={faEdit} 
+                                        />
+                                    </div>
+                                }
+                            </button>
+                        </div> */}
+                      </th>
                       <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px', fontSize: '12px', }} className="border px-4 py-2">Cast Price (INR)</th>
                       <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px', fontSize: '12px', }} className="border px-4 py-2">Finish Price (INR)</th>
                     </tr>
@@ -1483,14 +1575,14 @@ export default function Dashboard() {
                         padding: '4px',
                       }}>
                           <td hidden style={{ padding: '5px' }} className="border px-4 py-2">{row.part_ID}</td>
-                          <td style={{ fontSize: '12px', textAlign: 'left', padding: '5px', paddingLeft: "10px" }} className="border px-4 py-2">{row.project}</td>
-                          <td style={{ fontSize: '12px', textAlign: 'center', padding: '5px' }} className="border px-4 py-2">{row.shipping_pn}</td>
-                          <td style={{ fontSize: '12px', textAlign: 'center', padding: '5px' }} className="border px-4 py-2">{row.curr_unit}</td>
-                          <td style={{ fontSize: '12px', textAlign: 'right', padding: '5px', paddingRight: "10px" }} className="border px-4 py-2">{row.cast_USD}</td>
-                          <td style={{ fontSize: '12px', textAlign: 'right', padding: '5px', paddingRight: "10px" }} className="border px-4 py-2">{row.rate_USD}</td>
-                          <td style={{ fontSize: '12px', textAlign: 'right', padding: '5px', paddingRight: "10px" }} className="border px-4 py-2">{row.forex}</td>
-                          <td style={{ fontSize: '12px', textAlign: 'right', padding: '5px', paddingRight: "10px" }} className="border px-4 py-2">{row.cast_INR}</td>
-                          <td style={{ fontSize: '12px', textAlign: 'right', padding: '5px', paddingRight: "10px" }} className="border px-4 py-2">{row.rate_INR}</td>
+                          <td style={{ fontSize: '14px', textAlign: 'left', padding: '5px', paddingLeft: "10px" }} className="border px-4 py-2">{row.project}</td>
+                          <td style={{ fontSize: '14px', textAlign: 'center', padding: '5px' }} className="border px-4 py-2">{row.shipping_pn}</td>
+                          <td style={{ fontSize: '14px', textAlign: 'center', padding: '5px' }} className="border px-4 py-2">{row.curr_unit}</td>
+                          <td style={{ fontSize: '14px', textAlign: 'right', padding: '5px', paddingRight: "10px" }} className="border px-4 py-2">{(row.cast_USD !== null && row.cast_USD !== undefined && row.cast_USD !== 0) ? row.cast_USD.toFixed(2) : ''}</td>
+                          <td style={{ fontSize: '14px', textAlign: 'right', padding: '5px', paddingRight: "10px" }} className="border px-4 py-2">{(row.rate_USD !== null && row.rate_USD !== undefined && row.rate_USD !== 0) ? row.rate_USD.toFixed(2) : ''}</td>
+                          <td style={{ fontSize: '14px', textAlign: 'right', padding: '5px', paddingRight: "10px" }} className="border px-4 py-2">{row.forex}</td>
+                          <td style={{ fontSize: '14px', textAlign: 'right', padding: '5px', paddingRight: "10px" }} className="border px-4 py-2">{(row.cast_INR !== null && row.cast_INR !== undefined && row.cast_INR !== 0) ? row.cast_INR.toFixed(2) : ''}</td>
+                          <td style={{ fontSize: '14px', textAlign: 'right', padding: '5px', paddingRight: "10px" }} className="border px-4 py-2">{(row.rate_INR !== null && row.rate_INR !== undefined && row.rate_INR !== 0) ? row.rate_INR.toFixed(2) : ''}</td>
                         </tr>
                         )}
                       )
