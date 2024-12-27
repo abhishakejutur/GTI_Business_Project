@@ -30,6 +30,24 @@ export default function Dashboard() {
   const [access, setAccess] = useState();
   const [showMiddleTabs, setShowMiddleTabs] = useState(false);
   const [handleAccess, setHandleAccess] = useState(false);
+  const [latestPlanWeek, setLatestPlanWeek] = useState();
+  const [latestPlanYear, setLatestPlanYear] = useState();
+  const [isLastFinalizeMonth, setIsLastFinalizeMonth] = useState();
+  const [isLastFinalizeYear, setIsLastFinalizeYear] = useState();
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsSmallScreen(window.innerWidth <= 1500);
+    };
+
+    handleResize();
+
+    window.addEventListener('resize', handleResize);
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
 
 
   const toggleMiddleTabs = () => {
@@ -66,7 +84,8 @@ export default function Dashboard() {
     checkLogin();
     const id = secureLocalStorage.getItem("die");
     fetchEmployeeAccess(id);
-    
+    fetchCurrentMonthAndYear();
+    lastFinalizeWeek();
   }, []);
 
   // useEffect(() => {
@@ -134,10 +153,30 @@ export default function Dashboard() {
     }
   }, [activeTab, selectedDate]);
   
-
   useEffect(() => {
     fetchWeekOptions();
+    if (showMiddleTabs) {
+      setActiveTab("Estimated Business");
+    }
   }, []);
+
+  // useEffect(() => {
+  //   const initializePage = async () => {
+  //     const today = new Date();
+  //     const month = today.getMonth() + 1;
+  //     const year = today.getFullYear();
+  
+  //     setDefaultMonth(month);
+  //     setDefaultYear(year);
+  //     setSelectedDate(new Date(year, month - 1, 1));
+  
+  //     // setColumnHeaders(generateMonthYearHeaders(month - 1, year));
+  //     await fetchData(month, year);
+  //     // await fetchSaveButtonStatus(month, year);
+  //   };
+  
+  //   initializePage();
+  // }, []);
 
   const fetchCurrentMonthAndYear = async () => {
     try {
@@ -147,23 +186,37 @@ export default function Dashboard() {
       const data = await response.json();
       const { month_No, year_No } = data;
       const adjustedMonth = month_No - 1; 
+      setIsLastFinalizeYear(year_No);
+      setIsLastFinalizeMonth(month_No);
       setDefaultMonth(adjustedMonth);
       setDefaultYear(year_No);
       setNewMonth(month_No);
       setNewYear(year_No);
 
-      const defaultDate = new Date(year_No, adjustedMonth, 1);
-      setSelectedDate(defaultDate);
-      setColumnHeaders(generateMonthYearHeaders(adjustedMonth, year_No));
-      fetchData(month_No, year_No);
-      fetchSaveButtonStatus(month_No, year_No);
+      let fmonth = month_No;
+      let fyear = year_No;
+      if(fmonth == 12){
+        fmonth = 1;
+        fyear = fyear + 1;
+      } else {
+        fmonth = fmonth + 1;
+      }
+      console.log("Check default fetching : ", fmonth, fyear, month_No, year_No);
 
-      setMonth(month_No, year_No);
+      const defaultDate = new Date(fyear, fmonth - 1, 1);
+      setSelectedDate(defaultDate);
+      // setColumnHeaders(generateMonthYearHeaders(fmonth-1, fyear));
+      
+      // fetchData(fmonth, fyear);
+      setSelectedDate(new Date(fyear, fmonth - 1, 1));
+      fetchSaveButtonStatus(fmonth, fyear);
+
+      setMonth(fmonth, fyear);
+      fetchData();
     } catch (error) {
       console.error("Error fetching current month and year:", error);
     }
   };
-
   const fetchWeekOptions = async () => {
     try {
       const response = await fetch(`http://10.40.20.93:300/BTrail/weeks`);
@@ -254,16 +307,70 @@ export default function Dashboard() {
       setTableData([]);
     }
   };
+  const lastFinalizeWeek = async () => {
+    try {
+      const response = await fetch('http://10.40.20.93:300/ShippingSchedule/getLatestPlanWeekAndYear', {
+        method: 'GET'
+        });
+        if (response.ok) {
+          const { month_No, year_No } = await response.json();
+          setLatestPlanWeek(month_No);
+          setLatestPlanYear(year_No);
+        } else {
+          console.error("Failed to fetch latest plan week and year");
+        }
+    } catch (error) {
+          console.error("Error fetching latest plan week and year:", error);
+      }
+  };
   const handleWeekChange = (e) => {
     const selectedValue = e.target.value;
     const [week, year] = selectedValue.split('-');
-    setSelectedWeek(week);
-    setSelectedYear(year);
-    console.log("Selected week:", week);
-    console.log("Selected year:", year);
-    fetchShippingScheduleData(week, year);
+    const weekNo = parseInt(week);
+    const yearNo = parseInt(year);
+    let Cweek = weekNo;
+    let Cyear = yearNo;
+    if(Cweek == 1){
+      Cweek = 52;
+      Cyear = Cyear - 1;
+    } else {
+      Cweek = Cweek - 1;
+    }
+    console.log("Check plans : ",Cweek, Cyear, latestPlanWeek, latestPlanYear);
+    console.log("Selected week:", weekNo, typeof(weekNo));
+    console.log("Selected year:", yearNo);
+    console.log("Last finalized week:", latestPlanWeek);
+    if(Cweek>latestPlanWeek || Cyear>latestPlanYear){
+      setSelectedWeek(week);
+      alert("Not finalized the previous week plan");
+    } else {
+      setSelectedWeek(week);
+      setSelectedYear(year);
+      console.log("Selected week:", week);
+      console.log("Selected year:", year);
+      fetchShippingScheduleData(week, year);
+    }
   };
   const fetchShippingScheduleData = async (week, year) => {
+    const weekNo = parseInt(week);
+    const yearNo = parseInt(year);
+    let Cweek = weekNo;
+    let Cyear = yearNo;
+    if(Cweek == 1){
+      Cweek = 52;
+      Cyear = Cyear - 1;
+    } else {
+      Cweek = Cweek - 1;
+    }
+    console.log("Check fetch plans : ",Cweek, Cyear, latestPlanWeek, latestPlanYear);
+    console.log("Selected week:", weekNo, typeof(weekNo));
+    console.log("Selected year:", yearNo);
+    console.log("Last finalized week:", latestPlanWeek, typeof(latestPlanWeek));
+    if(Cweek>latestPlanWeek || Cyear>latestPlanYear){
+      setSelectedWeek('');
+      alert("Not finalized the previous week plan");
+      return;
+    }
     try {
       const response = await fetch(`http://10.40.20.93:300/dashboard/shippingschedule?PlanWeek=${week}&PlanYear=${year}`, {
         method: 'POST',
@@ -322,11 +429,31 @@ export default function Dashboard() {
     setColumns(months);
   };
   const handleDateChange = (date) => {
-    setSelectedDate(date);
+    let month = date.getMonth()+1;
+    let year = date.getFullYear();
+    let Cmonth = month; 
+    let Cyear = year;
+    if(Cmonth==1){
+      Cmonth=12;
+      Cyear=Cyear-1;
+    }else{
+      Cmonth=Cmonth-1;
+    }
+    console.log("Checking change : Month:", Cmonth, "Year:", Cyear);
+    if(Cmonth>isLastFinalizeMonth || Cyear>isLastFinalizeYear){
+      console.log("last finalize month and year", isLastFinalizeMonth, isLastFinalizeYear);
+      alert("Please finalize previous month");
+    } else {
+      setSelectedDate(date);
+    }
+    
   };
   const initializeShippingScheduleData = () => {
+    lastFinalizeWeek();
     const currentWeek = getCurrentWeekNumber();
     const currentYear = new Date().getFullYear();
+    // const currentWeek = latestPlanWeek;
+    // const currentYear = latestPlanYear;
     setSelectedWeek(currentWeek);
     setSelectedYear(currentYear);
     fetchShippingScheduleData(currentWeek, currentYear);
@@ -356,6 +483,7 @@ export default function Dashboard() {
       generateDynamicColumns(selectedDate);
       fetchDataByCustomer();
     } else if (tab === "Estimate Shipping Schedule") {
+      setShowMiddleTabs(false);
       initializeShippingScheduleData();
       setColumns([]);
     }
@@ -369,6 +497,19 @@ export default function Dashboard() {
       return parsedNum.toLocaleString('en-US');
     }
     return "0";
+  };
+  const getRowBackgroundColorProduct = (index) => {
+    if (tableData.length === 16) {
+      if ((index + 1) % 4 === 0) {
+        return { backgroundColor: '#FFE7C7' };
+      } else if (index % 4 === 0) {
+        return { backgroundColor: '#CAF1DE' };
+      } else if ((index - 1) % 4 === 0) {
+        return { backgroundColor: '#E1F8DC' };
+      } else {
+        return { backgroundColor: '#FEF8DD' };
+      }
+    }
   };
   const getRowBackgroundColor = (index) => {
     if (tableData.length === 19) {
@@ -389,6 +530,33 @@ export default function Dashboard() {
         return { backgroundColor: '#E1F8DC' };
       } else {
         return { backgroundColor: '#FEF8DD' };
+      }
+    }
+  };
+
+  const getRowBackgroundColorSaleType = (index) => {
+    if (tableData.length === 8) {
+      if ((index + 1) % 4 === 0) {
+        return { backgroundColor: '#FFE7C7' };
+      } else if (index % 4 === 0) {
+        return { backgroundColor: '#CAF1DE' };
+      } else if ((index - 1) % 4 === 0) {
+        return { backgroundColor: '#E1F8DC' };
+      } else {
+        return { backgroundColor: '#FEF8DD' };
+      }
+  
+    } else {
+      if ((index + 1) % 5 === 0) {
+        return { backgroundColor: '#FFE7C7' };
+      } else if (index % 5 === 0) {
+        return { backgroundColor: '#CAF1DE' };
+      } else if (index % 5 === 0) {
+        return { backgroundColor: '#E1F8DC' };
+      } else if ((index - 1) % 5 === 0) {
+        return { backgroundColor: '#FEF8DD' };
+      } else {
+        return { backgroundColor: '#FFE7C7' };
       }
     }
   };
@@ -465,7 +633,7 @@ export default function Dashboard() {
           onClick={() => handleTabChange("Estimated Business")}
           style={{
             fontSize: "12px",
-            padding: "10px 10px",
+            padding: "10px 5px",
             fontWeight: "bold",
             backgroundColor: activeTab === "Estimated Business" ? "#007bff" : "white",
             color: activeTab === "Estimated Business" ? "#fff" : "#000",
@@ -478,18 +646,18 @@ export default function Dashboard() {
         {/* Toggle Button */}
         <button
           className="toggle-button"
+          disabled = {activeTab === "Estimate Shipping Schedule"}
           onClick={toggleMiddleTabs}
           style={{
             fontSize: "12px",
             padding: "10px -10px",
             fontWeight: "bold",
             backgroundColor: "#fff",
-            // borderLeft: "0.5px solid #ddd",
+            cursor: activeTab === "Estimate Shipping Schedule" ? "not-allowed" : "pointer",
             color:"white",
             backgroundColor: activeTab === "Estimated Business" ? "#007bff" : "white",
             cursor: "pointer",
             transition: "transform 0.3s",
-            // transform: showMiddleTabs ? "rotate(180deg)" : "rotate(0deg)",
           }}
         >
           <span
@@ -498,7 +666,6 @@ export default function Dashboard() {
             padding: "2px 8px",
             fontWeight: "bold",
             backgroundColor: "#fff",
-            // borderLeft: "0.5px solid #ddd",
             color: activeTab === "Estimated Business" || activeTab === "Est. Busi. (Product)" ? "white" : "#007bff",
             backgroundColor: activeTab === "Estimated Business" || activeTab === "Est. Busi. (Product)" ? "#007bff" : "white",
             borderRadius:"80%",
@@ -520,7 +687,7 @@ export default function Dashboard() {
           style={{
             display: "flex",
             overflow: "hidden",
-            // transition: "max-width 0.6s ease, opacity 0.6s ease",
+            transition: "max-width 0.6s ease",
             maxWidth: showMiddleTabs ? "400px" : "0px",
             opacity: showMiddleTabs ? "1" : "0",
             whiteSpace: "nowrap",
@@ -534,7 +701,7 @@ export default function Dashboard() {
               fontSize: "12px",
               padding: "10px 10px",
               fontWeight: "bold",
-              backgroundColor: activeTab === "Est. Busi. (Product)" ? "#007bff" : "white",
+              backgroundColor: activeTab === "Est. Busi. (Product)" ? "#007bff" : "#F5F5F5",
               color: activeTab === "Est. Busi. (Product)" ? "#fff" : "#000",
               borderLeft: "1px solid #ddd",
               // borderRight: "1px solid #ddd",
@@ -544,7 +711,7 @@ export default function Dashboard() {
               // transition: "opacity 0.6s ease",
             }}
           >
-            <span style={{paddingLeft:"5px"}}>Est. Busi. (Product)</span>
+            <span style={{paddingLeft:"5px"}}>Product Wise</span>
           </button>
           <button
             hidden={!showMiddleTabs}
@@ -553,7 +720,7 @@ export default function Dashboard() {
               fontSize: "12px",
               padding: "10px 10px",
               fontWeight: "bold",
-              backgroundColor: activeTab === "Est. Busi. (Sale Type)" ? "#007bff" : "white",
+              backgroundColor: activeTab === "Est. Busi. (Sale Type)" ? "#007bff" : "#F5F5F5",
               color: activeTab === "Est. Busi. (Sale Type)" ? "#fff" : "#000",
               borderLeft: "1px solid #ddd",
               borderRight: "0px solid #ddd",
@@ -565,7 +732,7 @@ export default function Dashboard() {
               transition: "opacity 0.6s ease",
             }}
           >
-            Est. Busi. (Sale Type)
+            Sale Type Wise
           </button>
           <button
             hidden={!showMiddleTabs}
@@ -575,7 +742,7 @@ export default function Dashboard() {
               fontSize: "12px",
               padding: "10px 10px",
               fontWeight: "bold",
-              backgroundColor: activeTab === "Est. Busi. (Customer)" ? "#007bff" : "white",
+              backgroundColor: activeTab === "Est. Busi. (Customer)" ? "#007bff" : "#F5F5F5",
               color: activeTab === "Est. Busi. (Customer)" ? "#fff" : "#000",
               borderLeft: "1px solid #ddd",
               borderRight: "0px solid #ddd",
@@ -587,7 +754,7 @@ export default function Dashboard() {
               transition: "opacity 0.6s ease",
             }}
           >
-            Est. Busi. (Customer)
+            Customer Wise
           </button>
         </div>
           
@@ -619,8 +786,9 @@ export default function Dashboard() {
               onChange={handleWeekChange}
               style={{ padding: '5px', fontSize: '16px', borderRadius: '5px', border: '1px solid #333', backgroundColor: 'transparent', cursor: "pointer", padding: "5px 10px", textAlign:"center", marginRight:"20px" }}
             >
+              <option style={{ textAlign: "left" }} value="">Select Week</option>
               {weekOptions.map((week) => (
-                <option style={{ textAlign: "center" }} key={week.value} value={week.value}>
+                <option style={{ textAlign: "left" }} key={week.value} value={week.value}>
                   {week.value}
                 </option>
               ))}
@@ -666,11 +834,11 @@ export default function Dashboard() {
             <table className="min-w-full table-auto border-collapse" style={{ tableLayout: 'fixed', width: '100%', borderRadius: '8px', wordWrap:"break-word" }}>
               <thead className="sticky top-0 bg-gray-300" style={{ position: 'sticky', top: '0', zIndex: '1' }}>
                 <tr className="sticky top-0 bg-gray-300" style={{ fontSize: '13px', zIndex: 1, padding: '8px' }}>
-                  <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', width: '200px' }}>Estimated Business</th>
+                  <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', width: '150px' }}>Months</th>
                   {columns.map((col, index) => (
-                    <th key={index} className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', minWidth: '80px', textAlign: 'center', padding: '8px' }}>{col}</th>
+                    <th key={index} className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', minWidth: '100px', textAlign: 'center', padding: '8px' }}>{col}</th>
                   ))}
-                  <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', width: '100px', fontSize:"13px", padding: '8px' }}>Average</th>
+                  <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', width: '90px', fontSize:"13px", padding: '8px' }}>Average</th>
                 </tr>
               </thead>
               <tbody>
@@ -711,18 +879,18 @@ export default function Dashboard() {
                     };
                     return (
                       <tr key={index} style={rowStyle}>
-                        <td className="border px-4 py-1" style={{ textAlign: 'left' }}>
+                        <td className="border px-2 py-1" style={{ textAlign: 'left' }}>
                           {row.material} <span style={{ float: 'right', fontWeight: 'normal' }}>{row.required_Weights}</span>
                         </td>
                         {columns.map((col, i) => {
                           const key = String.fromCharCode(97 + i);
                           return (
-                            <td key={i} className="border px-2 py-1" style={{ textAlign: 'right', fontSize: '12px' }}>
+                            <td id="cell" key={i} className="border px-1 py-1" style={{ textAlign: 'right', fontSize: '12px' }}>
                               {row[key] ? formatNumber(row[key]) : ""}
                             </td>
                           );
                         })}
-                        <td className="border px-4 py-1" style={{ width: '100px', textAlign: 'right', fontSize: '12px' }}>
+                        <td className="border px-2 py-1" style={{ width: '60px', textAlign: 'right', fontSize: '12px' }}>
                           {formatNumber(average)}
                         </td>
                       </tr>
@@ -740,7 +908,7 @@ export default function Dashboard() {
             <table className="min-w-full table-auto border-collapse" style={{ tableLayout: 'fixed', width: '100%', borderRadius: '8px', wordWrap:"break-word" }}>
               <thead className="sticky top-0 bg-gray-300" style={{ position: 'sticky', top: '0', zIndex: '1' }}>
                 <tr className="sticky top-0 bg-gray-300" style={{ fontSize: '13px', zIndex: 1, padding: '8px' }}>
-                  <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', width: '170px' }}>Estimated Business</th>
+                  <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', width: '170px' }}>Months</th>
                   {columns.map((col, index) => (
                     <th key={index} className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', minWidth: '80px', textAlign: 'center', padding: '8px' }}>{col}</th>
                   ))}
@@ -769,13 +937,13 @@ export default function Dashboard() {
                     const isTonsRow = row.required_Weights === "Tons";
                     
                     const rowStyle = {
-                      ...getRowBackgroundColor(index),
+                      ...getRowBackgroundColorProduct(index),
                       fontFamily: "calibri",
                       fontSize: '13px',
                       ...(isThirdVisibleRow ? { borderBottom: "2px solid white" } : {}),
                       // ...(isLastRow || isFinalGTIPlan ? { backgroundColor: "#a6f1a6", color: "black" } : {}),
                       ...(isCostRow ? { borderBottom: "2px solid white", backgroundColor: "#FFE7C7", color: "black" } : {}),
-                      ...(isqtyrow && tableData.length!==25 ? { borderBottom: "2px solid white"} : {}),
+                      ...(isqtyrow && tableData.length!==16 ? { borderBottom: "2px solid white"} : {}),
                       ...(isqtyrow && !isFinalGTIPlan ? { backgroundColor: "#FEF8DD", color: "black" } : {}),
                       ...(isWeightRow && !isFinalGTIPlan ? { backgroundColor: "#E1F8DC", color: "black" } : {}),
                       ...(isTonsRow && !isFinalGTIPlan ? { backgroundColor: "#CAF1DE", color: "black" } : {}),
@@ -783,18 +951,18 @@ export default function Dashboard() {
                     };
                     return (
                       <tr key={index} style={rowStyle}>
-                        <td className="border px-4 py-1" style={{ textAlign: 'left' }}>
+                        <td className="border px-2 py-1" style={{ textAlign: 'left' }}>
                           {row.material} <span style={{ float: 'right', fontWeight: 'normal' }}>{row.required_Weights}</span>
                         </td>
                         {columns.map((col, i) => {
                           const key = String.fromCharCode(97 + i);
                           return (
-                            <td key={i} className="border px-2 py-1" style={{ textAlign: 'right', fontSize: '12px' }}>
+                            <td key={i} className="border px-1 py-1" style={{ textAlign: 'right', fontSize: '12px' }}>
                               {row[key] ? formatNumber(row[key]) : ""}
                             </td>
                           );
                         })}
-                        <td hidden className="border px-4 py-1" style={{ width: '100px', textAlign: 'right', fontSize: '12px' }}>
+                        <td hidden className="border px-2 py-1" style={{ width: '100px', textAlign: 'right', fontSize: '12px' }}>
                           {formatNumber(average)}
                         </td>
                       </tr>
@@ -812,7 +980,7 @@ export default function Dashboard() {
             <table className="min-w-full table-auto border-collapse" style={{ tableLayout: 'fixed', width: '100%', borderRadius: '8px', wordWrap:"break-word" }}>
               <thead className="sticky top-0 bg-gray-300" style={{ position: 'sticky', top: '0', zIndex: '1' }}>
                 <tr className="sticky top-0 bg-gray-300" style={{ fontSize: '13px', zIndex: 1, padding: '8px' }}>
-                  <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', width: '200px' }}>Estimated Business</th>
+                  <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', width: '160px' }}>Months</th>
                   {columns.map((col, index) => (
                     <th key={index} className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', minWidth: '80px', textAlign: 'center', padding: '8px' }}>{col}</th>
                   ))}
@@ -833,21 +1001,21 @@ export default function Dashboard() {
                     const average = Math.round(monthValues.reduce((sum, val) => sum + val, 0) / monthValues.length);
                     const isLastRow = index === tableData.length - 1;
                     const isThirdVisibleRow1 = (index + 1) % 3 === 0;
-                    const isThirdVisibleRow = !dashboardCostAccess && row.required_Weights !== "Cost" && (index + 1) % 3 === 0;
+                    const isThirdVisibleRow = !dashboardCostAccess && row.required_Weights !== "Cost" && (index + 1) % 4 === 0;
                     const isFinalGTIPlan = row.material === "Final GTI Plan";
-                    const isCostRow = row.required_Weights === "Cost";
+                    const isCostRow = row.required_Weights === "Share %";
                     const isqtyrow = row.required_Weights === "Qty.";
                     const isWeightRow = row.required_Weights === "Kgs.";
                     const isTonsRow = row.required_Weights === "Tons";
                     
                     const rowStyle = {
-                      ...getRowBackgroundColor(index),
+                      ...getRowBackgroundColorSaleType(index),
                       fontFamily: "calibri",
                       fontSize: '13px',
                       ...(isThirdVisibleRow ? { borderBottom: "2px solid white" } : {}),
-                      // ...(isLastRow || isFinalGTIPlan ? { backgroundColor: "#a6f1a6", color: "black" } : {}),
-                      ...(isCostRow ? { borderBottom: "2px solid white", backgroundColor: "#FFE7C7", color: "black" } : {}),
-                      ...(isqtyrow && tableData.length!==25 ? { borderBottom: "2px solid white"} : {}),
+                      ...(isLastRow || isFinalGTIPlan ? { backgroundColor: "#a6f1a6", color: "black" } : {}),
+                      ...(isCostRow ? { borderBottom: "2px solid white", backgroundColor: "#F7D8BA", color: "black" } : {}),
+                      // ...(isqtyrow && tableData.length!==10 ? { borderBottom: "2px solid white"} : {}),
                       ...(isqtyrow && !isFinalGTIPlan ? { backgroundColor: "#FEF8DD", color: "black" } : {}),
                       ...(isWeightRow && !isFinalGTIPlan ? { backgroundColor: "#E1F8DC", color: "black" } : {}),
                       ...(isTonsRow && !isFinalGTIPlan ? { backgroundColor: "#CAF1DE", color: "black" } : {}),
@@ -855,18 +1023,21 @@ export default function Dashboard() {
                     };
                     return (
                       <tr key={index} style={rowStyle}>
-                        <td className="border px-4 py-1" style={{ textAlign: 'left' }}>
+                        <td className="border px-2 py-1" style={{ textAlign: 'left' }}>
                           {row.material} <span style={{ float: 'right', fontWeight: 'normal' }}>{row.required_Weights}</span>
                         </td>
                         {columns.map((col, i) => {
                           const key = String.fromCharCode(97 + i);
                           return (
-                            <td key={i} className="border px-2 py-1" style={{ textAlign: 'right', fontSize: '12px' }}>
-                              {row[key] ? formatNumber(row[key]) : ""}
+                            <td key={i} className="border px-1 py-1" style={{ textAlign: 'right', fontSize: '12px' }}>
+                              {row.required_Weights === "Share %" ? 
+                                formatNumber(row[key]) : 
+                                (row[key] ? formatNumber(Math.round(row[key], 0)) : "")
+                              }
                             </td>
                           );
                         })}
-                        <td hidden className="border px-4 py-1" style={{ width: '100px', textAlign: 'right', fontSize: '12px' }}>
+                        <td hidden className="border px-2 py-1" style={{ width: '100px', textAlign: 'right', fontSize: '12px' }}>
                           {formatNumber(average)}
                         </td>
                       </tr>
@@ -884,7 +1055,7 @@ export default function Dashboard() {
             <table className="min-w-full table-auto border-collapse" style={{ tableLayout: 'fixed', width: '100%', borderRadius: '8px', wordWrap:"break-word" }}>
               <thead className="sticky top-0 bg-gray-300" style={{ position: 'sticky', top: '0', zIndex: '1' }}>
                 <tr className="sticky top-0 bg-gray-300" style={{ fontSize: '13px', zIndex: 1, padding: '8px' }}>
-                  <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', width: '200px' }}>Estimated Business</th>
+                  <th className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', width: '160px' }}>Months</th>
                   {columns.map((col, index) => (
                     <th key={index} className="border px-1 py-1" style={{ backgroundColor: 'grey', color: 'white', minWidth: '80px', textAlign: 'center', padding: '8px' }}>{col}</th>
                   ))}
@@ -907,19 +1078,19 @@ export default function Dashboard() {
                     const isThirdVisibleRow1 = (index + 1) % 3 === 0;
                     const isThirdVisibleRow = !dashboardCostAccess && row.required_Weights !== "Cost" && (index + 1) % 3 === 0;
                     const isFinalGTIPlan = row.material === "Final GTI Plan";
-                    const isCostRow = row.required_Weights === "Cost";
+                    const isCostRow = row.required_Weights === "Share %";
                     const isqtyrow = row.required_Weights === "Qty.";
                     const isWeightRow = row.required_Weights === "Kgs.";
                     const isTonsRow = row.required_Weights === "Tons";
                     
                     const rowStyle = {
-                      ...getRowBackgroundColor(index),
+                      ...getRowBackgroundColorSaleType(index),
                       fontFamily: "calibri",
                       fontSize: '13px',
-                      ...(isThirdVisibleRow ? { borderBottom: "2px solid white" } : {}),
+                      // ...(isThirdVisibleRow ? { borderBottom: "2px solid white" } : {}),
                       // ...(isLastRow || isFinalGTIPlan ? { backgroundColor: "#a6f1a6", color: "black" } : {}),
-                      ...(isCostRow ? { borderBottom: "2px solid white", backgroundColor: "#FFE7C7", color: "black" } : {}),
-                      ...(isqtyrow && tableData.length!==25 ? { borderBottom: "2px solid white"} : {}),
+                      ...(isCostRow ? { borderBottom: "2px solid white", backgroundColor: "#F7D8BA", color: "black" } : {}),
+                      // ...(isqtyrow && tableData.length!==25 ? { borderBottom: "2px solid white"} : {}),
                       ...(isqtyrow && !isFinalGTIPlan ? { backgroundColor: "#FEF8DD", color: "black" } : {}),
                       ...(isWeightRow && !isFinalGTIPlan ? { backgroundColor: "#E1F8DC", color: "black" } : {}),
                       ...(isTonsRow && !isFinalGTIPlan ? { backgroundColor: "#CAF1DE", color: "black" } : {}),
@@ -927,18 +1098,21 @@ export default function Dashboard() {
                     };
                     return (
                       <tr key={index} style={rowStyle}>
-                        <td className="border px-4 py-1" style={{ textAlign: 'left' }}>
+                        <td className="border px-2 py-1" style={{ textAlign: 'left' }}>
                           {isTonsRow && row.material} <span style={{ float: 'right', fontWeight: 'normal' }}>{row.required_Weights}</span>
                         </td>
                         {columns.map((col, i) => {
                           const key = String.fromCharCode(97 + i);
                           return (
-                            <td key={i} className="border px-2 py-1" style={{ textAlign: 'right', fontSize: '12px' }}>
-                              {row[key] ? formatNumber(row[key]) : ""}
+                            <td key={i} className="border px-1 py-1" style={{ textAlign: 'right', fontSize: '12px' }}>
+                              {row.required_Weights === "Share %" ? 
+                                formatNumber(row[key]) : 
+                                (row[key] ? formatNumber(Math.round(row[key], 0)) : "")
+                              }
                             </td>
                           );
                         })}
-                        <td hidden className="border px-4 py-1" style={{ width: '100px', textAlign: 'right', fontSize: '12px' }}>
+                        <td hidden className="border px-2 py-1" style={{ width: '100px', textAlign: 'right', fontSize: '12px' }}>
                           {formatNumber(average)}
                         </td>
                       </tr>

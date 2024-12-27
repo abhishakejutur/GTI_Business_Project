@@ -141,7 +141,7 @@ const Nav = ({ toggleSidebar, toggleDarkMode, isDarkMode, onSearch, emp }) => {
       <button onClick={toggleSidebar} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
         <FontAwesomeIcon icon={faBars} className="menuicon" />
       </button>
-      <a href="#" className="nav-link"><b>Business</b></a>
+      <a href="/dashboard" className="nav-link"><b>Business</b></a>
       <form action="#">
         <div className="form-input">
           <input 

@@ -204,7 +204,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             <FontAwesomeIcon icon={faShippingFast} /> 
             {!isCollapsed && (
               <span style={{ marginLeft: "1.5px" }} className="text">
-                <p style={{fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Shipping Plan</p>
+                <p style={{whiteSpace: "nowrap", fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Shipping Plan</p>
               </span>
             )}
           </a>
@@ -214,7 +214,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             <FontAwesomeIcon icon={faClipboardList} style={{ marginLeft: "4px"}} /> 
             {!isCollapsed && (
               <span style={{ marginLeft: "6px" }} className="text">
-                <p style={{fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Forecast</p>
+                <p style={{whiteSpace: "nowrap", fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Forecast</p>
               </span>
             )}
           </a>
@@ -224,7 +224,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             <FontAwesomeIcon icon={faMinusCircle} style={{ marginLeft: "3px"}} /> 
             {!isCollapsed && (
               <span style={{ marginLeft: "3px" }} className="text">
-                <p style={{fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Exclude</p>
+                <p style={{whiteSpace: "nowrap", fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Exclude</p>
               </span>
             )}
           </a>
@@ -234,7 +234,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             <FontAwesomeIcon icon={faCoins} style={{ marginLeft: "3px"}} /> 
             {!isCollapsed && (
               <span style={{ marginLeft: "3px" }} className="text">
-                <p style={{fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>part costs</p>
+                <p style={{whiteSpace: "nowrap", fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>part costs</p>
               </span>
             )}
           </a>
@@ -246,7 +246,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             <FontAwesomeIcon icon={faCog} style={{ marginLeft: "2px" }} />
             {!isCollapsed && (
               <span style={{ marginLeft: "5px" }} className="text">
-                <p style={{fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Access</p>
+                <p style={{whiteSpace: "nowrap", fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Access</p>
               </span>
             )}
           </a>
@@ -256,7 +256,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             <FontAwesomeIcon icon={faSignOutAlt} style={{ marginLeft: "3px" }} />
             {!isCollapsed && (
               <span style={{ marginLeft: "5px" }} className="text">
-                <p style={{fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Logout</p>
+                <p style={{whiteSpace: "nowrap", fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Logout</p>
               </span>
             )}
           </a>

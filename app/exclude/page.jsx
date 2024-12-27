@@ -19,6 +19,7 @@ import {
 import './page.css';
 import  secureLocalStorage  from  "react-secure-storage";
 import { handleLogin } from "@/lib/auth";
+// import { access } from "fs";
 
 const getMonths = (startMonth, startYear) => {
   const months = [];
@@ -47,7 +48,135 @@ export default function NMC() {
   const [accessData, setAccessData] = React.useState([]);
   const [access, setAccess] = React.useState();
   const [userEdit, setUserEdit] = React.useState(false);
+  const [expandedPartNo, setExpandedPartNo] = React.useState(null);
+  const [subTableInputs, setSubTableInputs] = React.useState({});
+  const [month, setMonth] = React.useState();
+  const [year, setYear] = React.useState();
 
+  const handleExpandRow = async (partNo) => {
+    if (expandedPartNo === partNo) {
+      setExpandedPartNo(null); 
+      setSubTableInputs({});
+      return;
+    }
+  
+    try {
+      const response = await fetch(
+        `http://10.40.20.93:300/api/getNWSData?partNo=${partNo}&monthNo=${month}&yearNo=${year}`
+      );
+  
+      if (response.ok) {
+        const result = await response.json();
+        console.log(result);
+        console.log("month", month, "year", year);
+        console.log("All Months list : ",months);
+  
+        if (result && Array.isArray(result.data) && result.data.length > 0) {
+          const fetchedData = result.data[0]; 
+  
+          const formattedData = {
+            month_1: fetchedData.a,
+            month_2: fetchedData.b,
+            month_3: fetchedData.c,
+            month_4: fetchedData.d,
+            month_5: fetchedData.e,
+            month_6: fetchedData.f,
+            month_7: fetchedData.g,
+            month_8: fetchedData.h,
+            month_9: fetchedData.i,
+            month_10: fetchedData.j,
+            month_11: fetchedData.k,
+            month_12: fetchedData.l,
+          };
+  
+          setSubTableInputs(formattedData);
+        } else {
+          console.error("Invalid or missing data in the response:", result);
+          setSubTableInputs({});
+        }
+      } else {
+        console.error("Failed to fetch subtable data:", await response.text());
+        setSubTableInputs({});
+      }
+    } catch (error) {
+      console.error("Error fetching subtable data:", error);
+      setSubTableInputs({});
+    }
+  
+    setExpandedPartNo(partNo);
+  };
+  
+  const handleSubTableSave = async (partNo, excludedMonths) => {
+    const createdBy = secureLocalStorage.getItem("nu");
+    const excludedMonthArray = (excludedMonths || "").split(",").map((m) => m.trim());
+  
+    const payload = {
+      partNo: partNo || "",
+      monthNo: Number(month) || 0,
+      yearNo: Number(year) || 0,
+      createdBy: createdBy || "",
+      a: "0",
+      b: "0",
+      c: "0",
+      d: "0",
+      e: "0",
+      f: "0",
+      g: "0",
+      h: "0",
+      i: "0",
+      j: "0",
+      k: "0",
+      l: "0",
+    };
+  
+    excludedMonthArray.forEach((trimmedMonth) => {
+      const monthIndex = months.findIndex((m) => {
+        const [monthName, year] = trimmedMonth.split(" ");
+        const formattedMonthName = monthName.substring(0, 3);
+        const formattedMonth = `${formattedMonthName}'${year.slice(-2)}`;
+        return m.label === formattedMonth;
+      }) + 1;      
+  
+      if (monthIndex > 0) {
+        const fieldKey = String.fromCharCode(96 + monthIndex);
+        payload[fieldKey] = subTableInputs[`month_${monthIndex}`] || "0";
+      } else {
+        console.error(`Excluded month "${trimmedMonth}" not found in months.`);
+      }
+    });
+  
+    try {
+      const response = await fetch("http://10.40.20.93:300/api/saveNWS", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error saving subtable:", errorText);
+        return;
+      }
+    
+      const result = await response.json();
+      console.log("Subtable saved successfully:", result);
+    
+      // Reset states after save
+      setSubTableInputs({});
+      setExpandedPartNo(null); 
+    
+      // Optionally refresh table data
+      await fetchTableDataNWS();
+    } catch (error) {
+      console.error("Error saving subtable:", error);
+    }
+    
+  };
+  
+  
+  const handleSubTableInputChange = (month, value) => {
+    setSubTableInputs((prev) => ({ ...prev, [month]: value }));
+  };
 
   React.useEffect(() => {
     const checkLogin = async () => {
@@ -161,8 +290,19 @@ export default function NMC() {
       );
       const data = await response.json();
       const { month_No, year_No } = data;
-
-      setMonths(getMonths(month_No, year_No));
+      let fmonth = month_No;
+      let fyear = year_No;
+      if(fmonth == 12){
+        fmonth = 1;
+        fyear = fyear + 1;
+      } else {
+        fmonth = fmonth + 1;
+      }
+      console.log("Check default fetching months list : ", fmonth, fyear, month_No, year_No);
+      setMonths(getMonths(fmonth, fyear));
+      setMonth(fmonth);
+      setYear(fyear);
+      // setMonths(getMonths(month_No, year_No));
     } catch (error) {
       console.error("Error fetching current month and year:", error);
     }
@@ -265,18 +405,21 @@ export default function NMC() {
     setSelectedMonths([]);
   };
 
+  
+
   return (
-    <div className="container" style={{ maxWidth: '100%', padding: '20px' }}>
-      <div className="tab-container" style={{ display: 'flex', borderBottom: '1px solid #ddd', marginBottom: '1px'}}>
+    <div className="container" style={{ maxWidth: '100%', padding: '10px', overflow: "hidden" }}>
+      <div className="tab-container" style={{ display: 'flex', borderBottom: '0px solid #ddd', marginBottom: '2px', }}>
         <button
           className={`tab-button ${activeTab === "Casting Supplied by NWS" ? "active" : ""}`}
           onClick={() => setActiveTab("Casting Supplied by NWS")}
           style={{
-            padding: '10px 20px',
+            padding: '10px 15px',
             fontWeight: activeTab === "Casting Supplied by NWS" ? 'bold' : 'normal',
             backgroundColor: activeTab === "Casting Supplied by NWS" ? '#007bff' : 'white',
             color: activeTab === "Casting Supplied by NWS" ? '#fff' : '#000',
             borderTopLeftRadius: '8px',
+            fontSize: '13px',
           }}
         >
           Casting Supplied by NWS
@@ -285,11 +428,12 @@ export default function NMC() {
           className={`tab-button ${activeTab === "New Projects" ? "active" : ""}`}
           onClick={() => setActiveTab("New Projects")}
           style={{
-            padding: '10px 20px',
+            padding: '10px 15px',
             fontWeight: activeTab === "New Projects" ? 'bold' : 'normal',
             backgroundColor: activeTab === "New Projects" ? '#007bff' : 'white',
             color: activeTab === "New Projects" ? '#fff' : '#000',
             borderTopRightRadius: '8px',
+            fontSize: '13px',
           }}
         >
           New Projects
@@ -321,6 +465,11 @@ export default function NMC() {
           handleRemoveRow={handleRemoveRow}
           isCastingNWS={activeTab === "Casting Supplied by NWS"}
           userEdit={userEdit}
+          expandedPartNo={expandedPartNo}
+          subTableInputs={subTableInputs}
+          handleSubTableInputChange={handleSubTableInputChange}
+          handleExpandRow={handleExpandRow} 
+          handleSubTableSave={handleSubTableSave}
         />
       </div>
     </div>
@@ -343,7 +492,12 @@ function ScreenSection({
   tableData,
   handleRemoveRow,
   isCastingNWS,
-  userEdit
+  userEdit,
+  expandedPartNo,
+  handleExpandRow,
+  subTableInputs,
+  handleSubTableInputChange,
+  handleSubTableSave,
 }) {
   return (
     <div className="flex flex-col w-full space-y-4" style={{ margin: 'auto', fontSize: '12px' }}>
@@ -471,21 +625,116 @@ function ScreenSection({
           <tbody className="bg-white">
             {tableData.length > 0 ? (
               tableData.map((row, index) => (
-                <tr key={index} className="hover:bg-gray-50">
-                  <td className="border px-1 py-1">{row.partNo}</td>
-                  {isCastingNWS && (
-                    <td className="border px-1 py-1">{row.excludedMonths || "N/A"}</td>
-                  )}
-                  <td className="border px-1 py-1">{row.createdBy || "N/A"}</td>
-                  <td className="border px-1 py-1">{row.createdOn ? new Date(row.createdOn).toLocaleDateString() : "N/A"}</td>
-                  {userEdit && <td className="border px-1 py-1" style={{ color: "red", textAlign: "center", fontWeight: "bold" }}>
-                    <button onClick={() => handleRemoveRow(row.partNo, row.excludedMonths)}>X</button>
-                  </td>}
-                </tr>
+                <React.Fragment key={index}>
+                  <tr className="hover:bg-gray-50">
+                    {isCastingNWS ? (
+                      <td className="border px-1 py-1">
+                      {userEdit ?(
+                        <button
+                        style={{ color: "green", textDecoration: "underline" }}
+                        onClick={() => handleExpandRow(row.partNo)}
+                      >
+                        {row.partNo}
+                      </button>
+                      ) : (
+                        <span>{row.partNo}</span>
+                      )}
+                      </td>
+                    ) : (
+                      <td className="border px-1 py-1">{row.partNo}</td>
+                    )}
+                    {isCastingNWS && (
+                      <td className="border px-1 py-1">{row.excludedMonths || "N/A"}</td>
+                    )}
+                    <td className="border px-1 py-1">{row.createdBy || "N/A"}</td>
+                    <td className="border px-1 py-1">
+                      {row.createdOn ? new Date(row.createdOn).toLocaleDateString() : "N/A"}
+                    </td>
+                    {userEdit && (
+                      <td className="border px-1 py-1" style={{ color: "red", textAlign: "center", fontWeight: "bold" }}>
+                        <button onClick={() => handleRemoveRow(row.partNo, row.excludedMonths)}>X</button>
+                      </td>
+                    )}
+                  </tr>
+                  {/* Subtable */}
+                  {expandedPartNo === row.partNo && isCastingNWS && (
+                  <tr>
+                    <td colSpan={isCastingNWS ? "5" : "4"} className="bg-gray-100">
+                      <div
+                        style={{
+                          padding: "10px",
+                          margin: "10px",
+                          border: "1px solid #ddd",
+                          borderRadius: "4px",
+                          display: "flex",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <div className="flex flex-wrap gap-2">
+                          {row.excludedMonths
+                            .split(",")
+                            .map((month, idx) => {
+                              const trimmedMonth = month.trim();
+                            
+                              const monthIndex = months.findIndex((m) => {
+                                const [monthName, year] = trimmedMonth.split(" ");
+                                const formattedMonthName = monthName.substring(0, 3); 
+                                const formattedMonth = `${formattedMonthName}'${year.slice(-2)}`;
+                                return m.label === formattedMonth;
+                              }) + 1;
+                              
+                            
+                              if (monthIndex === 0) {
+                                console.error(`Excluded month "${trimmedMonth}" not found in months.`);
+                                return null;
+                              }
+                            
+                              return (
+                                <div key={monthIndex} className="flex flex-col gap-1">
+                                  <label
+                                    style={{
+                                      fontSize: "12px",
+                                      fontWeight: "bold",
+                                      paddingLeft: "5px",
+                                    }}
+                                  >
+                                    {trimmedMonth} 
+                                  </label>
+                                  <input
+                                    type="number"
+                                    value={subTableInputs[`month_${monthIndex}`] || ""}
+                                    onChange={(e) =>
+                                      handleSubTableInputChange(
+                                        `month_${monthIndex}`,
+                                        e.target.value
+                                      )
+                                    }
+                                    className="border px-2 py-1 rounded-md text-sm"
+                                    style={{ width: "80px" }}
+                                  />
+                                </div>
+                              );
+                            })}
+                        </div>
+                        <div>
+                          <button
+                            onClick={() => handleSubTableSave(row.partNo, row.excludedMonths)}
+                            className="mt-2 px-4 py-2 bg-green-500 text-white rounded-md"
+                          >
+                            Save
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                </React.Fragment>
               ))
             ) : (
               <tr>
-                <td colSpan={isCastingNWS ? "5" : "4"} className="border px-1 py-1 text-center">No Data Available</td>
+                <td colSpan={isCastingNWS ? "5" : "4"} className="border px-1 py-1 text-center">
+                  No Data Available
+                </td>
               </tr>
             )}
           </tbody>

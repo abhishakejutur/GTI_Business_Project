@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.min.css';
 import HyperFormula from 'hyperformula';
@@ -10,9 +10,14 @@ import { faSync } from '@fortawesome/free-solid-svg-icons';
 import './page.css';
 import  secureLocalStorage  from  "react-secure-storage";
 import { handleLogin } from "@/lib/auth";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card"
 
 function Page({ isDarkMode }) {
-  const [data, setData] = useState([['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']]);
+  const [data, setData] = useState([['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 0]]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [weekOptions, setWeekOptions] = useState([]);
   const [selectedWeek, setSelectedWeek] = useState('');
@@ -29,6 +34,8 @@ function Page({ isDarkMode }) {
   const [isRefresh , setIsRefresh] = useState(false);
   const [latestPlanWeek, setLatestPlanWeek] = useState();
   const [latestPlanYear, setLatestPlanYear] = useState();
+  const [validPartNos, setValidPartNos] = useState([]);
+  const invalidCellsRef = useRef(new Set());
   
   let nextId = data.length + 1;
 
@@ -62,6 +69,7 @@ function Page({ isDarkMode }) {
     fetchEmployeeAccess(empid);
     lastFinalizeWeek();
   }, []);
+
   useEffect(() => {
     if (accessData.length > 0) {
       const accessLevel = getAccessForPage("ShippingSchedule");
@@ -76,6 +84,7 @@ function Page({ isDarkMode }) {
       }
     }
   }, [accessData]);
+  
   const fetchEmployeeAccess = async (employeeId) => {
     try {
       const response = await fetch(`http://10.40.20.93:300/getAccess?empId=${employeeId}`);
@@ -115,7 +124,7 @@ function Page({ isDarkMode }) {
 
     return [
         [...staticHeaders, ...weekHeaders],
-        ['Project', 'Part#', 'P.Name', 'Customer', 'Location', 'B/Qty', 'Sale', ...subHeaders]
+        ['Project', 'Part#', 'P.Name', 'Customer', 'Location', 'B/Qty', 'Sale', ...subHeaders, 'Color Key']
     ];
   };
   
@@ -124,14 +133,14 @@ function Page({ isDarkMode }) {
     'Project', 'Part#', 'P.Name', 'Customer', 'Location', 'Box Qty', 'Sale',
     'Week No.', 'Date', 'QTY .', 'Box', 'Week No.', 'Date', 'QTY .', 'Box',
     'Week No.', 'Date', 'QTY .', 'Box', 'Week No.', 'Date', 'QTY .', 'Box',
-    'Week No.', 'Date', 'QTY .', 'Box', 'Week No.', 'Date', 'QTY .', 'Box'
+    'Week No.', 'Date', 'QTY .', 'Box', 'Week No.', 'Date', 'QTY .', 'Box', 'Color Key'
   ];
   
   const columnKeys = [
     'projectName', 'partNo', 'partName', 'customer', 'custLocation', 'actual_Boxqty', 'saleType',
     'week1', 'date1', 'qty1', 'box1', 'week2', 'date2', 'qty2', 'box2',
     'week3', 'date3', 'qty3', 'box3', 'week4', 'date4', 'qty4', 'box4',
-    'week5', 'date5', 'qty5', 'box5', 'week6', 'date6', 'qty6', 'box6'
+    'week5', 'date5', 'qty5', 'box5', 'week6', 'date6', 'qty6', 'box6', 'is_update'
   ];
   const fetchSaveButtonStatus = async () => {
     let weekNumber, year;
@@ -207,6 +216,28 @@ function Page({ isDarkMode }) {
       .catch(error => console.error('Error fetching week options:', error));
   }, []);
 
+  useEffect(() => {
+    const fetchvalidPartNos = async () => {
+      try {
+        const response = await fetch("http://10.40.20.93:300/ShippingSchedule/GetAllValidShipPartNos");
+        if (!response.ok) {
+          console.error(`API error: ${response.status} ${response.statusText}`);
+          return;
+        }
+        const data = await response.json();
+        console.log("Fetched data:", data);
+        setValidPartNos(data);
+      } catch (error) {
+        console.error("Error in fetchvalidPartNos:", error);
+      }
+    };
+    fetchvalidPartNos();
+  }, []);
+  
+  useEffect(() => {
+    console.log(" validPartNos are stored :", validPartNos);
+  }, [validPartNos]);
+  
 
   const handleWeekChange = (event) => {
     const selectedWeekValue = event.target.value;
@@ -218,9 +249,17 @@ function Page({ isDarkMode }) {
         let [weekNumber, year] = selectedWeekValue.split('-');
         weekNumber = parseInt(weekNumber);
         year = parseInt(year);
-
+        let Cweek = weekNumber;
+        let Cyear = year;
+        if(Cweek == 1){
+          Cweek = 52;
+          Cyear = Cyear - 1;
+        } else {
+          Cweek = Cweek - 1;
+        }
+        console.log("Check plans : ",Cweek, Cyear, latestPlanWeek, latestPlanYear);
         lastFinalizeWeek();
-        if(weekNumber > latestPlanWeek || year > latestPlanYear){
+        if(Cweek > latestPlanWeek || Cyear > latestPlanYear){
           alert("please finalize the previous week plan");
           setSelectedWeek(latestPlanWeek + "-" + latestPlanYear);
           return
@@ -251,11 +290,21 @@ function Page({ isDarkMode }) {
     let [weekNumber, year] = weekValue.split('-');
     weekNumber = parseInt(weekNumber);
     year = parseInt(year);
+    let Cweek = weekNumber;
+    let Cyear = year;
+    if(Cweek == 1){
+      Cweek = 52;
+      Cyear = Cyear - 1;
+    } else {
+      Cweek = Cweek - 1;
+    }
+    console.log("Check fetch plans : ",Cweek, Cyear, latestPlanWeek, latestPlanYear);
+    console.log("LCheck fetch plans : ",Cweek, Cyear, weekNumber, year);
     lastFinalizeWeek();
-    if(weekNumber > latestPlanWeek || year > latestPlanYear){
-      // alert("please finalize the previous week plan : ", weekNumber, " - ", year);
-      return
-    } 
+    if (Cyear > latestPlanYear || (Cyear === latestPlanYear && Cweek > latestPlanWeek)) {
+      console.log("not fetched");
+      return;
+    }
     try {
       const response = await fetch(`http://10.40.20.93:300/BTrail/weekData?week=${weekNumber}&year=${year}`, {
         method: 'POST',
@@ -266,6 +315,7 @@ function Page({ isDarkMode }) {
 
       if (response.ok) {
         setIsSaveEnabled(false);
+        console.log("fetched plans response.ok : ",Cweek, Cyear, weekNumber, year);
         const fetchedData = await response.json();
         const tableData = fetchedData.map(item => [
           item.projectName,
@@ -298,11 +348,13 @@ function Page({ isDarkMode }) {
           item.week6,
           formatDateForDisplay(item.date6),
           item.qty6,
-          item.box6 || ''
+          item.box6 || '',
+          item.is_update || 0
         ]);
 
         setData(tableData.length ? tableData : data);
-
+        console.log("Week DAta : ", tableData);
+        console.log("Week DAta 2 : ", data);
         if (hotInstance) {
           hotInstance.loadData(tableData);
           hotInstance.render(); 
@@ -364,7 +416,9 @@ function Page({ isDarkMode }) {
       const formattedData = displayedData.map(row => {
         const rowData = {};
         columnKeys.forEach((key, index) => {
-          if (key.includes('week')) {
+          if (key === 'is_update') {
+            rowData[key] = row[index] || null;
+          } else if (key.includes('week')) {
             rowData[key] = row[index] || null;
           } else if (key.includes('date')) {
             rowData[key] = row[index] === '' ? null : formatDateForBackend(row[index]);
@@ -422,15 +476,14 @@ function Page({ isDarkMode }) {
       const formattedData = displayedData.map(row => {
         const rowData = {};
         columnKeys.forEach((key, index) => {
-          if (key.includes('week')) {
+          if (key === 'is_update') {
+            rowData[key] = row[index] || null;
+          } else if (key.includes('week')) {
             rowData[key] = row[index] || null;
           } else if (key.includes('date')) {
             rowData[key] = row[index] === '' ? null : formatDateForBackend(row[index]);
-          } else if (key.includes('qty')) {
-            rowData[key] = row[index] === '' ? null : parseFloat(row[index]) || 0.0;
-          } else if (key.includes('box')) {
-            const boxValue = parseFloat(row[index]);
-            rowData[key] = isNaN(boxValue) ? null : Math.round(boxValue);
+          } else if (key.includes('qty') || key.includes('box')) {
+            rowData[key] = row[index] === '' ? null : parseFloat(row[index]) || 0.00;
           } else if (key === 'partNo') {
             rowData[key] = row[index].split(' | ')[0];
           } else {
@@ -538,12 +591,12 @@ function Page({ isDarkMode }) {
       textRenderer.call(this, instance, td, row, col, prop, value, cellProperties);
     }
     const boxColumns = [10, 14, 18, 22, 26, 30];
-  if (boxColumns.includes(col)) {
-    const numericValue = parseFloat(value);
-    if (!isNaN(numericValue)) {
-      td.innerText = numericValue.toFixed(1);
+    if (boxColumns.includes(col)) {
+      const numericValue = parseFloat(value);
+      if (!isNaN(numericValue)) {
+        td.innerText = numericValue.toFixed(1);
+      }
     }
-  }
     const invalidColumns = [9, 13, 17, 21, 25, 29];
     if (invalidColumns.includes(col) && (value === '' || isNaN(value) || parseInt(value) != value)) {
       td.style.backgroundColor = 'red';
@@ -587,6 +640,42 @@ function Page({ isDarkMode }) {
       td.style.cursor = 'cell';
       td.style.paddingLeft='10px';
     }
+    if (col === 1) {
+      const partNo = value ? value.split(" | ")[0].trim() : null;
+      const cellKey = `${row}-${col}`;
+    
+      if (partNo && !validPartNos.includes(partNo)) {
+        // td.style.backgroundColor = 'red';
+        td.style.color = 'red';
+        td.title = 'This part number does not contains pkg wt./mach wt.'; 
+        invalidCellsRef.current.add(cellKey);
+      } else {
+        td.style.backgroundColor = '';
+        td.style.color = 'black';
+        td.title = '';
+        invalidCellsRef.current.delete(cellKey);
+      }
+    }
+    const colorKeyIndex = 31;
+    if (col >= 0 && data[row] && data[row][colorKeyIndex] === 1) {
+      td.style.backgroundColor = '#d4f5d4';
+    } else if (col >= 0 || col === null) {
+      td.style.backgroundColor = '';
+    }
+  };
+  const handleAfterMouseOut = (event, coords, TD) => {
+    if (coords.row >= 0 && coords.col >= 0) {
+      const cellKey = `${coords.row}-${coords.col}`;
+      if (invalidCellsRef.current.has(cellKey)) {
+        TD.style.backgroundColor = 'red';
+        TD.style.color = 'white';
+        TD.title = 'This part number does not contains pkg wt./mach wt.';
+      } else {
+        TD.style.backgroundColor = '';
+        TD.style.color = '#333';
+        TD.title = '';
+      }
+    }
   };
 
   const calculateTotalsRow = (data, qtyColumns, boxColumns) => {
@@ -626,8 +715,13 @@ function Page({ isDarkMode }) {
 
     const instance = new Handsontable(container, {
     data: enhancedData, 
-      rowHeaders: false,
+      rowHeaders: true,
+      rowHeaderWidth: 40,
       nestedHeaders: setWeekHeaders(parseInt(selectedWeek.split('-')[0]) || 0),
+      afterOnCellMouseOut: handleAfterMouseOut,
+      cells: (row, col) => ({
+        renderer: cellRenderer,
+      }),
       height: "100%",
       width: "100%",
       rowHeights: 30,
@@ -650,13 +744,23 @@ function Page({ isDarkMode }) {
         }
       },
       beforeChange: (changes, source) => {
-        if (source === 'UndoRedo.undo' || source === 'UndoRedo.redo') {
-          changes.forEach(([row, col], index) => {
-            if (row === data.length) {
-              changes[index] = null; 
-            }
-          });
-        }
+        // if (source === 'UndoRedo.undo' || source === 'UndoRedo.redo') {
+        //   changes.forEach(([row, col], index) => {
+        //     if (row === data.length) {
+        //       changes[index] = null; 
+        //     }
+        //   });
+        // }
+        // if (source === 'UndoRedo.undo' || source === 'UndoRedo.redo') {
+        //   const colorKeyIndex = 31;
+
+        //   changes.forEach(([row, prop, oldValue, newValue], index) => {
+        //     if (row >= 0 && prop !== colorKeyIndex) {
+        //       changes.push([row, colorKeyIndex, 0, 0]);
+        //       changes[index] = null; 
+        //     }
+        //   });
+        // }
       },
       colWidths: 120,
       autoWrapRow: true,
@@ -665,6 +769,7 @@ function Page({ isDarkMode }) {
       wordWrap: false,
       manualRowMove: true,
       // manualColumnMove: true,
+      undoRedo: true,
       licenseKey: 'non-commercial-and-evaluation',
       afterColumnSort() {
         let howManyRows = this.countRows() -1;
@@ -690,7 +795,7 @@ function Page({ isDarkMode }) {
       },
       hiddenColumns: {
         indicators: false,
-        columns:[2, 3, 7, 11, 15, 19, 23, 27]
+        columns:[2, 3, 7, 11, 15, 19, 23, 27, 31]
       },
       cells: function (row, col) {
         const cellProperties = {};
@@ -711,19 +816,19 @@ function Page({ isDarkMode }) {
           filter_by_condition: {
             hidden() {
               const col = this.getSelectedRangeLast().to.col;
-              return ![0, 1, 3, 4].includes(col);
+              return ![0, 1, 4].includes(col);
             },
           },
           filter_by_value: {
             hidden() {
               const col = this.getSelectedRangeLast().to.col;
-              return ![0, 1, 3, 4].includes(col);
+              return ![0, 1, 4].includes(col);
             },
           },
           filter_action_bar: {
             hidden() {
               const col = this.getSelectedRangeLast().to.col;
-              return ![0, 1, 3, 4].includes(col);
+              return ![0, 1, 4].includes(col);
             },
           },
         },
@@ -747,15 +852,50 @@ function Page({ isDarkMode }) {
         TH.style.fontSize = '12px';
       },
       afterOnCellMouseOver: function (event, coords, TD) {
+        const { row, col } = coords;
+        const colorKeyIndex = 31;
         if (coords.row >= 0) {
           TD.style.background = '#9EA3AD';
           TD.style.color = '#fff';
         }
+        if (row >= 0 && col >= 0 && data[row] && data[row][colorKeyIndex] != 1) {
+          TD.style.backgroundColor = '#9EA3AD';
+        } else {
+          TD.style.backgroundColor = '#9EA3AD';
+        }
+        const cellKey = `${coords.row}-${coords.col}`;
+        if (coords.row >= 0 && invalidCellsRef.current.has(cellKey)) {
+          TD.style.backgroundColor = 'red';
+          TD.style.color = 'white';
+          TD.title = 'This part number does not contains pkg wt./mach wt.';
+        } else {
+          TD.style.background = '#9EA3AD';
+          TD.style.color = '#fff';
+          // TD.style.fontWeight = '';
+        }
       },
       afterOnCellMouseOut: function (event, coords, TD) {
+        const { row, col } = coords;
+        const colorKeyIndex = 31;
+        
         if (coords.row >= 0) {
           TD.style.background = '';
           TD.style.color = '#333';
+        }
+        const cellKey = `${coords.row}-${coords.col}`;
+        if (coords.row >= 0 && invalidCellsRef.current.has(cellKey)) {
+          TD.style.backgroundColor = 'white';
+          TD.style.color = 'red';
+          TD.title = 'This part number does not contains pkg wt./mach wt.';
+        } else {
+          TD.style.background = '';
+          TD.style.color = '#333';
+          // TD.style.fontWeight = '';
+        }
+        if (row >= 0 && col >= 0 && data[row] && data[row][colorKeyIndex] === 1) {
+          TD.style.backgroundColor = '#d4f5d4';
+        } else {
+          TD.style.backgroundColor = '';
         }
         if (coords.row === data.length) {
           TD.classList.add('fixed-total-row'); 
@@ -775,6 +915,7 @@ function Page({ isDarkMode }) {
         { width: "3%", readOnly: true, className: 'htCenter htMiddle' },
         { className: 'htCenter htMiddle', width: "100%", readOnly: true},
         {
+          dropdownMenu: ['filter_by_condition', 'filter_by_value', 'filter_action_bar'],
           // type: 'dropdown',
           // source: locationOptions,
           readOnly: true,
@@ -806,7 +947,8 @@ function Page({ isDarkMode }) {
         { width: "4%", readOnly: true, className: 'htCenter htMiddle' }, 
         { width: "80%", type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true, className: 'htCenter htMiddle' }, 
         { width: "3%", className: 'htRight htMiddle', renderer: cellRenderer, type: 'numeric' }, 
-        { readOnly: true, width: "3%", className: 'htRight htMiddle' }
+        { readOnly: true, width: "3%", className: 'htRight htMiddle' },
+        { readOnly: false, width: "3%", className: 'htRight htMiddle' }
       ],
       cells: function (row, col) {
         const cellProperties = {};
@@ -823,6 +965,9 @@ function Page({ isDarkMode }) {
       
       afterChange: (changes, source) => {
         if (source === 'loadData' || !changes) return;
+        const updatedData = [...data]; 
+        const colorKeyIndex = 31;
+        const dateColumns = [9, 13, 17, 21, 25, 29, 10, 14, 18, 22, 26, 30];
         changes.forEach(([row, prop, oldValue, newValue]) => {
           const date1Index = 8;
           const date2Index = 12;
@@ -835,6 +980,13 @@ function Page({ isDarkMode }) {
                 console.warn('Row index out of bounds:', row);
                 return;
             }
+            
+            if (data[row]) {
+              if (dateColumns.includes(prop)) {
+                data[row][colorKeyIndex] = 1;
+              }
+            }
+            
             if (prop === date1Index) {
                 const dateValue = newValue || ''; 
                 const date1 = new Date(dateValue.split('/').reverse().join('-')); 
@@ -974,6 +1126,7 @@ function Page({ isDarkMode }) {
           setSaveBtn(false);
           console.log(SaveBtn);
         }
+        
       }
     });
 
@@ -988,6 +1141,8 @@ function Page({ isDarkMode }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <h2 className='hanson-title'>Shipping Schedule</h2>
           {SaveBtnEnabled && (
+            <HoverCard>
+            <HoverCardTrigger asChild>
             <FontAwesomeIcon
               icon={faSync}
               onClick={async () => {
@@ -1011,6 +1166,24 @@ function Page({ isDarkMode }) {
               }}
               style={{ cursor: 'pointer', fontSize: '20px', color: '#4CAF50', fontWeight: 'bold' }}
             />
+            </HoverCardTrigger>
+            <HoverCardContent
+              className="w-64"
+              style={{
+                zIndex: 1050,
+                // position: 'absolute',
+                backgroundColor: '#fff',
+                border: '1px solid black',
+              }}
+            >
+              <div className="p-2">
+                <h4 className="text-sm font-semibold">Refresh</h4>
+                <p className="text-xs text-muted-foreground">
+                  Click here to refresh the part data.
+                </p>
+              </div>
+            </HoverCardContent>
+          </HoverCard>
           )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }} className="controls-container">
@@ -1075,7 +1248,7 @@ function Page({ isDarkMode }) {
         </div>
         </div>
       </div>
-      <div  className="handsontable-wrapper">
+      <div className="handsontable-wrapper">
         <div id="example" className="custom-table"></div>
       </div>
     </div>

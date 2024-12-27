@@ -449,10 +449,13 @@ th, td {
     transform: translate(-42.18182px, -17.5455px);
 }
 
-@media (max-width: 768px) {
+/* @media (max-width: 1500px) {
   .table-container {
     max-width: 100%;
     overflow-x: scroll;
+  }
+  td[id="cell"]{
+    font-size: 10px;
   }
 
   table {
@@ -461,7 +464,7 @@ th, td {
 }
 .calendar-input styled-datepicker{
   font-size: 2px;
-}
+} */
 .content-container .table-container {
   width:calc(100%-20px);
 }

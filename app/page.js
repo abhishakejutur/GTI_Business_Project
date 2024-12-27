@@ -246,7 +246,7 @@ export default function Home() {
                   onClick={() => setShowPassword(!showPassword)} 
                   className="absolute right-2 top-10" 
                 >
-                  <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+                  {/* <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} hidden /> */}
                 </button>
               </div>
             </div>

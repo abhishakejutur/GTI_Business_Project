@@ -12,6 +12,11 @@ import "react-datepicker/dist/react-datepicker.css";
 import "./page.css";
 import  secureLocalStorage  from  "react-secure-storage";
 import { handleLogin } from "@/lib/auth";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card"
 
 function Page({ isDarkMode }) {
   const [data, setData] = useState([]);
@@ -34,6 +39,9 @@ function Page({ isDarkMode }) {
   const [tableData, setTableData] = useState([]);
   const [isLastFinalizeMonth, setIsLastFinalizeMonth] = useState();
   const [isLastFinalizeYear, setIsLastFinalizeYear] = useState();
+  const [validPartNos, setValidPartNos] = useState([]);
+  const invalidCellsRef = useRef(new Set());
+
 
 
   useEffect(() => {
@@ -78,14 +86,21 @@ function Page({ isDarkMode }) {
       setDefaultYear(year_No);
       setNewMonth(month_No);
       setNewYear(year_No);
-
-      const defaultDate = new Date(year_No, adjustedMonth, 1);
+      let fmonth = month_No;
+      let fyear = year_No;
+      if(fmonth == 12){
+        fmonth = 1;
+        fyear = fyear + 1;
+      } else {
+        fmonth = fmonth + 1;
+      }
+      console.log("Check default fetching : ", fmonth, fyear, month_No, year_No);
+      const defaultDate = new Date(fyear, fmonth-1, 1);
       setSelectedDate(defaultDate);
-      setColumnHeaders(generateMonthYearHeaders(adjustedMonth, year_No));
-      fetchData(month_No, year_No);
-      fetchSaveButtonStatus(month_No, year_No);
-
-      setMonth(month_No, year_No);
+      setColumnHeaders(generateMonthYearHeaders(fmonth-1, fyear));
+      fetchData(fmonth, fyear);
+      fetchSaveButtonStatus(fmonth, fyear);
+      setMonth(fmonth, fyear);
     } catch (error) {
       console.error("Error fetching current month and year:", error);
     }
@@ -96,6 +111,24 @@ function Page({ isDarkMode }) {
   currentDate.setDate(currentDate.getDate());
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
+
+  // useEffect(() => {
+  //   const initializePage = async () => {
+  //     const today = new Date();
+  //     const month = today.getMonth() + 1;
+  //     const year = today.getFullYear();
+  
+  //     setDefaultMonth(month);
+  //     setDefaultYear(year);
+  //     setSelectedDate(new Date(year, month - 1, 1));
+  
+  //     setColumnHeaders(generateMonthYearHeaders(month - 1, year));
+  //     await fetchData(month, year);
+  //     await fetchSaveButtonStatus(month, year);
+  //   };
+  
+  //   initializePage();
+  // }, []);
 
   const generateMonthYearHeaders = (month, year) => {
     console.log("month, year:", month, year);
@@ -113,9 +146,28 @@ function Page({ isDarkMode }) {
 
     return headers;
   };
-
+  useEffect(() => {
+    const fetchvalidPartNos = async () => {
+      try {
+        const response = await fetch("http://10.40.20.93:300/customerForecast/AllValidShipPartNos");
+        if (!response.ok) {
+          console.error(`API error: ${response.status} ${response.statusText}`);
+          return;
+        }
+        const data = await response.json();
+        console.log("Fetched data:", data);
+        setValidPartNos(data);
+      } catch (error) {
+        console.error("Error in fetchvalidPartNos:", error);
+      }
+    };
+    fetchvalidPartNos();
+  }, []);
   
-
+  useEffect(() => {
+    console.log(" validPartNos are stored :", validPartNos);
+  }, [validPartNos]);
+  
   const columnKeys = [
     'product_Id', 'projectName', 'customer', 'projectDesc', 'cast_PartNo', 'mach_PartNo', 'assy_PartNo', 'ship_PartNo', 'saletype', 'idm',
     'cast_wt', 'month_No', 'year_No', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'
@@ -165,6 +217,8 @@ function Page({ isDarkMode }) {
         window.location.href = "/";
       } else {
         console.log("accessing Forecast....");
+        // await fetchvalidPartNos();
+        console.log("validPartNos:", validPartNos);
       }
     };
     checkLogin();
@@ -176,6 +230,7 @@ function Page({ isDarkMode }) {
       return;
     }
     setIsLoggedIn(true);
+    // fetchvalidPartNos();
     // fetchData();
     setColumnHeaders(generateMonthYearHeaders(currentMonth, currentYear));
     // fetchData(currentMonth + 1, currentYear);
@@ -248,10 +303,18 @@ function Page({ isDarkMode }) {
     // adjustedDate.setDate(adjustedDate.getDate());
     console.log("Adjusted Date:", adjustedDate);
 
-    const month = adjustedDate.getMonth()+1;
-    const year = adjustedDate.getFullYear();
-
-    if(month>isLastFinalizeMonth || year>isLastFinalizeYear){
+    let month = adjustedDate.getMonth()+1;
+    let year = adjustedDate.getFullYear();
+    let Cmonth = month; 
+    let Cyear = year;
+    if(Cmonth==1){
+      Cmonth=12;
+      Cyear=Cyear-1;
+    }else{
+      Cmonth=Cmonth-1;
+    }
+    console.log("Checking : Month:", Cmonth, "Year:", Cyear);
+    if(Cmonth>isLastFinalizeMonth || Cyear>isLastFinalizeYear){
       console.log("last finalize month and year", isLastFinalizeMonth, isLastFinalizeYear);
       alert("Please finalize previous month");
     }else{
@@ -406,7 +469,7 @@ function Page({ isDarkMode }) {
         alert('Data refreshed successfully');
         console.log('Data refreshed successfully');
         console.log('Post request parameters:', 'Month : ', currentMonth+1, 'Year : ', currentYear);
-        // window.location.reload();
+        window.location.reload();
         
         fetchData(newMonth, newYear);
       } else {
@@ -460,7 +523,39 @@ function Page({ isDarkMode }) {
       td.style.cursor = 'cell';
       td.style.paddingLeft='10px';
     }
+    if (col === 7) {
+      const partNo = value ? value.split(" | ")[0].trim() : null;
+      const cellKey = `${row}-${col}`;
+    
+      if (partNo && !validPartNos.includes(partNo)) {
+        // td.style.backgroundColor = 'red';
+        td.style.color = 'red';
+        td.title = 'This part number does not contains cost/cast wt.'; 
+        invalidCellsRef.current.add(cellKey);
+      } else {
+        td.style.backgroundColor = '';
+        td.style.color = 'black';
+        td.title = '';
+        invalidCellsRef.current.delete(cellKey);
+      }
+    }
+    
   };
+  const handleAfterMouseOut = (event, coords, TD) => {
+    if (coords.row >= 0 && coords.col >= 0) {
+      const cellKey = `${coords.row}-${coords.col}`;
+      if (invalidCellsRef.current.has(cellKey)) {
+        TD.style.backgroundColor = 'red';
+        TD.style.color = 'white';
+        TD.title = 'This part number does not contains cost/cast wt.';
+      } else {
+        TD.style.backgroundColor = '';
+        TD.style.color = '#333';
+        TD.title = '';
+      }
+    }
+  };
+  
   const calculateTotalsRow = (data) => {
     const totalsRow = new Array(25).fill(null);
     
@@ -513,8 +608,13 @@ function Page({ isDarkMode }) {
 
     const instance = new Handsontable(containerRef.current, {
       data: enhancedData,
-      rowHeaders: false,
+      rowHeaders: true,
+      rowHeaderWidth: 40,
       nestedHeaders: [columnHeaders],
+      afterOnCellMouseOut: handleAfterMouseOut,
+      cells: (row, col) => ({
+        renderer: cellRenderer,
+      }),
       readOnly:access!==3,
       height: "100%",
       width: "100%",
@@ -750,18 +850,34 @@ function Page({ isDarkMode }) {
           TD.style.color = 'white';
           // TD.style.fontWeight = 'bold';
         }
+        const cellKey = `${coords.row}-${coords.col}`; 
+        if (coords.row >= 0 && invalidCellsRef.current.has(cellKey)) {
+          TD.style.backgroundColor = 'red';
+          TD.style.color = 'white';
+          TD.title = 'This part number does not contains cost/cast wt.';
+        } else {
+          TD.style.background = '#9EA3AD';
+          TD.style.color = 'white';
+        }
       },
       afterOnCellMouseOut: function (event, coords, TD) {
-        if (coords.row >= 0) {
+        const cellKey = `${coords.row}-${coords.col}`; 
+        if (coords.row >= 0 && invalidCellsRef.current.has(cellKey)) {
+          TD.style.backgroundColor = 'white';
+          TD.style.color = 'red';
+          TD.title = 'This part number does not contains cost/cast wt.';
+        } else {
           TD.style.background = '';
           TD.style.color = '#333';
           TD.style.fontWeight = '';
         }
+      
         if (coords.row === data.length) {
           TD.classList.add('fixed-total-row'); 
           TD.style.backgroundColor = '#eee';
         }
       },
+      
     });
     hotInstanceRef.current = instance;
     return () => instance.destroy();
@@ -773,11 +889,36 @@ function Page({ isDarkMode }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <h2 className='hanson-title'>Customer Forecast</h2>
           {SaveBtnEnabled && (
-            <FontAwesomeIcon
-              icon={faSync}
-              onClick={handleRefresh}
-              style={{ cursor: 'pointer', fontSize: '20px', color: '#4CAF50', fontWeight: 'bold' }}
-            />
+            <HoverCard>
+            <HoverCardTrigger asChild>
+              <FontAwesomeIcon
+                icon={faSync}
+                onClick={handleRefresh}
+                style={{
+                  cursor: 'pointer',
+                  fontSize: '20px',
+                  color: '#4CAF50',
+                  fontWeight: 'bold',
+                }}
+              />
+            </HoverCardTrigger>
+            <HoverCardContent
+              className="w-64"
+              style={{
+                zIndex: 1050,
+                // position: 'absolute',
+                backgroundColor: '#fff',
+                border: '1px solid black',
+              }}
+            >
+              <div className="p-2">
+                <h4 className="text-sm font-semibold">Refresh</h4>
+                <p className="text-xs text-muted-foreground">
+                  Click here to refresh the part data.
+                </p>
+              </div>
+            </HoverCardContent>
+          </HoverCard>
           )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>

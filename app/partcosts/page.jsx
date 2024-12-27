@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import DatePicker from "react-datepicker";
@@ -59,7 +59,7 @@ export default function Dashboard() {
   const [accessData, setAccessData] = useState([]);
   const [access, setAccess] = useState();
   const [userEdit, setUserEdit] = useState(false);
-
+  const dropdownRef = useRef(null);
   
 
   useEffect(() => {
@@ -539,7 +539,19 @@ export default function Dashboard() {
       console.error("Error deleting part cost:", error);
     }
   };
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownSuggestions([]); 
+      }
+    };
 
+    document.addEventListener("mousedown", handleClickOutside);
+    
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
   return (
     <div className="container" style={{ maxWidth: '100%', padding: '20px', overflow: 'hidden' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -573,13 +585,14 @@ export default function Dashboard() {
           className={`tab-button ${activeTab === "Part Costs" ? "active" : ""}`}
           onClick={() => handleTabChange("Part Costs")}
           style={{
-            padding: '10px 20px',
+            padding: '10px 10px',
             fontWeight: 'bold',
             backgroundColor: activeTab === "Part Costs" ? '#007bff' : 'white',
             color: activeTab === "Part Costs" ? '#fff' : '#000',
             borderTopRightRadius: '8px',
             borderTopLeftRadius: '8px',
-            width: '300px',
+            width: '200px',
+            fontSize: '12px',
           }}
         >
           Part Costs
@@ -610,6 +623,7 @@ export default function Dashboard() {
             />
             {dropdownSuggestions.length > 0 && (
               <ul
+                ref={dropdownRef}
                 className="responsive-suggestions-dropdown"
                 style={{
                   position: "absolute",
@@ -1448,14 +1462,14 @@ export default function Dashboard() {
                   <thead className="sticky top-0 bg-gray-300">
                     <tr>
                       <th hidden style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }} className="border px-4 py-2">Part ID</th>
-                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }} className="border px-4 py-2">Project</th>
-                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }} className="border px-4 py-2">Ship p/n</th>
-                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }} className="border px-4 py-2">Currency</th>
-                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }} className="border px-4 py-2">Cast Price (USD)</th>
-                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }} className="border px-4 py-2">Finish Price (USD)</th>
-                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }} className="border px-4 py-2">Forex</th>
-                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }} className="border px-4 py-2">Cast Price (INR)</th>
-                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px' }} className="border px-4 py-2">Finish Price (INR)</th>
+                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px', fontSize: '12px', }} className="border px-4 py-2">Project</th>
+                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px', fontSize: '12px', }} className="border px-4 py-2">Ship P/N</th>
+                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px', fontSize: '12px', }} className="border px-4 py-2">Currency</th>
+                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px', fontSize: '12px', }} className="border px-4 py-2">Cast Price (USD)</th>
+                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px', fontSize: '12px', }} className="border px-4 py-2">Finish Price (USD)</th>
+                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px', fontSize: '12px', }} className="border px-4 py-2">Forex</th>
+                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px', fontSize: '12px', }} className="border px-4 py-2">Cast Price (INR)</th>
+                      <th style={{ backgroundColor: 'grey', color: 'white', textAlign: 'center', border: '1px solid white', padding: '8px', fontSize: '12px', }} className="border px-4 py-2">Finish Price (INR)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1469,14 +1483,14 @@ export default function Dashboard() {
                         padding: '4px',
                       }}>
                           <td hidden style={{ padding: '5px' }} className="border px-4 py-2">{row.part_ID}</td>
-                          <td style={{ textAlign: 'left', padding: '5px', paddingLeft: "10px" }} className="border px-4 py-2">{row.project}</td>
-                          <td style={{ textAlign: 'center', padding: '5px' }} className="border px-4 py-2">{row.shipping_pn}</td>
-                          <td style={{ textAlign: 'center', padding: '5px' }} className="border px-4 py-2">{row.curr_unit}</td>
-                          <td style={{ textAlign: 'right', padding: '5px', paddingRight: "10px" }} className="border px-4 py-2">{row.cast_USD}</td>
-                          <td style={{ textAlign: 'right', padding: '5px', paddingRight: "10px" }} className="border px-4 py-2">{row.rate_USD}</td>
-                          <td style={{ textAlign: 'right', padding: '5px', paddingRight: "10px" }} className="border px-4 py-2">{row.forex}</td>
-                          <td style={{ textAlign: 'right', padding: '5px', paddingRight: "10px" }} className="border px-4 py-2">{row.cast_INR}</td>
-                          <td style={{ textAlign: 'right', padding: '5px', paddingRight: "10px" }} className="border px-4 py-2">{row.rate_INR}</td>
+                          <td style={{ fontSize: '12px', textAlign: 'left', padding: '5px', paddingLeft: "10px" }} className="border px-4 py-2">{row.project}</td>
+                          <td style={{ fontSize: '12px', textAlign: 'center', padding: '5px' }} className="border px-4 py-2">{row.shipping_pn}</td>
+                          <td style={{ fontSize: '12px', textAlign: 'center', padding: '5px' }} className="border px-4 py-2">{row.curr_unit}</td>
+                          <td style={{ fontSize: '12px', textAlign: 'right', padding: '5px', paddingRight: "10px" }} className="border px-4 py-2">{row.cast_USD}</td>
+                          <td style={{ fontSize: '12px', textAlign: 'right', padding: '5px', paddingRight: "10px" }} className="border px-4 py-2">{row.rate_USD}</td>
+                          <td style={{ fontSize: '12px', textAlign: 'right', padding: '5px', paddingRight: "10px" }} className="border px-4 py-2">{row.forex}</td>
+                          <td style={{ fontSize: '12px', textAlign: 'right', padding: '5px', paddingRight: "10px" }} className="border px-4 py-2">{row.cast_INR}</td>
+                          <td style={{ fontSize: '12px', textAlign: 'right', padding: '5px', paddingRight: "10px" }} className="border px-4 py-2">{row.rate_INR}</td>
                         </tr>
                         )}
                       )
