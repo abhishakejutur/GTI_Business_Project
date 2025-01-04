@@ -234,7 +234,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             <FontAwesomeIcon icon={faCoins} style={{ marginLeft: "3px"}} /> 
             {!isCollapsed && (
               <span style={{ marginLeft: "3px" }} className="text">
-                <p style={{whiteSpace: "nowrap", fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>part costs</p>
+                <p style={{whiteSpace: "nowrap", fontSize:"18px", fontFamily:"Poppins, sans-serif"}}>Part Costs</p>
               </span>
             )}
           </a>

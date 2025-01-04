@@ -95,12 +95,12 @@ function Page({ isDarkMode }) {
         fmonth = fmonth + 1;
       }
       console.log("Check default fetching : ", fmonth, fyear, month_No, year_No);
-      const defaultDate = new Date(fyear, fmonth-1, 1);
+      const defaultDate = new Date(year_No, adjustedMonth, 1);
       setSelectedDate(defaultDate);
-      setColumnHeaders(generateMonthYearHeaders(fmonth-1, fyear));
-      fetchData(fmonth, fyear);
-      fetchSaveButtonStatus(fmonth, fyear);
-      setMonth(fmonth, fyear);
+      setColumnHeaders(generateMonthYearHeaders(fmonth-1, year_No));
+      fetchData(month_No, year_No);
+      fetchSaveButtonStatus(month_No, year_No);
+      setMonth(month_No, year_No);
     } catch (error) {
       console.error("Error fetching current month and year:", error);
     }
@@ -314,7 +314,7 @@ function Page({ isDarkMode }) {
       Cmonth=Cmonth-1;
     }
     console.log("Checking : Month:", Cmonth, "Year:", Cyear);
-    if(Cmonth>isLastFinalizeMonth || Cyear>isLastFinalizeYear){
+    if ((Cyear > isLastFinalizeYear) || (Cyear === isLastFinalizeYear && Cmonth > isLastFinalizeMonth)) {
       console.log("last finalize month and year", isLastFinalizeMonth, isLastFinalizeYear);
       alert("Please finalize previous month");
     }else{
@@ -861,6 +861,12 @@ function Page({ isDarkMode }) {
         }
       },
       afterOnCellMouseOut: function (event, coords, TD) {
+        const { row, col } = coords;
+        
+        if (coords.row >= 0) {
+          TD.style.background = '';
+          TD.style.color = '#333';
+        }
         const cellKey = `${coords.row}-${coords.col}`; 
         if (coords.row >= 0 && invalidCellsRef.current.has(cellKey)) {
           TD.style.backgroundColor = 'white';
@@ -868,8 +874,8 @@ function Page({ isDarkMode }) {
           TD.title = 'This part number does not contains cost/cast wt.';
         } else {
           TD.style.background = '';
-          TD.style.color = '#333';
-          TD.style.fontWeight = '';
+          TD.style.color = '#68616E';
+          // TD.style.fontWeight = 'bold';
         }
       
         if (coords.row === data.length) {

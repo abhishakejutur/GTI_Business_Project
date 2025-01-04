@@ -259,7 +259,7 @@ function Page({ isDarkMode }) {
         }
         console.log("Check plans : ",Cweek, Cyear, latestPlanWeek, latestPlanYear);
         lastFinalizeWeek();
-        if(Cweek > latestPlanWeek || Cyear > latestPlanYear){
+        if ((Cyear > latestPlanYear) || (Cyear === latestPlanYear && Cweek > latestPlanWeek)) {   //if ((Cyear > latestPlanYear) || (Cyear === latestPlanYear && Cweek > latestPlanWeek)) {
           alert("please finalize the previous week plan");
           setSelectedWeek(latestPlanWeek + "-" + latestPlanYear);
           return
@@ -656,12 +656,14 @@ function Page({ isDarkMode }) {
         invalidCellsRef.current.delete(cellKey);
       }
     }
+    
     const colorKeyIndex = 31;
     if (col >= 0 && data[row] && data[row][colorKeyIndex] === 1) {
       td.style.backgroundColor = '#d4f5d4';
     } else if (col >= 0 || col === null) {
       td.style.backgroundColor = '';
-    }
+    
+  }
   };
   const handleAfterMouseOut = (event, coords, TD) => {
     if (coords.row >= 0 && coords.col >= 0) {
@@ -714,7 +716,8 @@ function Page({ isDarkMode }) {
     if (!container) return;
 
     const instance = new Handsontable(container, {
-    data: enhancedData, 
+      columnSorting: true,
+      data: enhancedData, 
       rowHeaders: true,
       rowHeaderWidth: 40,
       nestedHeaders: setWeekHeaders(parseInt(selectedWeek.split('-')[0]) || 0),
@@ -774,6 +777,25 @@ function Page({ isDarkMode }) {
       afterColumnSort() {
         let howManyRows = this.countRows() -1;
         this.rowIndexMapper.moveIndexes([this.toVisualRow(howManyRows)]);
+      },
+      afterColumnSort() {
+        const colorKeyIndex = 31;
+        const rowsCount = this.countRows();
+        const colsCount = this.countCols();
+    
+        for (let row = 0; row < rowsCount; row++) {
+          const colorKeyValue = this.getDataAtCell(row, colorKeyIndex);
+          for (let col = 0; col < colsCount; col++) {
+            const td = this.getCell(row, col);
+            if (td) {
+              if (colorKeyValue === 31) {
+                td.style.backgroundColor = '#d4f5d4';
+              } else {
+                td.style.backgroundColor = '';
+              }
+            }
+          }
+        }
       },
       stretchH: 'all',
       headerTooltips: true,
@@ -948,7 +970,7 @@ function Page({ isDarkMode }) {
         { width: "80%", type: 'date', dateFormat: 'DD/MM/YYYY', correctFormat: true, className: 'htCenter htMiddle' }, 
         { width: "3%", className: 'htRight htMiddle', renderer: cellRenderer, type: 'numeric' }, 
         { readOnly: true, width: "3%", className: 'htRight htMiddle' },
-        { readOnly: false, width: "3%", className: 'htRight htMiddle' }
+        { readOnly: false, width: "3%", className: 'htRight htMiddle', renderer: cellRenderer, }
       ],
       cells: function (row, col) {
         const cellProperties = {};

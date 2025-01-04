@@ -203,15 +203,15 @@ export default function Dashboard() {
       }
       console.log("Check default fetching : ", fmonth, fyear, month_No, year_No);
 
-      const defaultDate = new Date(fyear, fmonth - 1, 1);
+      const defaultDate = new Date(year_No, adjustedMonth, 1);
       setSelectedDate(defaultDate);
       // setColumnHeaders(generateMonthYearHeaders(fmonth-1, fyear));
       
       // fetchData(fmonth, fyear);
-      setSelectedDate(new Date(fyear, fmonth - 1, 1));
-      fetchSaveButtonStatus(fmonth, fyear);
+      setSelectedDate(new Date(year_No, adjustedMonth, 1));
+      fetchSaveButtonStatus(month_No, fyear);
 
-      setMonth(fmonth, fyear);
+      setMonth(month_No, year_No);
       fetchData();
     } catch (error) {
       console.error("Error fetching current month and year:", error);
@@ -340,7 +340,7 @@ export default function Dashboard() {
     console.log("Selected week:", weekNo, typeof(weekNo));
     console.log("Selected year:", yearNo);
     console.log("Last finalized week:", latestPlanWeek);
-    if(Cweek>latestPlanWeek || Cyear>latestPlanYear){
+    if ((Cyear > latestPlanYear) || (Cyear === latestPlanYear && Cweek > latestPlanWeek)) {
       setSelectedWeek(week);
       alert("Not finalized the previous week plan");
     } else {
@@ -366,7 +366,7 @@ export default function Dashboard() {
     console.log("Selected week:", weekNo, typeof(weekNo));
     console.log("Selected year:", yearNo);
     console.log("Last finalized week:", latestPlanWeek, typeof(latestPlanWeek));
-    if(Cweek>latestPlanWeek || Cyear>latestPlanYear){
+    if ((Cyear > latestPlanYear) || (Cyear === latestPlanYear && Cweek > latestPlanWeek)) {
       setSelectedWeek('');
       alert("Not finalized the previous week plan");
       return;
@@ -440,7 +440,7 @@ export default function Dashboard() {
       Cmonth=Cmonth-1;
     }
     console.log("Checking change : Month:", Cmonth, "Year:", Cyear);
-    if(Cmonth>isLastFinalizeMonth || Cyear>isLastFinalizeYear){
+    if ((Cyear > isLastFinalizeYear) || (Cyear === isLastFinalizeYear && Cmonth > isLastFinalizeMonth)) {
       console.log("last finalize month and year", isLastFinalizeMonth, isLastFinalizeYear);
       alert("Please finalize previous month");
     } else {
@@ -450,10 +450,12 @@ export default function Dashboard() {
   };
   const initializeShippingScheduleData = () => {
     lastFinalizeWeek();
-    const currentWeek = getCurrentWeekNumber();
-    const currentYear = new Date().getFullYear();
-    // const currentWeek = latestPlanWeek;
-    // const currentYear = latestPlanYear;
+    // const currentWeek = getCurrentWeekNumber();
+    // const date = new Date();
+    // date.setDate(date.getDate() + 6);
+    // const currentYear = date.getFullYear();
+    const currentWeek = latestPlanWeek;
+    const currentYear = latestPlanYear;
     setSelectedWeek(currentWeek);
     setSelectedYear(currentYear);
     fetchShippingScheduleData(currentWeek, currentYear);
@@ -599,6 +601,7 @@ export default function Dashboard() {
   };
   const getCurrentWeekNumber = () => {
     const date = new Date();
+    date.setDate(date.getDate() + 6);
     const startDate = new Date(date.getFullYear(), 0, 1);
     const days = Math.floor((date - startDate) / (24 * 60 * 60 * 1000));
     const weekNumber = Math.ceil((days + startDate.getDay() + 1) / 7);
