@@ -186,7 +186,7 @@ export default function Permissions() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
-      });
+      })
       const result = await response.json();
 
       if (result.message.includes("success")) {

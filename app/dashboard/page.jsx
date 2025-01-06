@@ -8,9 +8,29 @@ import "react-datepicker/dist/react-datepicker.css";
 import './page.css';
 import  secureLocalStorage  from  "react-secure-storage";
 import { handleLogin } from "@/lib/auth";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faSave
+} from "@fortawesome/free-solid-svg-icons";
+import { Check, ChevronsUpDown } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState("Estimated Business");
+  const [activeTab, setActiveTab] = useState("Estimated Business");  // 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [tableData, setTableData] = useState([]);
   const [columns, setColumns] = useState([]);
@@ -35,6 +55,10 @@ export default function Dashboard() {
   const [isLastFinalizeMonth, setIsLastFinalizeMonth] = useState();
   const [isLastFinalizeYear, setIsLastFinalizeYear] = useState();
   const [isSmallScreen, setIsSmallScreen] = useState(false);
+  const [open1, setOpen1] = React.useState(false);
+  const [value1, setValue1] = React.useState("");
+  const [open2, setOpen2] = React.useState(false);
+  const [value2, setValue2] = React.useState("");
 
   useEffect(() => {
     const handleResize = () => {
@@ -323,6 +347,12 @@ export default function Dashboard() {
           console.error("Error fetching latest plan week and year:", error);
       }
   };
+  const filteredData = tableData.filter((row) => {
+    const matchesCustomer = value1 ? row.customer === value1 : true;
+    const matchesLocation = value2 ? row.custLocation === value2 : true;
+    return matchesCustomer && matchesLocation;
+  });
+  
   const handleWeekChange = (e) => {
     const selectedValue = e.target.value;
     const [week, year] = selectedValue.split('-');
@@ -490,8 +520,7 @@ export default function Dashboard() {
       setColumns([]);
     }
   };
-  
-  
+
   const formatNumber = (num) => {
     const parsedNum = parseFloat(num);
     // console.log("Formatting number:", num, "=>", parsedNum); 
@@ -783,13 +812,142 @@ export default function Dashboard() {
       <div className="header-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1 style={{ fontSize: '20px', fontWeight: 'bold' }}></h1>
         {activeTab === "Estimate Shipping Schedule" ? (
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                <Popover open={open1} onOpenChange={setOpen1}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={open1}
+                      className="w-[150px] justify-between h-9"
+                      style={{
+                        fontFamily: 'Arial, sans-serif',
+                        fontSize: '12px',
+                        border: '1px solid black',
+                        borderRadius: '5px',
+                        padding: '0px 8px', 
+                        backgroundColor:'transparent',
+                      }}
+                    >
+                      {value1 ? value1 : "Customer..."}
+                      <ChevronsUpDown className="opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[200px] p-0">
+                    <Command>
+                      <CommandInput
+                        placeholder="Search customer..."
+                        className="h-9"
+                        style={{
+                          fontFamily: 'Arial, sans-serif',
+                          fontSize: '12px',
+                          border: '1px solid black',
+                        }}
+                      />
+                      <CommandList>
+                        <CommandEmpty>No customer found.</CommandEmpty>
+                        <CommandGroup>
+                          {[...new Set(tableData.map((row) => row.customer))].map((customer, index) => (
+                            <CommandItem
+                              key={index}
+                              value={customer}
+                              onSelect={(currentValue) => {
+                                setValue1(currentValue === value1 ? "" : currentValue);
+                                setOpen1(false);
+                              }}
+                              style={{
+                                fontFamily: 'Arial, sans-serif',
+                                fontSize: '12px', 
+                                padding: '4px 8px',
+                              }}
+                            >
+                              {customer}
+                              <Check
+                                className={cn(
+                                  "ml-auto",
+                                  value1 === customer ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                
+                <Popover open={open2} onOpenChange={setOpen2}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={open2}
+                      className="w-[150px] justify-between h-9"
+                      style={{
+                        fontFamily: 'Arial, sans-serif',
+                        fontSize: '12px',
+                        border: '1px solid black',
+                        borderRadius: '5px',
+                        padding: '0px 8px', 
+                        backgroundColor:'transparent',
+                      }}
+                    >
+                      {value2 ? value2 : "Location..."}
+                      <ChevronsUpDown className="opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[200px] p-0">
+                    <Command>
+                      <CommandInput
+                        placeholder="Search location..."
+                        className="h-9"
+                        style={{
+                          fontFamily: 'Arial, sans-serif',
+                          fontSize: '12px',
+                          border: '1px solid black',
+                        }}
+                      />
+                      <CommandList>
+                        <CommandEmpty>No location found.</CommandEmpty>
+                        <CommandGroup>
+                          {[...new Set(tableData.map((row) => row.custLocation))].map((location, index) => (
+                            <CommandItem
+                              key={index}
+                              value={location}
+                              onSelect={(currentValue) => {
+                                setValue2(currentValue === value2 ? "" : currentValue);
+                                setOpen2(false);
+                              }}
+                              style={{
+                                fontFamily: 'Arial, sans-serif',
+                                fontSize: '12px',
+                                padding: '4px 8px',
+                              }}
+                            >
+                              {location}
+                              <Check
+                                className={cn(
+                                  "ml-auto",
+                                  value2 === location ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
             <select
               value={`${selectedWeek}-${selectedYear}`}
               onChange={handleWeekChange}
-              style={{ padding: '5px', fontSize: '16px', borderRadius: '5px', border: '1px solid #333', backgroundColor: 'transparent', cursor: "pointer", padding: "5px 10px", textAlign:"center", marginRight:"20px" }}
+              style={{ padding: '5px', fontSize: '16px', borderRadius: '5px', border: '1px solid #333', backgroundColor: 'transparent', cursor: "pointer", padding: "6px 2px", textAlign:"center", marginRight:"5px" }}
             >
-              <option style={{ textAlign: "left" }} value="">Select Week</option>
+              <option style={{ textAlign: "left" }} value="">Select</option>
               {weekOptions.map((week) => (
                 <option style={{ textAlign: "left" }} key={week.value} value={week.value}>
                   {week.value}
@@ -800,7 +958,7 @@ export default function Dashboard() {
               onClick={() => handleSaveShippingSchedule()}
               hidden = {access!==3}
               style={{
-                padding: '8px 16px',
+                padding: '7px 16px',
                 marginRight: '10px',
                 backgroundColor: '#28a745',
                 color: 'white',
@@ -813,7 +971,7 @@ export default function Dashboard() {
               onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#218838')}
               onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#28a745')}
             >
-              Save
+              <FontAwesomeIcon icon={faSave} />
             </button>
           </div>
         ) : (
@@ -1053,7 +1211,7 @@ export default function Dashboard() {
               )}
               </tbody>
             </table>
-          )}    
+          )}   
           {activeTab === "Est. Busi. (Customer)" && (
             <table className="min-w-full table-auto border-collapse" style={{ tableLayout: 'fixed', width: '100%', borderRadius: '8px', wordWrap:"break-word" }}>
               <thead className="sticky top-0 bg-gray-300" style={{ position: 'sticky', top: '0', zIndex: '1' }}>
@@ -1146,8 +1304,8 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody style={{ padding: "8px" }}>
-              {tableData.length > 0 ? (
-                tableData.map((row, index) => {
+              {filteredData.length > 0 ? (
+                filteredData.map((row, index) => {
                   const containerWeight = selectedTonsForRow[index]
                     ? parseFloat(selectedTonsForRow[index])
                     : row.containerWeight || (row.saletype === "EXP" ? 17 : 13);

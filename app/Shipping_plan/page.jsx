@@ -800,7 +800,30 @@ function Page({ isDarkMode }) {
       stretchH: 'all',
       headerTooltips: true,
       columnSorting: true,
+      dropdownMenu: true,
       dropdownMenu: ['filter_by_condition', 'filter_by_value', 'filter_action_bar'],
+      dropdownMenu: {
+        items: {
+          filter_by_condition: {
+            hidden() {
+              const col = this.getSelectedRangeLast().to.col;
+              return ![0, 1, 4, 6].includes(col);
+            },
+          },
+          filter_by_value: {
+            hidden() {
+              const col = this.getSelectedRangeLast().to.col;
+              return ![0, 1, 4, 6].includes(col);
+            },
+          },
+          filter_action_bar: {
+            hidden() {
+              const col = this.getSelectedRangeLast().to.col;
+              return ![0, 1, 4, 6].includes(col);
+            },
+          },
+        },
+      },
       datePickerConfig: {
         firstDay: 1,
         showWeekNumber: true,
@@ -833,36 +856,12 @@ function Page({ isDarkMode }) {
       //     'cut': { name: 'Cut' }
       //   }
       // },
-      dropdownMenu: {
-        items: {
-          filter_by_condition: {
-            hidden() {
-              const col = this.getSelectedRangeLast().to.col;
-              return ![0, 1, 4].includes(col);
-            },
-          },
-          filter_by_value: {
-            hidden() {
-              const col = this.getSelectedRangeLast().to.col;
-              return ![0, 1, 4].includes(col);
-            },
-          },
-          filter_action_bar: {
-            hidden() {
-              const col = this.getSelectedRangeLast().to.col;
-              return ![0, 1, 4].includes(col);
-            },
-          },
-        },
-      },
       afterGetColHeader: function (col, TH) {
-        if (col > 1) {
+        if (col > 6 || col === 5) {
           const button = TH.querySelector('.changeType');
-    
           if (!button) {
             return;
           }
-    
           button.parentElement.removeChild(button);
         }
         TH.style.background = '#eee';
@@ -932,12 +931,11 @@ function Page({ isDarkMode }) {
         }
       },
       columns: [
-        { className: 'htLeft htMiddle' ,width: "175%", readOnly: true, dropdownMenu: false }, 
+        { className: 'htLeft htMiddle' ,width: "175%", readOnly: true }, 
         { width: "100%", readOnly: true, className: 'htCenter htMiddle' }, 
         { width: "3%", readOnly: true, className: 'htCenter htMiddle' },
         { className: 'htCenter htMiddle', width: "100%", readOnly: true},
         {
-          dropdownMenu: ['filter_by_condition', 'filter_by_value', 'filter_action_bar'],
           // type: 'dropdown',
           // source: locationOptions,
           readOnly: true,

@@ -97,7 +97,7 @@ function Page({ isDarkMode }) {
       console.log("Check default fetching : ", fmonth, fyear, month_No, year_No);
       const defaultDate = new Date(year_No, adjustedMonth, 1);
       setSelectedDate(defaultDate);
-      setColumnHeaders(generateMonthYearHeaders(fmonth-1, year_No));
+      setColumnHeaders(generateMonthYearHeaders(month_No-1, year_No));
       fetchData(month_No, year_No);
       fetchSaveButtonStatus(month_No, year_No);
       setMonth(month_No, year_No);
@@ -232,7 +232,7 @@ function Page({ isDarkMode }) {
     setIsLoggedIn(true);
     // fetchvalidPartNos();
     // fetchData();
-    setColumnHeaders(generateMonthYearHeaders(currentMonth, currentYear));
+    // setColumnHeaders(generateMonthYearHeaders(currentMonth, currentYear));
     // fetchData(currentMonth + 1, currentYear);
     fetchCurrentMonthAndYear();
     // fetchData(month[0], month[1]);
@@ -827,7 +827,7 @@ function Page({ isDarkMode }) {
         }
       },
       afterGetColHeader: function (col, TH) {
-        if (col > 2 && col != 7) {
+        if (col > 2 && col != 7 && col !== 8) {
           const button = TH.querySelector('.changeType');
     
           if (!button) {
