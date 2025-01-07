@@ -945,7 +945,7 @@ export default function Dashboard() {
             <select
               value={`${selectedWeek}-${selectedYear}`}
               onChange={handleWeekChange}
-              style={{ padding: '5px', fontSize: '16px', borderRadius: '5px', border: '1px solid #333', backgroundColor: 'transparent', cursor: "pointer", padding: "6px 2px", textAlign:"center", marginRight:"5px" }}
+              style={{ padding: '5px', fontSize: '16px', borderRadius: '5px', border: '1px solid #333', backgroundColor: 'transparent', cursor: "pointer", padding: "5px 2px", textAlign:"center", marginRight:"5px" }}
             >
               <option style={{ textAlign: "left" }} value="">Select</option>
               {weekOptions.map((week) => (

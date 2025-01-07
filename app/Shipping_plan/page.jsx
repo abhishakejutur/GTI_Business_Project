@@ -6,7 +6,7 @@ import HyperFormula from 'hyperformula';
 import '../handsontable/page.css';
 // import '../globals.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSync } from '@fortawesome/free-solid-svg-icons';
+import { faSync, faFileExcel } from '@fortawesome/free-solid-svg-icons';
 import './page.css';
 import  secureLocalStorage  from  "react-secure-storage";
 import { handleLogin } from "@/lib/auth";
@@ -15,6 +15,8 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card"
+import { Button } from "@/components/ui/button";
+import * as XLSX from 'xlsx';
 
 function Page({ isDarkMode }) {
   const [data, setData] = useState([['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 0]]);
@@ -584,6 +586,20 @@ function Page({ isDarkMode }) {
       return false;
     }
     return true;
+  };
+  const downloadExcel = (data) => {
+    const columnHeaders = [
+      'Project', 'Part#', 'P.Name', 'Customer', 'Location', 'Box Qty', 'Sale',
+      'Week No.', 'Date', 'QTY .', 'Box', 'Week No.', 'Date', 'QTY .', 'Box',
+      'Week No.', 'Date', 'QTY .', 'Box', 'Week No.', 'Date', 'QTY .', 'Box',
+      'Week No.', 'Date', 'QTY .', 'Box', 'Week No.', 'Date', 'QTY .', 'Box'
+    ];
+  
+    const modifiedData = [columnHeaders, ...data.map(row => row.slice(0, -1))];
+    const worksheet = XLSX.utils.json_to_sheet(modifiedData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+    XLSX.writeFile(workbook, "ShippingSchedule.xlsx");
   };
   const cellRenderer = (instance, td, row, col, prop, value, cellProperties) => {
     const textRenderer = Handsontable.renderers.TextRenderer;
@@ -1207,6 +1223,11 @@ function Page({ isDarkMode }) {
           )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }} className="controls-container">
+          <div>
+          <Button className='bg-green-800 hover:bg-green-700 h-10' onClick={()=>downloadExcel(data)}>
+            <FontAwesomeIcon icon={faFileExcel} style={{ cursor: 'pointer', fontSize: '25px', color: 'white', fontWeight: 'bold' }} />
+          </Button>
+          </div>
           <div style={{ display: 'inline-block' }}>
             <select
               id="week-select"

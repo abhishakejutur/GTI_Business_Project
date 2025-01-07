@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from 'react';
 import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.min.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSync } from '@fortawesome/free-solid-svg-icons';
+import { faSync, faFileExcel } from '@fortawesome/free-solid-svg-icons';
 import HyperFormula from 'hyperformula';
 import '../handsontable/page.css';
 // import '../globals.css';
@@ -17,6 +17,8 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card"
+import { Button } from "@/components/ui/button";
+import * as XLSX from 'xlsx';
 
 function Page({ isDarkMode }) {
   const [data, setData] = useState([]);
@@ -485,7 +487,28 @@ function Page({ isDarkMode }) {
   useEffect(() => {
     fetchData();
   }, []);
-
+  const downloadExcel = (data) => {
+    const columnHeaders = [
+      'Id', 'Project Name', 'Customer', 'Desc', 'Cast PartNo', 'Mach PartNo', 'Assy PartNo', 'Ship PartNo', 'Sale', 'Material',
+      'Cast_wt', 'Month', 'Year'
+    ];
+  
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const selectedMonth = newMonth - 1; 
+    const selectedYear = newYear;
+    for (let i = 0; i < 12; i++) {
+      const monthIndex = (selectedMonth + i) % 12;
+      const yearValue = selectedYear + Math.floor((selectedMonth + i) / 12);
+      const monthYear = `${months[monthIndex]}'${yearValue.toString().slice(2)}`;
+      columnHeaders.push(monthYear);
+    }
+  
+    const modifiedData = [columnHeaders, ...data];
+    const worksheet = XLSX.utils.json_to_sheet(modifiedData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+    XLSX.writeFile(workbook, "Forecast.xlsx");
+  };
     const cellValidator = (value) => {
     if (value !== null && value !== '' && !Number.isInteger(parseFloat(value))) {
       return false;
@@ -928,6 +951,11 @@ function Page({ isDarkMode }) {
           )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+        <div>
+          <Button className='bg-green-700 hover:bg-green-900 h-9' onClick={()=>downloadExcel(data)}>
+            <FontAwesomeIcon icon={faFileExcel} style={{ cursor: 'pointer', fontSize: '25px', color: 'white', fontWeight: 'bold' }} />
+          </Button>
+        </div>
         <div className="datepicker-container">
           <DatePicker
             selected={selectedDate}
